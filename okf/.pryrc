@@ -5,13 +5,18 @@ if defined?(Rails)
   def custom_console_boot_method = puts("Hello, world!")
 
   def_model_shortcuts "b", Okf::Bundle
-  # def_model_shortcuts "c", Okf::Concept
+  def_model_shortcuts "c", Okf::Concept
   # def_model_shortcuts "co", Okf::Consumption
-  # def_model_shortcuts "d", Okf::Directory
-  def_model_shortcuts "e", Okf::Entry
   # def_model_shortcuts "i", Okf::Index
   # def_model_shortcuts "l", Okf::Log
   # def_model_shortcuts "s", Okf::Schema
+  if Rails.root.to_s.end_with?('spec/dummy')
+    def_model_shortcuts "g", Goal
+    def_model_shortcuts "i", Issue
+    def_model_shortcuts "o", Organization
+    def_model_shortcuts "p", Project
+    def_model_shortcuts "s", Strategy
+  end
 
   def sync
     ob_a.each do |bundle|
