@@ -1,4 +1,14 @@
 PATH
+  remote: ../okf
+  specs:
+    okf (0.1.0)
+      importmap-rails
+      rails (>= 8.1.3)
+      stimulus-rails
+      tailwindcss-rails
+      turbo-rails
+
+PATH
   remote: .
   specs:
     chorus (0.1.0)
@@ -311,6 +321,7 @@ DEPENDENCIES
   amazing_print
   chorus!
   factory_bot_rails
+  okf!
   propshaft
   pry-rails
   puma
@@ -371,6 +382,7 @@ CHECKSUMS
   net-smtp (0.5.1)
   nio4r (2.7.5)
   nokogiri (1.19.4-arm64-darwin)
+  okf (0.1.0)
   parallel (2.1.0)
   parser (3.3.11.1)
   pp (0.6.3)

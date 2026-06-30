@@ -1,0 +1,99 @@
+es:
+  chorus:
+    app_name: "Chorus"
+    actions:
+      new: "Nuevo"
+      new_model: "Nuevo %{model}"
+      edit: "Editar"
+      edit_model: "Editar %{model}"
+      show: "Ver"
+      back: "Volver"
+      destroy: "Eliminar"
+      save: "Guardar"
+      cancel: "Cancelar"
+    empty: "Aún no hay %{model}."
+    confirm:
+      destroy: "¿Estás seguro?"
+    unassigned: "Sin asignar"
+    flash:
+      created: "%{model} se creó correctamente."
+      updated: "%{model} se actualizó correctamente."
+      destroyed: "%{model} se eliminó correctamente."
+
+  activerecord:
+    models:
+      chorus/organization:
+        one: "Organización"
+        other: "Organizaciones"
+      chorus/strategy:
+        one: "Estrategia"
+        other: "Estrategias"
+      chorus/goal:
+        one: "Objetivo"
+        other: "Objetivos"
+      chorus/role:
+        one: "Rol"
+        other: "Roles"
+      chorus/agent:
+        one: "Agente"
+        other: "Agentes"
+      chorus/workspace:
+        one: "Espacio de trabajo"
+        other: "Espacios de trabajo"
+      chorus/project:
+        one: "Proyecto"
+        other: "Proyectos"
+      chorus/artifact:
+        one: "Artefacto"
+        other: "Artefactos"
+      chorus/issue:
+        one: "Incidencia"
+        other: "Incidencias"
+    attributes:
+      chorus/organization:
+        name: "Nombre"
+        slug: "Slug"
+        description: "Descripción"
+      chorus/strategy:
+        organization: "Organización"
+        name: "Nombre"
+        status: "Estado"
+        description: "Descripción"
+      chorus/goal:
+        strategy: "Estrategia"
+        name: "Nombre"
+        status: "Estado"
+        description: "Descripción"
+      chorus/role:
+        organization: "Organización"
+        name: "Nombre"
+        description: "Descripción"
+      chorus/agent:
+        organization: "Organización"
+        role: "Rol"
+        name: "Nombre"
+        kind: "Tipo"
+      chorus/workspace:
+        organization: "Organización"
+        active_project: "Proyecto activo"
+        name: "Nombre"
+        description: "Descripción"
+      chorus/project:
+        goal: "Objetivo"
+        name: "Nombre"
+        slug: "Slug"
+        status: "Estado"
+        description: "Descripción"
+      chorus/artifact:
+        workspace: "Espacio de trabajo"
+        name: "Nombre"
+        kind: "Tipo"
+        locator: "Localizador"
+        description: "Descripción"
+      chorus/issue:
+        project: "Proyecto"
+        agent: "Agente"
+        title: "Título"
+        status: "Estado"
+        position: "Posición"
+        description: "Descripción"

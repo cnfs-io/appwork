@@ -1,14 +1,20 @@
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 require 'spec_helper'
 ENV['RAILS_ENV'] ||= 'test'
-require_relative '../config/environment'
+require_relative 'dummy/config/environment'
 # Prevent database truncation if the environment is production
 abort("The Rails environment is running in production mode!") if Rails.env.production?
 # Uncomment the line below in case you have `--require rails_helper` in the `.rspec` file
 # that will avoid rails generators crashing because migrations haven't been run yet
 # return unless Rails.env.test?
 require 'rspec/rails'
+require 'factory_bot_rails'
 # Add additional requires below this line. Rails is not loaded until this point!
+
+# The engine's factories live at <engine>/spec/factories, not under the dummy
+# app's Rails.root. Point FactoryBot at them explicitly.
+FactoryBot.definition_file_paths = [ File.expand_path('factories', __dir__) ]
+FactoryBot.reload
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are
@@ -44,6 +50,9 @@ RSpec.configure do |config|
   # examples within a transaction, remove the following line or assign false
   # instead of true.
   config.use_transactional_fixtures = true
+
+  # FactoryBot short syntax: build(...), create(...) without the FactoryBot prefix.
+  config.include FactoryBot::Syntax::Methods
 
   # You can uncomment this line to turn off ActiveRecord support entirely.
   # config.use_active_record = false

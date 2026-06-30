@@ -1,0 +1,15 @@
+<tr id="<%= dom_id(issue) %>" class="border-t border-border">
+    <td class="px-4 py-2 text-sm text-text"><%= issue.title %></td>
+    <td class="px-4 py-2 text-sm text-text"><%= issue.status %></td>
+    <td class="px-4 py-2 text-sm text-text"><%= issue.position %></td>
+    <td class="px-4 py-2 text-sm text-text"><%= issue.project&.name %></td>
+    <td class="px-4 py-2 text-sm text-text"><%= issue.agent&.name %></td>
+    <td class="px-4 py-2 text-right text-sm whitespace-nowrap">
+      <%= link_to t("chorus.actions.show"), issue, class: "text-sm font-medium text-primary hover:underline" %>
+      <%= link_to t("chorus.actions.edit"), edit_issue_path(issue), class: "text-sm font-medium text-primary hover:underline ml-3" %>
+      <%= button_to t("chorus.actions.destroy"), issue, method: :delete,
+            form: { class: "inline ml-3" },
+            class: "inline-flex items-center rounded-md bg-danger px-3 py-1.5 text-sm font-medium text-danger-contrast hover:opacity-90",
+            data: { turbo_confirm: t("chorus.confirm.destroy") } %>
+    </td>
+  </tr>

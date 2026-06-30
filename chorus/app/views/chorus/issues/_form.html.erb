@@ -1,0 +1,47 @@
+<%= form_with model: issue, class: "space-y-4" do |form| %>
+  <% if issue.errors.any? %>
+    <div class="rounded-md border border-danger bg-surface px-4 py-3 text-sm text-danger">
+      <h2 class="font-medium"><%= t("chorus.errors_heading", count: issue.errors.count, default: "%{count} error(s) prohibited this from being saved") %></h2>
+      <ul class="mt-2 list-disc list-inside">
+        <% issue.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+    <div>
+    <%= form.label :project_id, Chorus::Issue.human_attribute_name(:project), class: "block text-sm font-medium text-text-muted" %>
+    <%= form.collection_select :project_id, Chorus::Project.order(:name), :id, :name, { include_blank: false }, class: "mt-1 block w-full rounded-md border border-border bg-surface px-3 py-2 text-text shadow-sm focus:border-primary focus:outline-none" %>
+  </div>
+
+    <div>
+    <%= form.label :agent_id, Chorus::Issue.human_attribute_name(:agent), class: "block text-sm font-medium text-text-muted" %>
+    <%= form.collection_select :agent_id, Chorus::Agent.order(:name), :id, :name, { include_blank: t("chorus.unassigned") }, class: "mt-1 block w-full rounded-md border border-border bg-surface px-3 py-2 text-text shadow-sm focus:border-primary focus:outline-none" %>
+  </div>
+
+    <div>
+    <%= form.label :title, class: "block text-sm font-medium text-text-muted" %>
+    <%= form.text_field :title, class: "mt-1 block w-full rounded-md border border-border bg-surface px-3 py-2 text-text shadow-sm focus:border-primary focus:outline-none" %>
+  </div>
+
+    <div>
+    <%= form.label :status, class: "block text-sm font-medium text-text-muted" %>
+    <%= form.text_field :status, class: "mt-1 block w-full rounded-md border border-border bg-surface px-3 py-2 text-text shadow-sm focus:border-primary focus:outline-none" %>
+  </div>
+
+    <div>
+    <%= form.label :position, class: "block text-sm font-medium text-text-muted" %>
+    <%= form.number_field :position, class: "mt-1 block w-full rounded-md border border-border bg-surface px-3 py-2 text-text shadow-sm focus:border-primary focus:outline-none" %>
+  </div>
+
+    <div>
+    <%= form.label :description, class: "block text-sm font-medium text-text-muted" %>
+    <%= form.text_area :description, rows: 4, class: "mt-1 block w-full rounded-md border border-border bg-surface px-3 py-2 text-text shadow-sm focus:border-primary focus:outline-none" %>
+  </div>
+
+  <div class="flex items-center gap-3 pt-2">
+    <%= form.submit t("chorus.actions.save"), class: "inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-contrast hover:opacity-90 cursor-pointer" %>
+    <%= link_to t("chorus.actions.cancel"), issue.persisted? ? issue : issues_path, class: "text-sm font-medium text-primary hover:underline" %>
+  </div>
+<% end %>

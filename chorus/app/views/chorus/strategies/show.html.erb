@@ -1,0 +1,34 @@
+<% content_for :title, @strategy.name %>
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-semibold text-text"><%= @strategy.name %></h1>
+    <div class="flex items-center gap-3">
+      <%= link_to t("chorus.actions.edit"), edit_strategy_path(@strategy), class: "inline-flex items-center rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-text hover:bg-surface-muted" %>
+      <%= link_to t("chorus.actions.back"), strategies_path, class: "text-sm font-medium text-primary hover:underline" %>
+    </div>
+  </div>
+
+  <dl class="divide-y divide-border rounded-lg border border-border bg-surface">
+    <div class="px-4 py-3">
+      <dt class="text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Strategy.human_attribute_name(:name) %></dt>
+      <dd class="mt-1 text-sm text-text"><%= @strategy.name %></dd>
+    </div>
+      <div class="px-4 py-3">
+      <dt class="text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Strategy.human_attribute_name(:status) %></dt>
+      <dd class="mt-1 text-sm text-text"><%= @strategy.status %></dd>
+    </div>
+      <div class="px-4 py-3">
+      <dt class="text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Strategy.human_attribute_name(:organization) %></dt>
+      <dd class="mt-1 text-sm text-text"><%= @strategy.organization&.name %></dd>
+    </div>
+      <div class="px-4 py-3">
+      <dt class="text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Strategy.human_attribute_name(:description) %></dt>
+      <dd class="mt-1 text-sm text-text"><%= @strategy.description %></dd>
+    </div>
+  </dl>
+
+  <%= button_to t("chorus.actions.destroy"), @strategy, method: :delete,
+        class: "inline-flex items-center rounded-md bg-danger px-3 py-1.5 text-sm font-medium text-danger-contrast hover:opacity-90",
+        data: { turbo_confirm: t("chorus.confirm.destroy") } %>
+</div>

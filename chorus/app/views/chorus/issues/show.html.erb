@@ -1,0 +1,42 @@
+<% content_for :title, @issue.title %>
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-semibold text-text"><%= @issue.title %></h1>
+    <div class="flex items-center gap-3">
+      <%= link_to t("chorus.actions.edit"), edit_issue_path(@issue), class: "inline-flex items-center rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-text hover:bg-surface-muted" %>
+      <%= link_to t("chorus.actions.back"), issues_path, class: "text-sm font-medium text-primary hover:underline" %>
+    </div>
+  </div>
+
+  <dl class="divide-y divide-border rounded-lg border border-border bg-surface">
+    <div class="px-4 py-3">
+      <dt class="text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Issue.human_attribute_name(:title) %></dt>
+      <dd class="mt-1 text-sm text-text"><%= @issue.title %></dd>
+    </div>
+      <div class="px-4 py-3">
+      <dt class="text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Issue.human_attribute_name(:status) %></dt>
+      <dd class="mt-1 text-sm text-text"><%= @issue.status %></dd>
+    </div>
+      <div class="px-4 py-3">
+      <dt class="text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Issue.human_attribute_name(:position) %></dt>
+      <dd class="mt-1 text-sm text-text"><%= @issue.position %></dd>
+    </div>
+      <div class="px-4 py-3">
+      <dt class="text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Issue.human_attribute_name(:project) %></dt>
+      <dd class="mt-1 text-sm text-text"><%= @issue.project&.name %></dd>
+    </div>
+      <div class="px-4 py-3">
+      <dt class="text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Issue.human_attribute_name(:agent) %></dt>
+      <dd class="mt-1 text-sm text-text"><%= @issue.agent&.name %></dd>
+    </div>
+      <div class="px-4 py-3">
+      <dt class="text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Issue.human_attribute_name(:description) %></dt>
+      <dd class="mt-1 text-sm text-text"><%= @issue.description %></dd>
+    </div>
+  </dl>
+
+  <%= button_to t("chorus.actions.destroy"), @issue, method: :delete,
+        class: "inline-flex items-center rounded-md bg-danger px-3 py-1.5 text-sm font-medium text-danger-contrast hover:opacity-90",
+        data: { turbo_confirm: t("chorus.confirm.destroy") } %>
+</div>

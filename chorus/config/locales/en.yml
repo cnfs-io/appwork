@@ -1,0 +1,99 @@
+en:
+  chorus:
+    app_name: "Chorus"
+    actions:
+      new: "New"
+      new_model: "New %{model}"
+      edit: "Edit"
+      edit_model: "Edit %{model}"
+      show: "Show"
+      back: "Back"
+      destroy: "Destroy"
+      save: "Save"
+      cancel: "Cancel"
+    empty: "No %{model} yet."
+    confirm:
+      destroy: "Are you sure?"
+    unassigned: "Unassigned"
+    flash:
+      created: "%{model} was successfully created."
+      updated: "%{model} was successfully updated."
+      destroyed: "%{model} was successfully destroyed."
+
+  activerecord:
+    models:
+      chorus/organization:
+        one: "Organization"
+        other: "Organizations"
+      chorus/strategy:
+        one: "Strategy"
+        other: "Strategies"
+      chorus/goal:
+        one: "Goal"
+        other: "Goals"
+      chorus/role:
+        one: "Role"
+        other: "Roles"
+      chorus/agent:
+        one: "Agent"
+        other: "Agents"
+      chorus/workspace:
+        one: "Workspace"
+        other: "Workspaces"
+      chorus/project:
+        one: "Project"
+        other: "Projects"
+      chorus/artifact:
+        one: "Artifact"
+        other: "Artifacts"
+      chorus/issue:
+        one: "Issue"
+        other: "Issues"
+    attributes:
+      chorus/organization:
+        name: "Name"
+        slug: "Slug"
+        description: "Description"
+      chorus/strategy:
+        organization: "Organization"
+        name: "Name"
+        status: "Status"
+        description: "Description"
+      chorus/goal:
+        strategy: "Strategy"
+        name: "Name"
+        status: "Status"
+        description: "Description"
+      chorus/role:
+        organization: "Organization"
+        name: "Name"
+        description: "Description"
+      chorus/agent:
+        organization: "Organization"
+        role: "Role"
+        name: "Name"
+        kind: "Kind"
+      chorus/workspace:
+        organization: "Organization"
+        active_project: "Active project"
+        name: "Name"
+        description: "Description"
+      chorus/project:
+        goal: "Goal"
+        name: "Name"
+        slug: "Slug"
+        status: "Status"
+        description: "Description"
+      chorus/artifact:
+        workspace: "Workspace"
+        name: "Name"
+        kind: "Kind"
+        locator: "Locator"
+        description: "Description"
+      chorus/issue:
+        project: "Project"
+        agent: "Agent"
+        title: "Title"
+        status: "Status"
+        position: "Position"
+        description: "Description"

@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Pull in Chorus's semantic color tokens (the `@theme` block). This registers
+   the `bg-primary` / `text-text` / `border-border` / `bg-danger` utilities the
+   engine views use, along with the engine's NEUTRAL defaults. Five levels up
+   from this entry file reaches the engine root (see @source note below). */
+@import "../../../../../app/assets/stylesheets/chorus/tokens.css";
+
 /* Scan the dummy app's own views/helpers... */
 @source "../../../app/views/**/*";
 @source "../../../app/helpers/**/*.rb";
@@ -11,3 +17,29 @@
    i.e. five levels up. */
 @source "../../../../../app/views/**/*";
 @source "../../../../../app/helpers/**/*.rb";
+
+/* ───────────────────────────────────────────────────────────────────────────
+   HOST THEME OVERRIDE — this is the worked reference for lgat-admin.
+
+   The dummy app re-skins the ENTIRE Chorus UI to a teal + warm-slate palette
+   purely by redefining the same `--color-*` variables Chorus's tokens declare.
+   No Chorus view is touched. Because every utility resolves `var(--color-*)`
+   at runtime, and this un-layered `:root` block outranks Tailwind's
+   `@layer theme` defaults, these values cascade through every Chorus view.
+   Delete this block and the UI falls back to the engine's neutral grey.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+  --color-primary: oklch(0.48 0.085 192);          /* deep teal */
+  --color-primary-contrast: oklch(0.99 0.01 192);  /* near-white */
+
+  --color-surface: oklch(0.99 0.005 255);          /* warm slate, lightest */
+  --color-surface-muted: oklch(0.96 0.008 255);
+
+  --color-border: oklch(0.87 0.012 255);
+
+  --color-text: oklch(0.30 0.02 258);              /* warm slate, darkest */
+  --color-text-muted: oklch(0.51 0.02 258);
+
+  --color-danger: oklch(0.55 0.13 25);             /* muted red */
+  --color-danger-contrast: oklch(0.99 0 0);
+}

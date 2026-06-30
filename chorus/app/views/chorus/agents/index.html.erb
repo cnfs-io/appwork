@@ -1,0 +1,35 @@
+<% content_for :title, Chorus::Agent.model_name.human(count: 2) %>
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-semibold text-text"><%= Chorus::Agent.model_name.human(count: 2) %></h1>
+    <%= link_to t("chorus.actions.new_model", model: Chorus::Agent.model_name.human), new_agent_path, class: "inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-contrast hover:opacity-90" %>
+  </div>
+
+  <%= turbo_frame_tag "chorus_agents" do %>
+    <div class="overflow-hidden rounded-lg border border-border bg-surface">
+      <table class="min-w-full divide-y divide-border">
+        <thead class="bg-surface-muted">
+          <tr>
+        <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Agent.human_attribute_name(:name) %></th>
+        <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Agent.human_attribute_name(:kind) %></th>
+        <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Agent.human_attribute_name(:role) %></th>
+        <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Agent.human_attribute_name(:organization) %></th>
+            <th class="px-4 py-2"></th>
+          </tr>
+        </thead>
+        <tbody id="chorus_agents_rows">
+          <% if @agents.any? %>
+            <%= render @agents %>
+          <% else %>
+            <tr>
+              <td colspan="5" class="px-4 py-6 text-center text-sm text-text-muted">
+                <%= t("chorus.empty", model: Chorus::Agent.model_name.human(count: 2)) %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>
