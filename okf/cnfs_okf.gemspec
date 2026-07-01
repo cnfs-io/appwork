@@ -1,8 +1,8 @@
-require_relative "lib/okf/version"
+require_relative "lib/cnfs_okf/version"
 
 Gem::Specification.new do |spec|
-  spec.name        = "okf"
-  spec.version     = Okf::VERSION
+  spec.name        = "cnfs_okf"
+  spec.version     = CnfsOkf::VERSION
   spec.authors     = [ "Robert Roach" ]
   spec.email       = [ "rjayroach@gmail.com" ]
   spec.homepage    = "TODO"

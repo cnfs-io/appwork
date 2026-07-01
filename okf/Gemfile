@@ -3,6 +3,9 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in okf.gemspec.
 gemspec
 
+gem "cnfs_support", path: "../cnfs_support"
+gem "cnfs_dev", path: "../cnfs_dev"
+
 gem "puma"
 
 gem "sqlite3"

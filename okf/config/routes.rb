@@ -1,2 +1,2 @@
-Okf::Engine.routes.draw do
+CnfsOkf::Engine.routes.draw do
 end

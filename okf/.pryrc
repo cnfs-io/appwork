@@ -1,15 +1,10 @@
 # .pryrc
 
-if defined?(Rails)
+if false # defined?(Rails)
 
-  def custom_console_boot_method = puts("Hello, world!")
 
   def_model_shortcuts "b", Okf::Bundle
   def_model_shortcuts "c", Okf::Concept
-  # def_model_shortcuts "co", Okf::Consumption
-  # def_model_shortcuts "i", Okf::Index
-  # def_model_shortcuts "l", Okf::Log
-  # def_model_shortcuts "s", Okf::Schema
   if Rails.root.to_s.end_with?('spec/dummy')
     def_model_shortcuts "g", Goal
     def_model_shortcuts "i", Issue

@@ -1,4 +1,4 @@
-module Okf
+module CnfsOkf
   module ApplicationHelper
   end
 end
