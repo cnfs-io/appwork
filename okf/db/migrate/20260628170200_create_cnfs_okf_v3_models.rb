@@ -26,6 +26,8 @@ class CreateCnfsOkfV3Models < ActiveRecord::Migration[8.1]
 
       t.references :owner, polymorphic: true       # singular owner (not enforced yet)
       t.timestamps
+
+      t.index [ :bundle_id, :path ], unique: true
     end
   end
 end

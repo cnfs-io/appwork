@@ -1,5 +1,7 @@
 module CnfsOkf
   class Concept < ApplicationRecord
+    include PathValidatable
+
     self.inheritance_column = nil   # `type` is an OKF field, not Rails STI
 
     FRONTMATTER_COLUMNS = %w[type title description resource tags timestamp].freeze
@@ -9,9 +11,8 @@ module CnfsOkf
 
     serialize :custom_frontmatter, coder: YAML, type: Hash
 
+
     before_validation :stat_it, unless: ->(record) { record.path.nil? }
-    validates :path, presence: true
-    validate :path_must_exist, unless: ->(record) { record.path.nil? }
 
     def pathname
       bundle.pathname.join(path)
@@ -24,10 +25,6 @@ module CnfsOkf
       self.ino = file_stat.ino
       self.content_hash = Digest::MD5.hexdigest(raw_content)
       apply_frontmatter
-    end
-
-    def path_must_exist
-      errors.add(:path, "'#{pathname}' does not exist") unless pathname.exist?
     end
 
     # Raw bytes of the file.

@@ -18,7 +18,8 @@ module CnfsOkf
     def pathname
       return nil unless path
 
-      parent ? parent.pathname.join(path) : Pathname.new(path)
+      (@pathname_cache ||= {})[path] ||=
+        parent ? parent.pathname.join(path) : Pathname.new(path)
     end
   end
 end
