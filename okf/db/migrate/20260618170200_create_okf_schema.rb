@@ -1,4 +1,4 @@
-class CreateCnfsOkfV3Models < ActiveRecord::Migration[8.1]
+class CreateOkfSchema < ActiveRecord::Migration[8.1]
   def change
     create_table :cnfs_okf_bundles do |t|
       t.string     :path, null: false            # absolute path to directory on FS
