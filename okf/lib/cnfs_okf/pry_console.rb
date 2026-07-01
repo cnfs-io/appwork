@@ -16,7 +16,8 @@ module CnfsOkf
     # Always-available OKF model shortcuts (prefix => model name under CnfsOkf).
     SHORTCUTS = {
       "b" => "Bundle",
-      "c" => "Concept"
+      "c" => "Concept",
+      "v" => "ViewPort"
     }.freeze
 
     # Shortcuts present only in the dummy/host app (top-level models).

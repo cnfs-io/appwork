@@ -1,10 +1,10 @@
 class CreateCnfsOkfV3Models < ActiveRecord::Migration[8.1]
   def change
     create_table :cnfs_okf_bundles do |t|
-      t.string     :sti_type, null: false        # STI discriminator (RootBundle/Bundle)
-      t.references :bundle, foreign_key: { to_table: :cnfs_okf_bundles }  # parent; null for RootBundle
-      t.string     :path, null: false            # absolute (RootBundle) or relative-to-parent
-      t.references :owner, polymorphic: true      # singular owner (not enforced yet)
+      t.string     :path, null: false            # absolute path to directory on FS
+      t.integer    :ino                          # inode; null until first ident
+      t.integer    :dev                          # device id; used to detect cross-fs moves
+      t.references :owner, polymorphic: true
       t.timestamps
     end
 
@@ -28,6 +28,14 @@ class CreateCnfsOkfV3Models < ActiveRecord::Migration[8.1]
       t.timestamps
 
       t.index [ :bundle_id, :path ], unique: true
+    end
+
+    create_table :cnfs_okf_view_ports do |t|
+      t.references :bundle, null: false, foreign_key: { to_table: :cnfs_okf_bundles }
+      t.string     :path, null: false, default: ""  # bundle-relative dir path; "" = bundle root
+      t.integer    :ino
+      t.references :owner, polymorphic: true
+      t.timestamps
     end
   end
 end

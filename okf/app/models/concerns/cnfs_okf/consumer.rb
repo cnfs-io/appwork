@@ -4,6 +4,7 @@ module CnfsOkf
 
     class_methods do
       # owns_many_cnfs_okf :bundles
+      # owns_many_cnfs_okf :view_ports
       # owns_many_cnfs_okf :reference_docs, class_name: "CnfsOkf::Concept"
       def owns_many_cnfs_okf(name, class_name: nil)
         has_many name,
@@ -12,7 +13,7 @@ module CnfsOkf
       end
 
       # owns_one_cnfs_okf :concept
-      # owns_one_cnfs_okf :root_bundle, class_name: "CnfsOkf::RootBundle"
+      # owns_one_cnfs_okf :view_port
       def owns_one_cnfs_okf(name, class_name: nil)
         has_one name,
                 class_name: class_name || cnfs_okf_class_for(name),
