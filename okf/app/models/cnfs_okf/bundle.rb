@@ -29,14 +29,13 @@ module CnfsOkf
     end
 
     def create_concepts
-      # Emit a plain ActiveSupport::Notifications event — no OpenTelemetry
-      # dependency here. cnfs_telemetry (if installed in the host) subscribes to
-      # the "okf" prefix and turns this into a span; without it, this is a cheap
-      # no-op notification. The block's duration becomes the span duration; the
-      # payload keys become span attributes (okf.bundle.create.bundle_id, etc.).
-      ActiveSupport::Notifications.instrument(
-        "okf.bundle.create", bundle_id: id, path: path
-      ) do |payload|
+      # Standardized notification via CnfsSupport::Instrumentable. Composes the
+      # event name from this class: "cnfs_okf.bundle.create". No OpenTelemetry
+      # dependency here — cnfs_telemetry (if installed in the host) subscribes to
+      # the "cnfs_okf" prefix and turns this into a span whose tracer name matches
+      # this model's log tag. The block's duration becomes the span duration; the
+      # payload keys become span attributes.
+      instrument(:create, bundle_id: id, path: path) do |payload|
         created = concept_paths.map do |rel_path|
           concepts.find_or_create_by(path: rel_path.to_s)
         end

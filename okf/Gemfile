@@ -3,9 +3,6 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in okf.gemspec.
 gemspec
 
-gem "cnfs_support", path: "../cnfs_support"
-gem "cnfs_dev", path: "../cnfs_dev"
-
 gem "puma"
 
 gem "sqlite3"
@@ -28,3 +25,7 @@ group :development do
 end
 gem "amazing_print"
 gem "pry-rails"
+
+gem "cnfs_support", path: "../support"
+gem "cnfs_dev", path: "../dev"
+gem "cnfs_telemetry", path: "../telemetry"
