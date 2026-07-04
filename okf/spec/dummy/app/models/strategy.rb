@@ -1,10 +1,8 @@
 class Strategy < ApplicationRecord
-  include CnfsOkf::Consumer
-
   belongs_to :organization
   has_many :goals, dependent: :destroy
 
-  owns_one_cnfs_okf :concept
+  has_one_okf :concept
 
   # Delegate frontmatter access to the owned concept — BY HAND (no DSL yet).
   # Standard fields via delegate; a custom field written long-form so we can
