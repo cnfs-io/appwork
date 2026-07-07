@@ -31,10 +31,14 @@ module CnfsOkf
       _fm, body = split_frontmatter(pathname.read)
       new_content = build_file_content(body)
 
-      begin
+      # Standardized notification via CnfsSupport::Instrumentable, emitted as
+      # "cnfs_okf.concept.persist". Scoped to the disk write only — the DB save
+      # continuation (`yield`) stays outside the span, preserving the
+      # around_save contract. A write failure throws :abort to halt the save.
+      instrument(:persist, concept_id: id, path: path, bytes: new_content.bytesize) do
         pathname.write(new_content)
       rescue => e
-        Rails.logger.error("CnfsOkf::Concept#persist_to_disk failed writing '#{pathname}': #{e.message}")
+        logger.error { "CnfsOkf::Concept#persist_to_disk failed writing '#{pathname}': #{e.message}" }
         throw(:abort)
       end
 

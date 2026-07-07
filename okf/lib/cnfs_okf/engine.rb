@@ -13,11 +13,12 @@ module CnfsOkf
     end
     CnfsSupport.plugins << self
 
-    # Contribute OKF console shortcuts/commands when cnfs_dev is present.
+    # Load console shortcuts/commands when cnfs_dev is present.
     # Only loads in a console session (never web/job processes).
     console do
-      require "cnfs_okf/pry_console"
-      CnfsOkf::PryConsole.install!
+      CnfsDev.console do |c|
+        c.namespace(module_parent, "o")
+      end if defined?(CnfsDev)
     end
   end
 end

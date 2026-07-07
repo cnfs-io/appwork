@@ -10,12 +10,12 @@ module CnfsOkf
       dest = Pathname.new(new_path).expand_path
 
       if dest.exist?
-        Rails.logger.error("CnfsOkf::Bundle#mv failed: destination '#{dest}' already exists")
+        logger.error { "CnfsOkf::Bundle#mv failed: destination '#{dest}' already exists" }
         return false
       end
 
       unless dest.dirname.exist?
-        Rails.logger.error("CnfsOkf::Bundle#mv failed: parent directory '#{dest.dirname}' does not exist")
+        logger.error { "CnfsOkf::Bundle#mv failed: parent directory '#{dest.dirname}' does not exist" }
         return false
       end
 
@@ -23,7 +23,7 @@ module CnfsOkf
         pathname.rename(dest)
         update!(path: dest.to_s)
       rescue => e
-        Rails.logger.error("CnfsOkf::Bundle#mv failed moving '#{pathname}' to '#{dest}': #{e.message}")
+        logger.error { "CnfsOkf::Bundle#mv failed moving '#{pathname}' to '#{dest}': #{e.message}" }
         false
       end
     end
@@ -40,31 +40,49 @@ module CnfsOkf
     # moved on the same filesystem (all inodes match), meaning no concepts need
     # to change.
     def sync_concepts
-      current_paths     = concept_paths.map(&:to_s)  # relative paths of files on disk now
-      existing_concepts = concepts.to_a               # concept records currently in the DB
-      binding.pry
+      # Standardized notification via CnfsSupport::Instrumentable, emitted as
+      # "cnfs_okf.bundle.sync". The block's duration becomes the span duration;
+      # the payload keys become span attributes. Enriched mid-block with the
+      # reconciliation outcome counts.
+      instrument(:sync, bundle_id: id, path: path) do |payload|
+        current_paths     = concept_paths.map(&:to_s)  # relative paths of files on disk now
+        existing_concepts = concepts.to_a               # concept records currently in the DB
 
-      return if ino_match?(existing_concepts, current_paths)
-
-      existing_paths = existing_concepts.map(&:path)
-
-      # Destroy concepts whose files no longer exist at the new location.
-      existing_concepts.each do |concept|
-        next if current_paths.include?(concept.path)
-
-        if concept.owner.present?
-          # Deleting an owned concept could orphan the owning record — skip and warn.
-          Rails.logger.warn(
-            "CnfsOkf::Bundle#sync_concepts: skipping stale concept id=#{concept.id} " \
-            "path=#{concept.path.inspect} — owner #{concept.owner_type}##{concept.owner_id} is set"
-          )
-        else
-          concept.destroy
+        if ino_match?(existing_concepts, current_paths)
+          payload[:ino_match] = true
+          next
         end
-      end
 
-      # Create concepts for files that appeared in the new location.
-      (current_paths - existing_paths).each { |p| concepts.find_or_create_by(path: p) }
+        existing_paths = existing_concepts.map(&:path)
+        destroyed_count = 0
+        skipped_count   = 0
+
+        # Destroy concepts whose files no longer exist at the new location.
+        existing_concepts.each do |concept|
+          next if current_paths.include?(concept.path)
+
+          if concept.owner.present?
+            # Deleting an owned concept could orphan the owning record — skip and warn.
+            skipped_count += 1
+            logger.warn do
+              "CnfsOkf::Bundle#sync_concepts: skipping stale concept id=#{concept.id} " \
+              "path=#{concept.path.inspect} — owner #{concept.owner_type}##{concept.owner_id} is set"
+            end
+          else
+            concept.destroy
+            destroyed_count += 1
+          end
+        end
+
+        # Create concepts for files that appeared in the new location.
+        created = (current_paths - existing_paths).map { |p| concepts.find_or_create_by(path: p) }
+
+        payload[:created_count]   = created.size
+        payload[:destroyed_count] = destroyed_count
+        payload[:skipped_count]   = skipped_count
+        logger.info { "#{self.class}#sync_concepts created=#{created.size} destroyed=#{destroyed_count} skipped=#{skipped_count}" }
+        created
+      end
     end
 
     private
