@@ -40,5 +40,15 @@ module Dummy
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    # This dummy lives *inside* the engine, so Rails' automatic engine-migration
+    # append is skipped (its guard treats the nested app root as the engine root).
+    # Point the migration path at the engine's db/migrate directly, with absolute
+    # paths so it resolves the same regardless of the working directory rspec runs
+    # from. A real host app would instead run `bin/rails chatter:install:migrations`.
+    config.paths["db/migrate"] = [
+      Rails.root.join("db/migrate").to_s,
+      Chatter::Engine.root.join("db/migrate").to_s
+    ]
   end
 end

@@ -24,7 +24,10 @@
       <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <%= yield %>
+  <body class="bg-slate-50 text-slate-900">
+    <%= render "layouts/switcher" %>
+    <main class="max-w-4xl mx-auto p-4">
+      <%= yield %>
+    </main>
   </body>
 </html>
