@@ -57,7 +57,7 @@ module Chorus
     end
 
     def agent_params
-      params.require(:agent).permit(:organization_id, :role_id, :name, :kind)
+      params.require(:agent).permit(:role_id, :name, :kind)
     end
   end
 end

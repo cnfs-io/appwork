@@ -2,9 +2,9 @@ require "rails_helper"
 
 RSpec.describe "Chorus i18n", type: :request do
   it "renders UI text through t() keys (English by default)" do
-    get "/chorus/organizations"
+    get "/chorus/strategies"
     expect(response.body).to include(
-      I18n.t("chorus.actions.new_model", model: Chorus::Organization.model_name.human)
+      I18n.t("chorus.actions.new_model", model: Chorus::Strategy.model_name.human)
     )
   end
 
@@ -12,7 +12,7 @@ RSpec.describe "Chorus i18n", type: :request do
     expect(I18n.t("chorus.actions.new", locale: :en)).to eq("New")
   end
 
-  it "localizes the new spine models (strategies, goals, artifacts)" do
+  it "localizes the spine models (strategies, goals, artifacts)" do
     get "/chorus/strategies"
     expect(response.body).to include(
       I18n.t("chorus.actions.new_model", model: Chorus::Strategy.model_name.human)
@@ -29,7 +29,7 @@ RSpec.describe "Chorus i18n", type: :request do
     )
   end
 
-  it "switches the new models to Spanish via ?locale=es" do
+  it "switches to Spanish via ?locale=es" do
     get "/chorus/strategies?locale=es"
     expect(response.body).to include("Estrategias")
 
@@ -38,15 +38,6 @@ RSpec.describe "Chorus i18n", type: :request do
 
     get "/chorus/artifacts?locale=es"
     expect(response.body).to include("Artefactos")
-  end
-
-  it "switches to Spanish via ?locale=es (host-provided locale)" do
-    expect(I18n.available_locales).to include(:es)
-
-    get "/chorus/organizations?locale=es"
-
-    expect(response.body).to include("Nuevo")          # chorus.actions.new(_model)
-    expect(response.body).to include("Organizaciones") # localized model name
   end
 
   it "ships ONLY en.yml inside the engine (the host carries other locales)" do

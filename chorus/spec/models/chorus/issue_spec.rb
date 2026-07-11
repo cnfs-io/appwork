@@ -29,15 +29,14 @@ RSpec.describe Chorus::Issue, type: :model do
     end
   end
 
-  describe "traversal to organization" do
-    it "reaches the organization up the intent spine (project → goal → strategy)" do
-      org = create(:chorus_organization)
-      strategy = create(:chorus_strategy, organization: org)
+  describe "traversal up the intent spine" do
+    it "reaches the strategy through project → goal" do
+      strategy = create(:chorus_strategy)
       goal = create(:chorus_goal, strategy: strategy)
       project = create(:chorus_project, goal: goal)
       issue = create(:chorus_issue, project: project)
 
-      expect(issue.project.organization).to eq(org)
+      expect(issue.project.goal.strategy).to eq(strategy)
     end
   end
 end

@@ -11,11 +11,6 @@
   <% end %>
 
     <div>
-    <%= form.label :organization_id, Chorus::Role.human_attribute_name(:organization), class: "block text-sm font-medium text-text-muted" %>
-    <%= form.collection_select :organization_id, Chorus::Organization.order(:name), :id, :name, { include_blank: false }, class: "mt-1 block w-full rounded-md border border-border bg-surface px-3 py-2 text-text shadow-sm focus:border-primary focus:outline-none" %>
-  </div>
-
-    <div>
     <%= form.label :name, class: "block text-sm font-medium text-text-muted" %>
     <%= form.text_field :name, class: "mt-1 block w-full rounded-md border border-border bg-surface px-3 py-2 text-text shadow-sm focus:border-primary focus:outline-none" %>
   </div>

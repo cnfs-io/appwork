@@ -56,3 +56,60 @@ One fix worth flagging: I removed the config.paths["db/migrate"] << Chorus::Engi
 
 
 
+
+# Phase A2b — External accounts + GitHub repo provisioning
+
+PHASE-A2b-external-accounts.md executed. What shipped:
+
+**Schema (edited in place).** Added `chorus_external_accounts` to the consolidated
+`20260620120001_create_chorus_schema.rb` — STI `type`, `name`, serialized
+`settings` bag, unique `[type, name]` index — modeled on the `chorus_sources`
+block. Dummy `spec/dummy/db/schema.rb` updated to match; ran
+`RAILS_ENV=test bin/rails db:test:prepare`.
+
+**Config.** `Chorus::Credentials` (`lib/chorus/credentials.rb`) — a
+`CnfsSupport::Config` subclass (anyway_config): `config_name :chorus_credentials`,
+`env_prefix :chorus`, `attr_config :github_token`. Resolves the token from
+`credentials.chorus_credentials.github_token` → `ENV["CHORUS_GITHUB_TOKEN"]`;
+never a source literal, never serialized, never in a payload. Required from
+`lib/chorus.rb`, mirroring how `CnfsCognito` pulls in its `Config`.
+
+**Models.** `Chorus::ExternalAccount` STI base — `setting` macro and the pinned
+`instrument` helper copied verbatim from `Source`; no provisioning interface on
+the base (provisioning isn't universal across kinds). Subclasses: `GitHub`
+(keyless — `name` is the org login; `#create_repository` POSTs via stdlib
+`Net::HTTP` and returns the repo `ssh_url`), plus data-only `Gitlab`, `Aws`,
+`GoogleCloud` (targeting config in the bag only — no SDK-credential columns).
+
+**Zeitwerk.** `github.rb` autoloads to `ExternalAccount::GitHub`; registered a
+`GitHub` acronym via a `chorus.inflections` initializer in `engine.rb` so it
+resolves to the capitalized constant rather than `Github`.
+
+**Specs.** `spec/models/chorus/external_account_spec.rb` (16 examples): STI base,
+settings bag, STI resolution, `create_repository` happy/failure paths,
+instrumentation, and secret hygiene — network stubbed at the `Net::HTTP`
+boundary, coordination-only. The secret-hygiene assertion was validated as
+load-bearing by mutation (leaking the token into the payload turned both hygiene
+tests red, in success and failure paths) before being trusted.
+
+**Instrumentation prefix.** `CnfsSupport.component_tag` was refactored (in
+`gems/support`, uncommitted at the time) to prepend `cnfs_`, so events now emit
+under `cnfs_chorus.*`. Updated the instrumentation specs to match:
+`external_account_spec.rb` asserts `cnfs_chorus.external_account.create_repository`
+(and that the pinned subject never leaks `git_hub`), and `source_spec.rb`'s five
+instrumentation examples were moved from `chorus.source.*` to `cnfs_chorus.source.*`.
+
+**i18n.** `activerecord.models.chorus/external_account` + attribute labels
+(`name`, `group`, `account_id`, `region`, `default_role_arn`, `project_id`,
+`service_account_email`) added to `en.yml`. STI subclasses not enumerated
+(matching the `Source` precedent).
+
+**Pending next slice.** Onboarding CRUD — the MVC surface for a tenant to add
+GitHub org(s) and the other account kinds — is deliberately out of this slice and
+is the next follow-up.
+
+Green counts: source + external_account model specs 39, 0 failures; RuboCop clean.
+Note: 10 pre-existing failures remain in the suite (`Chorus::Agent#kind=`, from a
+separate in-flight Agent refactor — the agent factory sets `kind` but the
+table/model no longer carries it). Untouched here; not caused by this slice.
+No commit made.

@@ -1,6 +1,5 @@
 <tr id="<%= dom_id(role) %>" class="border-t border-border">
     <td class="px-4 py-2 text-sm text-text"><%= role.name %></td>
-    <td class="px-4 py-2 text-sm text-text"><%= role.organization&.name %></td>
     <td class="px-4 py-2 text-right text-sm whitespace-nowrap">
       <%= link_to t("chorus.actions.show"), role, class: "text-sm font-medium text-primary hover:underline" %>
       <%= link_to t("chorus.actions.edit"), edit_role_path(role), class: "text-sm font-medium text-primary hover:underline ml-3" %>

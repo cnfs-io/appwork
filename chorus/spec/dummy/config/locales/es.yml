@@ -22,9 +22,6 @@ es:
 
   activerecord:
     models:
-      chorus/organization:
-        one: "Organización"
-        other: "Organizaciones"
       chorus/strategy:
         one: "Estrategia"
         other: "Estrategias"
@@ -50,12 +47,7 @@ es:
         one: "Incidencia"
         other: "Incidencias"
     attributes:
-      chorus/organization:
-        name: "Nombre"
-        slug: "Slug"
-        description: "Descripción"
       chorus/strategy:
-        organization: "Organización"
         name: "Nombre"
         status: "Estado"
         description: "Descripción"
@@ -65,16 +57,13 @@ es:
         status: "Estado"
         description: "Descripción"
       chorus/role:
-        organization: "Organización"
         name: "Nombre"
         description: "Descripción"
       chorus/agent:
-        organization: "Organización"
         role: "Rol"
         name: "Nombre"
         kind: "Tipo"
       chorus/workspace:
-        organization: "Organización"
         active_project: "Proyecto activo"
         name: "Nombre"
         description: "Descripción"

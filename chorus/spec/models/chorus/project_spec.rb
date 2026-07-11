@@ -27,18 +27,11 @@ RSpec.describe Chorus::Project, type: :model do
       expect(reflection.options[:through]).to eq(:goal)
     end
 
-    it "reaches organization through goal" do
-      reflection = described_class.reflect_on_association(:organization)
-      expect(reflection.macro).to eq(:has_one)
-      expect(reflection.options[:through]).to eq(:goal)
-    end
-
-    it "returns the organization up the intent spine" do
-      org = create(:chorus_organization)
-      strategy = create(:chorus_strategy, organization: org)
+    it "returns the strategy up the intent spine" do
+      strategy = create(:chorus_strategy)
       goal = create(:chorus_goal, strategy: strategy)
       project = create(:chorus_project, goal: goal)
-      expect(project.organization).to eq(org)
+      expect(project.strategy).to eq(strategy)
     end
   end
 

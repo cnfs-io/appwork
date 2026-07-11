@@ -22,9 +22,6 @@ en:
 
   activerecord:
     models:
-      chorus/organization:
-        one: "Organization"
-        other: "Organizations"
       chorus/strategy:
         one: "Strategy"
         other: "Strategies"
@@ -49,13 +46,11 @@ en:
       chorus/issue:
         one: "Issue"
         other: "Issues"
+      chorus/external_account:
+        one: "External account"
+        other: "External accounts"
     attributes:
-      chorus/organization:
-        name: "Name"
-        slug: "Slug"
-        description: "Description"
       chorus/strategy:
-        organization: "Organization"
         name: "Name"
         status: "Status"
         description: "Description"
@@ -65,16 +60,13 @@ en:
         status: "Status"
         description: "Description"
       chorus/role:
-        organization: "Organization"
         name: "Name"
         description: "Description"
       chorus/agent:
-        organization: "Organization"
         role: "Role"
         name: "Name"
         kind: "Kind"
       chorus/workspace:
-        organization: "Organization"
         active_project: "Active project"
         name: "Name"
         description: "Description"
@@ -97,3 +89,11 @@ en:
         status: "Status"
         position: "Position"
         description: "Description"
+      chorus/external_account:
+        name: "Name"
+        group: "Group"
+        account_id: "Account ID"
+        region: "Region"
+        default_role_arn: "Default role ARN"
+        project_id: "Project ID"
+        service_account_email: "Service account email"

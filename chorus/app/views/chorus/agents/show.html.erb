@@ -22,10 +22,6 @@
       <dt class="text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Agent.human_attribute_name(:role) %></dt>
       <dd class="mt-1 text-sm text-text"><%= @agent.role&.name %></dd>
     </div>
-      <div class="px-4 py-3">
-      <dt class="text-xs font-semibold uppercase tracking-wide text-text-muted"><%= Chorus::Agent.human_attribute_name(:organization) %></dt>
-      <dd class="mt-1 text-sm text-text"><%= @agent.organization&.name %></dd>
-    </div>
   </dl>
 
   <%= button_to t("chorus.actions.destroy"), @agent, method: :delete,

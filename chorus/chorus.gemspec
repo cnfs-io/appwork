@@ -23,6 +23,10 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency "rails", ">= 8.1.3"
+  spec.add_dependency "cnfs_dev"
+  # AgentProfile stores an encrypted API key via has_encrypted. Master key
+  # wiring lives in the host app (see iam.gemspec note).
+  spec.add_dependency "lockbox", "~> 2.0"
   spec.add_dependency "turbo-rails"
   spec.add_dependency "stimulus-rails"
   spec.add_dependency "importmap-rails"

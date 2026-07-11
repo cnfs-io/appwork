@@ -1,8 +1,6 @@
 require "rails_helper"
 
 RSpec.describe "Chorus::Workspaces", type: :request do
-    let(:org) { create(:chorus_organization) }
-
   describe "GET /chorus/workspaces" do
     it "renders the index" do
       create(:chorus_workspace)
@@ -26,7 +24,7 @@ RSpec.describe "Chorus::Workspaces", type: :request do
   describe "POST /chorus/workspaces" do
     it "persists a new workspace" do
       expect {
-        post "/chorus/workspaces", params: { workspace: { name: "Delivery", organization_id: org.id } }
+        post "/chorus/workspaces", params: { workspace: { name: "Delivery" } }
       }.to change(Chorus::Workspace, :count).by(1)
       expect(response).to have_http_status(:redirect)
     end
@@ -38,7 +36,7 @@ RSpec.describe "Chorus::Workspaces", type: :request do
 
     it "can set the active project slot" do
       project = create(:chorus_project)
-      post "/chorus/workspaces", params: { workspace: { name: "Delivery", organization_id: org.id, active_project_id: project.id } }
+      post "/chorus/workspaces", params: { workspace: { name: "Delivery", active_project_id: project.id } }
       expect(Chorus::Workspace.last.active_project).to eq(project)
     end
   end

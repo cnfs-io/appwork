@@ -1,11 +1,8 @@
 module Chorus
   class Goal < ApplicationRecord
-    include Okf::ConsumesConcept
-
     belongs_to :strategy
-    has_one :organization, through: :strategy
-
     has_many :projects, dependent: :destroy
+    has_one_okf :concept
 
     validates :name, presence: true
   end

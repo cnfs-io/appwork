@@ -1,8 +1,6 @@
 require "rails_helper"
 
 RSpec.describe "Chorus::Strategies", type: :request do
-    let(:org) { create(:chorus_organization) }
-
   describe "GET /chorus/strategies" do
     it "renders the index" do
       create(:chorus_strategy)
@@ -26,7 +24,7 @@ RSpec.describe "Chorus::Strategies", type: :request do
   describe "POST /chorus/strategies" do
     it "persists a new strategy" do
       expect {
-        post "/chorus/strategies", params: { strategy: { name: "Grow North", status: "active", organization_id: org.id } }
+        post "/chorus/strategies", params: { strategy: { name: "Grow North", status: "active" } }
       }.to change(Chorus::Strategy, :count).by(1)
       expect(response).to have_http_status(:redirect)
     end

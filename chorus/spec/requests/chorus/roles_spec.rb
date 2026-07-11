@@ -1,8 +1,6 @@
 require "rails_helper"
 
 RSpec.describe "Chorus::Roles", type: :request do
-    let(:org) { create(:chorus_organization) }
-
   describe "GET /chorus/roles" do
     it "renders the index" do
       create(:chorus_role)
@@ -26,7 +24,7 @@ RSpec.describe "Chorus::Roles", type: :request do
   describe "POST /chorus/roles" do
     it "persists a new role" do
       expect {
-        post "/chorus/roles", params: { role: { name: "Coordinator", organization_id: org.id } }
+        post "/chorus/roles", params: { role: { name: "Coordinator" } }
       }.to change(Chorus::Role, :count).by(1)
       expect(response).to have_http_status(:redirect)
     end

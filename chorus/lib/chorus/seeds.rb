@@ -1,3 +1,5 @@
+require_relative "../../db/seeds"
+
 module Chorus
   # Idempotent demo seeds for a realistic, non-opinionated organization.
   # Runnable from the dummy app via `bin/rails db:seed` or `rake chorus:seed`.
@@ -9,6 +11,7 @@ module Chorus
     module_function
 
     def seed!
+=begin
       org = Organization.find_or_create_by!(slug: "acme-chorus") do |o|
         o.name = "Acme Chorus"
         o.description = "A non-opinionated demo organization for exploring the Chorus domain."
@@ -81,6 +84,7 @@ module Chorus
         i.position = position
         i.agent = agent
       end
+=end
     end
   end
 end

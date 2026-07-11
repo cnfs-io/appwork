@@ -57,7 +57,7 @@ module Chorus
     end
 
     def role_params
-      params.require(:role).permit(:organization_id, :name, :description)
+      params.require(:role).permit(:name, :description)
     end
   end
 end

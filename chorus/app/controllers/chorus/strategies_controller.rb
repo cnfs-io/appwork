@@ -57,7 +57,7 @@ module Chorus
     end
 
     def strategy_params
-      params.require(:strategy).permit(:organization_id, :name, :description, :status)
+      params.require(:strategy).permit(:name, :description, :status)
     end
   end
 end

@@ -57,7 +57,7 @@ module Chorus
     end
 
     def workspace_params
-      params.require(:workspace).permit(:organization_id, :active_project_id, :name, :description)
+      params.require(:workspace).permit(:active_project_id, :name, :description)
     end
   end
 end

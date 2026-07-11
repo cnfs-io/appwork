@@ -11,14 +11,9 @@ RSpec.describe Chorus::Strategy, type: :model do
       expect(strategy).not_to be_valid
       expect(strategy.errors[:name]).to be_present
     end
-
-    it "requires an organization" do
-      expect(build(:chorus_strategy, organization: nil)).not_to be_valid
-    end
   end
 
   describe "associations" do
-    it { expect(described_class.reflect_on_association(:organization).macro).to eq(:belongs_to) }
     it { expect(described_class.reflect_on_association(:goals).macro).to eq(:has_many) }
   end
 

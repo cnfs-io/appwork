@@ -1,28 +1,30 @@
 # Chorus
 
 Chorus is a mountable Rails engine that owns the **organizational structure** of a
-collaborative system: organizations, strategies, goals, roles, agents (human or
-AI participants), workspaces, projects, issues, and artifacts. It ships as a
-complete, self-standing domain — full CRUD, seeds, and specs — with no external
-content dependencies.
+collaborative system: strategies, goals, roles, agents (human or AI
+participants), workspaces, projects, issues, and artifacts. It ships as a
+complete domain — full CRUD, seeds, and specs. Narrative content is backed by OKF
+(`cnfs_okf`) concepts through a one-directional dependency: Chorus consumes OKF;
+OKF never knows Chorus.
+
+Chorus holds **no `Organization` model**: under `cnfs_tenanted` there is one
+database per account, and that database *is* one organization. Strategy, Role,
+Workspace, and Agent are therefore top-level roots, scoped by the database rather
+than by an owning column.
 
 ## Domain
 
 Ownership flows down an explicit **intent spine** from strategy to execution; a
-project reaches its organization through its goal and strategy, never through a
-workspace.
+project reaches its strategy through its goal, never through a workspace.
 
 ```
-Organization 1───* Strategy    (Strategy belongs_to org)
 Strategy     1───* Goal        (Goal belongs_to strategy)
 Goal         1───* Project     (Project belongs_to goal)
 Project      1───* Issue       (destroy)
-Organization 1───* Goal        (through: strategies)
-Organization 1───* Project     (through: goals)
+Strategy     1───* Project     (through: goals)
 
-Organization 1───* Role        (Role belongs_to org)
-Organization 1───* Agent       (Agent belongs_to org, optional role)
 Role         1───* Agent       (nullify on role delete)
+Agent        0──1  Role        (Agent belongs_to role, optional)
 Agent        1───* Issue       (assignee; nullify)
 ```
 
@@ -31,7 +33,6 @@ durable and serial: it outlives any single project and hosts exactly one *active
 project at a time, retaining nothing else about project history.
 
 ```
-Organization 1───* Workspace   (Workspace belongs_to org)
 Workspace    0──1  Project     (active_project_id; nullable, nullify)
 Workspace    1───* Artifact    (destroy)
 ```
@@ -63,7 +64,7 @@ mount Chorus::Engine => "/chorus"
 
 ```bash
 $ bin/rails db:migrate   # the engine's migrations are picked up automatically
-$ bin/rails chorus:seed  # optional: a realistic demo organization
+$ bin/rails chorus:seed  # optional: a realistic demo domain
 ```
 
 ## Theming — semantic color tokens (host re-skins, no view forks)

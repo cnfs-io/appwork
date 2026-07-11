@@ -9,7 +9,7 @@ gem "sqlite3"
 
 gem "propshaft"
 
-gem "okf", path: "../okf"
+gem "pry", require: true
 
 # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
 gem "rubocop-rails-omakase", require: false
@@ -24,6 +24,12 @@ end
 
 group :development do
   gem "ruby-lsp-rspec", require: false
+  gem "ruby-lsp-rails", require: false
 end
 gem "amazing_print"
 gem "pry-rails"
+
+gem "cnfs_support", path: "../support"
+gem "cnfs_dev", path: "../dev"
+gem "cnfs_telemetry", path: "../telemetry"
+gem "cnfs_okf", path: "../okf"

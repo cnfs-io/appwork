@@ -14,8 +14,8 @@ refusal is the whole point of the design, and it determines what Chorus can test
 ## Two claims; only one is Chorus's to make
 
 **Claim 1 — the harness is internally sound.** Models compose, associations hold,
-the intent spine resolves (an Issue reaches its Organization through
-Project → Goal → Strategy), a Workspace hosts a Project serially, an Agent can
+the intent spine resolves (an Issue reaches its Strategy through
+Project → Goal), a Workspace hosts a Project serially, an Agent can
 claim an Issue. This is structural integrity, fully testable inside Chorus
 against synthetic data, with no notion of what any real org does. **Chorus owns
 this.**
@@ -37,7 +37,7 @@ Chorus *can* make about itself:
 
 **Claim 1.5 — the harness supports a complete coordination lifecycle, end to end,
 against a synthetic domain.** Not "did it produce something useful," but "can the
-mechanics flow all the way through": an Organization with a Strategy spins up a
+mechanics flow all the way through": a Strategy spins up a
 Goal, the Goal a Project, the Project Issues; a Workspace takes the Project into
 its active slot with Artifacts attached; Agents claim Issues, move them through
 states, complete them; Issues resolve and the Workspace frees up.
@@ -53,8 +53,9 @@ hits it.
 
 - **In Chorus:** model specs (associations, validations, `dependent:` behavior),
   plus a lifecycle/workflow integration spec walking the full coordination cycle
-  against a synthetic org. When heartbeat/checkout land (PHASE-B), that spec
-  extends to cover claim/lease/release end to end. Never any efficacy assertion.
+  against a synthetic org. When heartbeat/checkout land (the heartbeat-and-checkout
+  plan, `doc/plans/003`), that spec extends to cover claim/lease/release end to
+  end. Never any efficacy assertion.
 - **In Factory / lgat-admin:** "given our real domain, does running this harness
   produce the outcomes we care about." Agents + skills pointed at real goals;
   the org actually functioning. These hosts own "done."
@@ -63,7 +64,8 @@ hits it.
 
 The lifecycle integration test does **not** need real content storage — a
 synthetic domain uses trivial stubbed/inline content. So Chorus can prove its
-harness sound (Claim 1.5) without the content seam existing. The seam and
-`chorus-storage` are driven by **Factory's** real content needs (Claim 2), not by
-Chorus's self-integrity. Chorus does not block on the seam to validate itself.
-(See `ARCHITECTURE-content-storage.md`.)
+harness sound (Claim 1.5) without the content seam existing. The seam and any
+downstream content store are driven by **Factory's** real content needs
+(Claim 2), not by Chorus's self-integrity — narrative content lives in OKF
+concepts (`has_one_okf`), and no content columns sit on Chorus's own domain
+tables. Chorus does not block on the seam to validate itself.

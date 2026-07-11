@@ -12,17 +12,12 @@ RSpec.describe Chorus::Workspace, type: :model do
       expect(workspace.errors[:name]).to be_present
     end
 
-    it "requires an organization" do
-      expect(build(:chorus_workspace, organization: nil)).not_to be_valid
-    end
-
     it "is valid without an active project (the slot is optional)" do
       expect(build(:chorus_workspace, active_project: nil)).to be_valid
     end
   end
 
   describe "associations" do
-    it { expect(described_class.reflect_on_association(:organization).macro).to eq(:belongs_to) }
     it { expect(described_class.reflect_on_association(:artifacts).macro).to eq(:has_many) }
 
     it "marks active_project as optional" do

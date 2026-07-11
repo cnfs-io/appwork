@@ -1,5 +1,4 @@
 Chorus::Engine.routes.draw do
-  resources :organizations
   resources :strategies
   resources :goals
   resources :roles
@@ -9,5 +8,5 @@ Chorus::Engine.routes.draw do
   resources :artifacts
   resources :issues
 
-  root to: "organizations#index"
+  root to: "strategies#index"
 end
