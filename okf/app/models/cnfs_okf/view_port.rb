@@ -18,7 +18,7 @@ module CnfsOkf
     end
 
     # def tree = concepts.map(&:parent).uniq
-    def tree = pathname.glob("*/**").map(&:parent).select(&:directory?).map { |p| p.relative_path_from(pathname)}.uniq
+    def tree = pathname.glob("*/**").map(&:parent).select(&:directory?).map { |p| p.relative_path_from(pathname) }.uniq
 
     def ls = concepts
 

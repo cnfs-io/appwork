@@ -1,5 +1,5 @@
 class Strategy < ApplicationRecord
-  belongs_to :organization
+  belongs_to :account
   has_many :goals, dependent: :destroy
 
   has_one_okf :concept

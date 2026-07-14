@@ -10,6 +10,17 @@ module CnfsOkf
 
     def raw_content = (@raw_content ||= pathname.read)
 
+    # Runs the block with disk-write suppressed. Used by CnfsOkf::Sync, which is
+    # assigning attributes that came FROM disk — writing them back would be a
+    # gratuitous no-op write that re-stamps content_hash and re-triggers the
+    # filesystem listener. Nothing else should use this.
+    def without_persist
+      @suppress_persist = true
+      yield
+    ensure
+      @suppress_persist = false
+    end
+
     def content
       _fm, body = split_frontmatter(raw_content)
       body
@@ -51,6 +62,7 @@ module CnfsOkf
     # Skipped on new records — frontmatter is read FROM the file on create, not written back.
     def frontmatter_changed?
       return false if new_record?
+      return false if @suppress_persist
 
       (changed & self.class::FRONTMATTER_COLUMNS).any? || custom_frontmatter_changed?
     end

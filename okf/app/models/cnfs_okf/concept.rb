@@ -22,6 +22,16 @@ module CnfsOkf
       apply_frontmatter
     end
 
+    # True when the file on disk no longer matches what the DB last recorded.
+    # Derived, not stored: under the :quarantine policy Sync declines to update a
+    # diverged owned concept, leaving content_hash stale — which is exactly what
+    # keeps the concept detectably diverged for a downstream review queue.
+    def diverged?
+      return false unless pathname.exist?
+
+      content_hash != Digest::MD5.hexdigest(pathname.read)
+    end
+
     private
 
     def apply_frontmatter

@@ -28,21 +28,11 @@ module CnfsOkf
       self.dev = s.dev
     end
 
+    # On a fresh bundle every file on disk is a create — exactly what Sync does.
+    # Routing through Sync means ONE code path builds concepts, forever, and its
+    # "cnfs_okf.sync.run" event covers the create the same as any reconcile.
     def create_concepts
-      # Standardized notification via CnfsSupport::Instrumentable. Composes the
-      # event name from this class: "cnfs_okf.bundle.create". No OpenTelemetry
-      # dependency here — cnfs_telemetry (if installed in the host) subscribes to
-      # the "cnfs_okf" prefix and turns this into a span whose tracer name matches
-      # this model's log tag. The block's duration becomes the span duration; the
-      # payload keys become span attributes.
-      instrument(:create, bundle_id: id, path: path) do |payload|
-        created = concept_paths.map do |rel_path|
-          concepts.find_or_create_by(path: rel_path.to_s)
-        end
-        payload[:concept_count] = created.size
-        logger.info { "#{self.class} created #{created.size} concepts" }
-        created
-      end
+      CnfsOkf::Sync.call(bundle: self)
     end
 
     def concept_paths

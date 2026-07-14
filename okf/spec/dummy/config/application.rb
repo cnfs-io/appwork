@@ -21,7 +21,6 @@ Bundler.require(*Rails.groups)
 module Dummy
   class Application < Rails::Application
     config.load_defaults Rails::VERSION::STRING.to_f
-    config.x.migrations_in_place = true
 
     # For compatibility with applications that use this config
     config.action_controller.include_all_helpers = false
