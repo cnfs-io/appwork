@@ -14,14 +14,27 @@ consistent, non-in-flux state before a line is written.
 
 ## What Chorus is
 
-A mountable Rails engine (`isolate_namespace Chorus`) that models human/AI
-participant coordination as a real-world org chart: a strategy derives goals,
-goals inspire projects, projects carry issues, and the work happens in
-workspaces where projects and issues meet agents and artifacts. Chorus holds
-**no `Organization` row of its own** — a Chorus database *is* one organization
-(see the organization boundary below). Chorus is a non-opinionated coordination
-framework — it limits its opinions so as not to rule out legitimate setups (e.g.
-a single project needing both a Rails repo and a Solana repo).
+A mountable Rails engine (`isolate_namespace Chorus`) that provides the
+**coordination substrate** for human/AI participant work — not an org-chart domain
+of its own. Chorus owns:
+
+- the **execution surface**: a durable, serial `Workspace` that occupies one
+  polymorphic *workable* at a time and holds `Artifact`s;
+- the **`Chorus::Workable`** occupiability contract a host domain model `include`s
+  to become occupiable by a Workspace;
+- **participants**: `Agent` and `AgentProfile`;
+- a **skill catalog** (`CatalogSkill`, `Curation`, `Taxonomy`,
+  `SkillCategorization`, `Skill`) mirroring the external agent-skills ecosystem;
+- **managed origins & third-party accounts**: `Source` and `ExternalAccount` (STI).
+
+**Chorus does not own the org-chart spine.** The intent spine
+(strategy → goal → project → issue) and `Role` were extracted to host gems: the
+org spine lives in a host like `micro_manager`; IAM provides `Role`. A host
+becomes occupiable by depending on Chorus and including `Chorus::Workable` (see
+the host-agnostic boundary below). Chorus holds **no `Organization` row of its
+own** — a Chorus database *is* one organization. Chorus stays non-opinionated — it
+limits its opinions so as not to rule out legitimate setups (e.g. a single unit of
+work needing both a Rails repo and a Solana repo).
 
 ## The boundary that defines Chorus
 
@@ -40,6 +53,23 @@ coupling at all). What survived the reversal is the *directionality*, not the
 absence of coupling: the sacred rule is now "Chorus→OKF allowed, OKF→Chorus
 forbidden," not "no coupling."
 
+### The host boundary: hosts depend on Chorus; Chorus knows no host
+
+Chorus is **host-agnostic**. A host domain gem (today `micro_manager`; tomorrow
+`gtd`, or a bare Concept-backed unit) is a **Chorus consumer**: it depends on
+Chorus and `include`s `Chorus::Workable` to make its domain models occupiable —
+exactly as it `include`s `CnfsOkf::Consumer` to become OKF-backed. The dependency
+runs strictly one way:
+
+- **Host → Chorus:** allowed, real, gemspec-declared. A host may reference
+  `Chorus::Workable`, `Chorus::Workspace`, `Chorus::Agent`.
+- **Chorus → any host:** FORBIDDEN. Chorus must never reference, name, or know a
+  host constant (`MicroManager`, `Gtd`, …). This is what the org-spine extraction
+  was *for* — so one Chorus can serve any host.
+
+(grep-enforceable: no host constant appears under `gems/chorus/app` or
+`gems/chorus/lib`.) This is the same shape as the OKF rule, one boundary over.
+
 ### The organization boundary: a database is an organization
 
 Chorus carries **no `Organization` model, table, or owning FK.** The
@@ -50,111 +80,124 @@ virtue of which database it is in, so an `Organization` row would only restate
 what the connection already guarantees — and would invite cross-org rows in a
 single table, which the tenancy model exists to prevent.
 
-The consequence for the schema: **Strategy, Role, Workspace, and Agent are
-top-level roots** — none of them `belongs_to :organization`, because there is no
-organization row to belong to. `Source` and `ExternalAccount` say the same in
-their own comments ("account-scoped by tenancy — one physical DB per Account").
-Do not reintroduce an `Organization` model or an org-owning FK; scope is the
-database, not a column.
+The consequence for the schema: **Workspace and Agent are top-level roots** — no
+`chorus_*` model `belongs_to :organization`, because there is no organization row
+to belong to. `Source` and `ExternalAccount` say the same in their own comments
+("account-scoped by tenancy — one physical DB per Account"). Do not reintroduce an
+`Organization` model or an org-owning FK; scope is the database, not a column.
 
 ### Corollary: no content columns on domain tables
 
-Domain models that carry narrative content (Strategy, Goal, Project, Issue) do
-**not** get a `body`/`content`/`markdown` column. Narrative content lives in OKF
-concepts, reached via `has_one_okf`. A `body` column would be a competing source
-of truth against the OKF concept — a two-master sync problem — so the binding
-rule is simply: **add no content columns.** A model that needs narrative content
-declares `has_one_okf` and lets the OKF concept own the text.
+A model that carries narrative content does **not** get a
+`body`/`content`/`markdown` column. Narrative content lives in OKF concepts,
+reached via `has_one_okf`. A `body` column would be a competing source of truth
+against the OKF concept — a two-master sync problem — so the binding rule is
+simply: **add no content columns.** A model that needs narrative content declares
+`has_one_okf` and lets the OKF concept own the text. (This is why the
+now-extracted spine models never carried a `body` column, and why host spine
+models don't either.)
 
-## Domain spine (the ERD)
+## The domain (current model map)
 
-The intent spine runs strategy → execution. `Strategy` is the root of the spine
-(there is no `Organization` above it — the database is the organization).
-Ownership flows down this chain; this is how a Project reaches its Strategy.
+Chorus owns the **execution surface** and **participants**, plus a skill catalog
+and managed-origin models. The **intent spine (strategy → goal → project → issue)
+is not here** — it lives in host gems; Chorus sees only a polymorphic *workable*.
 
-```
-Strategy                            (root of the intent spine; no owner FK)
-  has_many :goals
-  has_many :projects, through: :goals
-Goal            belongs_to :strategy
-  has_many :projects
-Project         belongs_to :goal
-  has_one  :strategy, through: :goal
-  has_many :issues
-Issue           belongs_to :project
-```
-
-Execution surface, separate from the intent spine (a top-level root — no owner
-FK; scoped by the database):
+Execution surface (top-level roots — no owner FK; scoped by the database):
 
 ```
-Workspace       durable; hosts ONE active project at a time (serial)
-  has_many :artifacts
-  belongs_to :active_project (Chorus::Project, optional) — the active slot
-  active project tracked by nullable active_project_id
-  (project HISTORY beyond the current active project is deferred — see the
-  heartbeat-and-checkout plan in `doc/plans`)
+Workspace       durable; occupies ONE workable at a time (serial)
+  belongs_to :workable, polymorphic: true, optional: true  — the occupied slot
+  has_many   :artifacts (destroy)
 Artifact        belongs_to :workspace
-  first-class; string `kind` (e.g. "git_repo", "okf_bundle"); a locator
+  first-class; string `kind` (e.g. "git_repo", "okf_bundle"); a `locator`
   Chorus blesses no artifact type — new kinds are added by convention
-Project         optionally currently-in a Workspace (the active slot), via
-  Project#hosting_workspace (inverse of Workspace#active_project)
 ```
 
-Participants (top-level roots — no owner FK; scoped by the database):
+`Chorus::Workable` (`app/models/concerns/chorus/workable.rb`) — the occupiability
+contract a host model includes:
 
 ```
-Role            has_many :agents (nullify)
-Agent           belongs_to :role (optional); has_many :issues (nullify)
-                has_one_okf :concept
-AgentProfile    describes an agent runtime via an attached OKF Concept
+Workable (concern)  include-d by a host domain model
+  provides has_one :workspace, as: :workable (the polymorphic inverse)
+  OCCUPIABILITY ONLY — carries no status, no host-domain semantics
+```
+
+Participants (top-level roots):
+
+```
+Agent           has_one_okf :concept  (no direct workspace FK; no Role — IAM owns Role)
+AgentProfile    has_many :agents (nullify); has_one_okf :concept
                 (Agent↔AgentProfile FK direction is being settled — see plan 001)
+```
+
+Skill catalog (mirror of the external agent-skills ecosystem):
+
+```
+CatalogSkill        has_many :taxonomies, through: :skill_categorizations
+Taxonomy            self-referential parent/children; slug-keyed
+SkillCategorization belongs_to :catalog_skill, :taxonomy
+Curation            chorus.org's reputation verdict (YAML-serializable)
+Skill               minimal; has_one_okf :concept
+```
+
+Managed origins & third-party accounts (STI, `settings`-bag config):
+
+```
+Source            STI base (Source::Git live) — a managed origin synced to disk
+ExternalAccount   STI base (ExternalAccount::GitHub acts) — a tenant's 3rd-party accounts
 ```
 
 ## Load-bearing invariants
 
-- **Project reaches its Strategy through Goal, not through Workspace.** Strategy
-  is the top of the ownership chain (the database is the organization above it);
-  Workspace is an execution context, not a node in the ownership hierarchy. Do
-  not give Workspace a structural claim on the Strategy→Project chain.
-- **Workspace is durable and serial.** It outlives any single project and hosts
-  one active project at a time via the nullable `active_project_id`. This is
-  deliberate: serial reuse prevents concurrent projects from clobbering each
-  other's artifacts. Do not model Workspace↔Project as a live many-to-many.
-  Past-occupant *history* is deliberately not modelled yet (only the current
-  active project is) — it is parked in the heartbeat-and-checkout plan
-  (`doc/plans/003-heartbeat-and-checkout.md`).
+- **Chorus provides the execution surface, not the intent spine.** The domain
+  spine (strategy → goal → project → issue) lives in host gems; Chorus owns
+  `Workspace` and the `Chorus::Workable` contract. Do not reintroduce spine models
+  into Chorus.
+- **Workspace is durable and serial.** It outlives any single occupant and
+  occupies one polymorphic `workable` at a time via the nullable
+  `workable_id`/`workable_type`. This is deliberate: serial reuse prevents
+  concurrent occupants from clobbering each other's artifacts. Do not model
+  Workspace↔workable as a live many-to-many. Past-occupant *history* is
+  deliberately not modelled yet — parked in `doc/plans/003-heartbeat-and-checkout.md`.
+- **`Chorus::Workable` is occupiability only.** It provides the polymorphic
+  `has_one :workspace, as: :workable` inverse and nothing else — no status, no
+  host-domain semantics. Status is a separate host-side facility
+  (`okf_frontmatter :status` over the OKF concept), not Workable's job.
 - **Artifact is first-class and type-open.** A workspace holds many artifacts
   (multiple repos, OKF bundles) of different `kind`s. Chorus must never special-
   case a particular stack (Rails, Solana, etc.); that is what keeps Chorus
   unopinionated.
-- **Agent attachment is mediated by the Issue claim.** An Agent does *not* carry
-  a `workspace_id`. An Agent meets a Workspace only by claiming an Issue, whose
-  Project occupies that Workspace's active slot. Keep agent↔workspace out of the
-  schema as a direct FK.
-- **Strategy → Goal is one-to-many; keep the intent spine a tree.** A Goal
-  belongs to exactly one Strategy.
-- **`status`/`kind` are strings; `slug` only where it earns its place** (carried
-  on Project per the established convention).
+- **Agent carries no direct workspace FK.** An Agent does *not* carry a
+  `workspace_id`; agent↔workspace is discovered host-side (via the host's
+  occupancy of a workspace), never a direct FK in Chorus. Agent also carries no
+  `Role` — IAM owns Role.
+- **`kind` is a free string; `slug` only where it earns its place** (`chorus_taxonomies`,
+  the normalized category key). The host owns `status` vocabularies — Chorus
+  carries no `status` column.
 
 ## Layout
 
-- `app/models/chorus/` — the domain spine (`strategy`, `goal`, `project`,
-  `issue`, `workspace`, `artifact`, `agent`, `role`), plus `agent_profile` and
-  `skill` (both OKF-backed via `has_one_okf :concept`; minimal today). There is
-  no `organization` model — the database is the organization.
+- `app/models/chorus/` — the execution surface (`workspace`, `artifact`),
+  participants (`agent`, `agent_profile`), the skill catalog (`catalog_skill`,
+  `curation`, `taxonomy`, `skill_categorization`, `skill`), and origins/accounts
+  (`source`, `external_account`). There is no `organization` model, and no spine
+  models (`strategy`/`goal`/`project`/`issue`/`role`) — those live in host gems.
+- `app/models/concerns/chorus/workable.rb` — the occupiability contract a host
+  domain model includes (the polymorphic `has_one :workspace, as: :workable`).
 - `app/models/chorus/source.rb` (+ `source/`) — an STI base (`Source::Git` live)
   whose per-kind config lives in a serialized `settings` bag (the `setting`
   macro), not per-kind columns.
 - `app/models/chorus/external_account.rb` (+ `external_account/`) — an STI base
   (`ExternalAccount::GitHub` acts; `Gitlab`/`Aws`/`GoogleCloud` are data-only)
   for a tenant's third-party service accounts; same `settings`-bag pattern.
-- `app/controllers/chorus/`, `app/views/chorus/` — namespaced MVC.
+- `app/controllers/chorus/` — `application_controller` only; the scaffold V+C
+  layer was retired (plan 004), to be rebuilt on Phlex/CnfsUi later.
 - `db/migrate/` — edited in place pre-v1 (see `../CLAUDE.md`).
 - `config/locales/en.yml` — `chorus.*` namespace. `es.yml` lives in
   `spec/dummy/config/locales/`.
-- `spec/` — RSpec + FactoryBot; model specs under `spec/models/chorus/`,
-  request specs under `spec/requests/chorus/`.
+- `spec/` — RSpec + FactoryBot; model specs under `spec/models/chorus/` (request
+  specs were retired with the scaffold V+C layer; they return when Phlex UI does).
 
 ## Tests
 
@@ -164,7 +207,8 @@ the in-place migration edit, so schema and fixtures stay together.
 
 **Test only what a harness can honestly claim.** Chorus tests that the harness is
 internally sound and that a full coordination lifecycle composes end-to-end
-against a *synthetic* domain. Chorus never tests *efficacy* ("did this produce
+against a *synthetic* domain (the end-to-end lifecycle spec is not yet written —
+see the flux entries below). Chorus never tests *efficacy* ("did this produce
 useful work") — efficacy requires a domain, and the domain belongs to downstream
 hosts (Factory, lgat-admin), which own the definition of "done". Keep synthetic
 test domains deliberately meaningless so specs cannot smuggle domain opinions
@@ -187,32 +231,46 @@ how a later session would know the claim stopped being true.
   about Chorus.
   referent: `grep -ri chorus` under the `okf` gem returns nothing; no doc
   describes OKF depending on, importing, or naming Chorus.
+- [critical] Chorus is host-agnostic: hosts depend on Chorus and `include`
+  `Chorus::Workable` to become occupiable, but Chorus never references, names, or
+  knows a host constant (`MicroManager`, `Gtd`, …). The dependency runs
+  host → Chorus only; Chorus → host is forbidden.
+  referent: grep for host constants (`MicroManager`, `Gtd`, …) under
+  `gems/chorus/app` and `gems/chorus/lib` returns nothing; no `chorus_*` model or
+  doc names a host gem.
 - [critical] Chorus carries no `Organization` (or tenant/account) model of its
   own; the per-tenant database (`cnfs_tenanted`, one physical DB per
-  `Iam::Account`) is the organizational boundary. Strategy, Role, Workspace, and
-  Agent are top-level roots scoped by the database, not by an owning FK.
+  `Iam::Account`) is the organizational boundary. Workspace and Agent are
+  top-level roots scoped by the database, not by an owning FK.
   referent: no `Organization`/`Tenant`/`Account` model or `chorus_organizations`
   table exists in the engine; no `chorus_*` model declares `belongs_to
   :organization`; docs describe no in-schema org root.
 
 ### identity / structure
 
-- [high] The intent spine is a tree rooted at Strategy: Strategy → Goal →
-  Project → Issue. Ownership flows down it; a Project reaches its Strategy through
-  its Goal, never through a Workspace.
-  referent: `Project belongs_to :goal` (not `:workspace`); docs/models give
-  Workspace no structural claim on the Strategy→Project chain; each Goal belongs
-  to exactly one Strategy.
-- [high] Workspace is durable and serial: it hosts exactly one active Project at
-  a time via the nullable `active_project_id`; there is no live Workspace↔Project
-  many-to-many, and past-occupant history is not modelled.
-  referent: `chorus_workspaces` has a single nullable `active_project_id`; docs
-  describe no occupancy-history table (it is deferred to `doc/plans/003`).
-- [high] Agent attaches to a Workspace only through the Issue claim — never a
-  direct agent↔workspace FK. An Agent's workspace is found via
-  `issue.project.hosting_workspace`.
-  referent: `chorus_agents` carries no `workspace_id`; docs never describe a
-  direct `Agent#workspace` association.
+- [high] Chorus provides the execution surface, not the intent spine. The domain
+  spine (strategy → goal → project → issue) lives in host gems; Chorus owns the
+  `Workspace` execution surface and the `Chorus::Workable` occupiability contract.
+  referent: no `Strategy`/`Goal`/`Project`/`Issue` model exists in the engine; the
+  `Chorus::Workable` concern exists; `Chorus::Workspace belongs_to :workable,
+  polymorphic: true`.
+- [high] Workspace is durable and serial: it occupies exactly one polymorphic
+  workable at a time via the nullable `workable_id`/`workable_type`; there is no
+  live Workspace↔workable many-to-many, and past-occupant history is not modelled.
+  referent: `chorus_workspaces` carries polymorphic `workable_id`/`workable_type`
+  (and no `active_project_id`); docs describe no occupancy-history table (deferred
+  to `doc/plans/003`).
+- [high] `Chorus::Workable` is occupiability only: it provides the polymorphic
+  `has_one :workspace, as: :workable` inverse and carries no status or host-domain
+  semantics. Status is a separate host-side facility (`okf_frontmatter :status`
+  over the OKF concept), not Workable's.
+  referent: `Chorus::Workable` declares only the `workspace` inverse (no `status`
+  accessor); docs describe status as a host-side `okf_frontmatter` facility.
+- [high] Agent carries no direct workspace FK, and no `Role`. Agent↔workspace is
+  discovered host-side, never a direct FK in Chorus; `Role` left Chorus (IAM owns
+  it).
+  referent: `chorus_agents` carries no `workspace_id` and no `role_id`; no
+  `Chorus::Agent#workspace` or `belongs_to :role` exists; no `Chorus::Role` model.
 - [high] Artifact is first-class and type-open: a Workspace holds many Artifacts
   whose `kind` is a free string; Chorus special-cases no artifact kind or stack.
   referent: `Artifact#kind` is a plain string column; no doc or model branches on
@@ -221,41 +279,48 @@ how a later session would know the claim stopped being true.
 ### hygiene
 
 - [medium] Narrative content lives in OKF concepts via `has_one_okf`, never in a
-  `body`/`content`/`markdown` column on a domain table (Strategy, Goal, Project,
-  Issue).
-  referent: no `chorus_*` domain table carries a body/content/markdown column; a
-  model needing narrative content declares `has_one_okf`.
-- [medium] `status`/`kind` are free strings (the host owns those vocabularies);
-  `slug` appears only where it earns its place (`chorus_projects`).
-  referent: schema uses string `status`/`kind` with no inclusion validation;
-  `slug` exists only on `chorus_projects`.
+  `body`/`content`/`markdown` column on a `chorus_*` table.
+  referent: no `chorus_*` table carries a body/content/markdown column; a model
+  needing narrative content declares `has_one_okf`.
+- [medium] `kind` is a free string (the host owns those vocabularies); `slug`
+  appears only where it earns its place (`chorus_taxonomies`); Chorus carries no
+  `status` column (status is a host-side concept-frontmatter concern).
+  referent: schema uses string `kind` with no inclusion validation; `slug` exists
+  only on `chorus_taxonomies`; no `chorus_*` table has a `status` column.
 
 ### coherence of docs ↔ plans
 
 - [medium] `doc/plans` holds unimplemented work only; shipped/superseded plans are
   retired to `chorus/.trash` (the space-root trash), not kept in the queue.
   referent: every file in `doc/plans` corresponds to work not yet green in the
-  suite; no `PHASE-*.md` remains at the gem root.
-- [medium] No doc or plan references a deleted file or superseded naming
+  suite; no shipped plan (e.g. 004/005/006) remains in the queue; no `PHASE-*.md`
+  at the gem root.
+- [medium] No live doc references a deleted file or superseded naming
   (`ARCHITECTURE-content-storage.md`, `PHASE-A*`/`PHASE-B`, "respine",
   "nine-model spine").
-  referent: grep of docs + `doc/plans` for those names returns nothing.
+  referent: grep of `CLAUDE.md`, `README.md`, `ARCHITECTURE-*.md`, and `doc/plans`
+  for those names returns nothing (the append-only `progress.md` history is exempt
+  — it records past state by design).
 
 ### features in flux (provisional — not scored)
 
 - **Model-layer stabilization** is an open arc. `AgentProfile` is committed to a
   single non-STI model whose runtime behavior is described by an attached OKF
-  Concept (Rails STI is the documented, unbuilt fallback), but three things are
-  unsettled: the Agent↔AgentProfile FK direction (today `AgentProfile has_many
-  :agents` with no inverse `agent_profile_id` on `chorus_agents`), the
-  commented-out `belongs_to :role` on `AgentProfile` and `Skill`, and the
-  remaining pending Agent request specs. Claims about `AgentProfile`'s final
-  shape and the Agent↔profile relationship are PROVISIONAL.
+  Concept (Rails STI is the documented, unbuilt fallback), but two things are
+  unsettled: the Agent↔AgentProfile FK direction (plan 004 added an
+  `agent_profile_id` column to `chorus_agents`, but `Chorus::Agent` declares no
+  `belongs_to :agent_profile` yet — only `AgentProfile has_many :agents`), and the
+  commented-out `belongs_to :role` on `AgentProfile` and `Skill` (now stale
+  placeholders — `Role` has left Chorus, so these must be resolved or removed).
+  Claims about `AgentProfile`'s final shape and the Agent↔profile relationship are
+  PROVISIONAL.
   tracking: `doc/plans/001-model-layer-stabilization.md`
 - **Lifecycle integration and heartbeat/checkout** are open arcs. The end-to-end
-  coordination lifecycle spec (`spec/integration/`) is not yet written, and Issue
-  claim/lease/heartbeat columns do not exist — `Issue → Agent` is still a soft
-  optional `belongs_to`. Claims about atomic claim/lease/heartbeat semantics are
-  PROVISIONAL until these land.
+  coordination lifecycle spec is not yet written, and claim/lease/heartbeat
+  semantics do not exist. NOTE: plans 002 and 003 predate the org extraction and
+  are premised on the now-departed `Chorus::Issue` — they need re-scoping to the
+  post-extraction world (host-side Ticket lifecycle, or a Workable-level
+  lifecycle) before execution; that re-scope is an open operator decision. Claims
+  about atomic claim/lease/heartbeat semantics are PROVISIONAL until these land.
   tracking: `doc/plans/002-lifecycle-integration.md`,
   `doc/plans/003-heartbeat-and-checkout.md`

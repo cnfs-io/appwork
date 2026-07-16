@@ -11,29 +11,19 @@ RSpec.describe Chorus::Agent, type: :model do
       expect(agent).not_to be_valid
       expect(agent.errors[:name]).to be_present
     end
-
-    it "is valid without a role (role is optional)" do
-      expect(build(:chorus_agent, role: nil)).to be_valid
-    end
   end
 
   describe "associations" do
-    it { expect(described_class.reflect_on_association(:issues).macro).to eq(:has_many) }
-
-    it "marks role as optional" do
-      expect(described_class.reflect_on_association(:role).options[:optional]).to be(true)
+    # Agent is role-blind and ticket-blind after plan 004: Role left Chorus
+    # (IAM provides it) and the ticket backlink lives only on the org side.
+    # Holding either here would make Chorus name a departed constant.
+    it "does not couple to role" do
+      expect(described_class.reflect_on_association(:role)).to be_nil
     end
-  end
 
-  describe "dependent nullify" do
-    xit "nullifies its issues' agent when destroyed" do
-      agent = create(:chorus_agent)
-      issue = create(:chorus_issue, agent: agent)
-
-      agent.destroy
-
-      expect(issue.reload.agent_id).to be_nil
-      expect(Chorus::Issue.exists?(issue.id)).to be(true)
+    it "does not enumerate issues/tickets from the Chorus side" do
+      expect(described_class.reflect_on_association(:issues)).to be_nil
+      expect(described_class.reflect_on_association(:tickets)).to be_nil
     end
   end
 end

@@ -1,7 +1,9 @@
 module Chorus
   class Workspace < ApplicationRecord
-    belongs_to :active_project, class_name: "Chorus::Project",
-      optional: true, inverse_of: :hosting_workspace
+    # A workspace occupies at most one workable at a time (a polymorphic target).
+    # Chorus asserts nothing about what a workable IS yet; that is plan 005. Bare
+    # seam here: column + association only.
+    belongs_to :workable, polymorphic: true, optional: true
 
     has_many :artifacts, dependent: :destroy
 

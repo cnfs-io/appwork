@@ -22,67 +22,25 @@ es:
 
   activerecord:
     models:
-      chorus/strategy:
-        one: "Estrategia"
-        other: "Estrategias"
-      chorus/goal:
-        one: "Objetivo"
-        other: "Objetivos"
-      chorus/role:
-        one: "Rol"
-        other: "Roles"
       chorus/agent:
         one: "Agente"
         other: "Agentes"
       chorus/workspace:
         one: "Espacio de trabajo"
         other: "Espacios de trabajo"
-      chorus/project:
-        one: "Proyecto"
-        other: "Proyectos"
       chorus/artifact:
         one: "Artefacto"
         other: "Artefactos"
-      chorus/issue:
-        one: "Incidencia"
-        other: "Incidencias"
     attributes:
-      chorus/strategy:
-        name: "Nombre"
-        status: "Estado"
-        description: "Descripción"
-      chorus/goal:
-        strategy: "Estrategia"
-        name: "Nombre"
-        status: "Estado"
-        description: "Descripción"
-      chorus/role:
-        name: "Nombre"
-        description: "Descripción"
       chorus/agent:
-        role: "Rol"
         name: "Nombre"
         kind: "Tipo"
       chorus/workspace:
-        active_project: "Proyecto activo"
         name: "Nombre"
-        description: "Descripción"
-      chorus/project:
-        goal: "Objetivo"
-        name: "Nombre"
-        slug: "Slug"
-        status: "Estado"
         description: "Descripción"
       chorus/artifact:
         workspace: "Espacio de trabajo"
         name: "Nombre"
         kind: "Tipo"
         locator: "Localizador"
-        description: "Descripción"
-      chorus/issue:
-        project: "Proyecto"
-        agent: "Agente"
-        title: "Título"
-        status: "Estado"
-        position: "Posición"
         description: "Descripción"

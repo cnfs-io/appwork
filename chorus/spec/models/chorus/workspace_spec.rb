@@ -12,29 +12,27 @@ RSpec.describe Chorus::Workspace, type: :model do
       expect(workspace.errors[:name]).to be_present
     end
 
-    it "is valid without an active project (the slot is optional)" do
-      expect(build(:chorus_workspace, active_project: nil)).to be_valid
+    it "is valid without a workable (the slot is optional)" do
+      expect(build(:chorus_workspace, workable: nil)).to be_valid
     end
   end
 
   describe "associations" do
     it { expect(described_class.reflect_on_association(:artifacts).macro).to eq(:has_many) }
 
-    it "marks active_project as optional" do
-      expect(described_class.reflect_on_association(:active_project).options[:optional]).to be(true)
+    it "occupies a polymorphic workable" do
+      reflection = described_class.reflect_on_association(:workable)
+      expect(reflection.macro).to eq(:belongs_to)
+      expect(reflection.options[:polymorphic]).to be(true)
     end
 
-    it "does not couple to projects except through the active slot" do
+    it "marks workable as optional" do
+      expect(described_class.reflect_on_association(:workable).options[:optional]).to be(true)
+    end
+
+    it "makes no structural claim on the Strategy → Project chain (org models left Chorus)" do
+      expect(described_class.reflect_on_association(:active_project)).to be_nil
       expect(described_class.reflect_on_association(:projects)).to be_nil
-    end
-  end
-
-  describe "the active project slot" do
-    it "hosts at most one active project at a time" do
-      workspace = create(:chorus_workspace)
-      project = create(:chorus_project)
-      workspace.update!(active_project: project)
-      expect(workspace.reload.active_project).to eq(project)
     end
   end
 
@@ -46,15 +44,6 @@ RSpec.describe Chorus::Workspace, type: :model do
       workspace.destroy
 
       expect(Chorus::Artifact.exists?(artifact.id)).to be(false)
-    end
-
-    it "does not destroy its active project when destroyed" do
-      project = create(:chorus_project)
-      workspace = create(:chorus_workspace, active_project: project)
-
-      workspace.destroy
-
-      expect(Chorus::Project.exists?(project.id)).to be(true)
     end
   end
 end

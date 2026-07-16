@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_20_120001) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_16_120001) do
   create_table "chorus_agent_profiles", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -18,13 +18,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_20_120001) do
   end
 
   create_table "chorus_agents", force: :cascade do |t|
-    t.integer "agent_id"
+    t.integer "agent_profile_id"
     t.datetime "created_at", null: false
     t.string "name", null: false
-    t.integer "role_id"
     t.datetime "updated_at", null: false
-    t.index ["agent_id"], name: "index_chorus_agents_on_agent_id"
-    t.index ["role_id"], name: "index_chorus_agents_on_role_id"
+    t.index ["agent_profile_id"], name: "index_chorus_agents_on_agent_profile_id"
   end
 
   create_table "chorus_artifacts", force: :cascade do |t|
@@ -38,6 +36,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_20_120001) do
     t.index ["workspace_id"], name: "index_chorus_artifacts_on_workspace_id"
   end
 
+  create_table "chorus_catalog_skills", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.integer "install_count"
+    t.json "repo_topics"
+    t.string "resource", null: false
+    t.string "skill_name"
+    t.datetime "synced_at"
+    t.datetime "updated_at", null: false
+    t.index ["resource", "skill_name"], name: "index_chorus_catalog_skills_on_resource_and_skill_name", unique: true
+  end
+
+  create_table "chorus_curations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "reputation"
+    t.string "resource", null: false
+    t.string "skill_name"
+    t.datetime "updated_at", null: false
+    t.index ["resource", "skill_name"], name: "index_chorus_curations_on_resource_and_skill_name", unique: true
+  end
+
   create_table "chorus_external_accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -47,45 +66,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_20_120001) do
     t.index ["type", "name"], name: "index_chorus_external_accounts_on_type_and_name", unique: true
   end
 
-  create_table "chorus_goals", force: :cascade do |t|
+  create_table "chorus_skill_categorizations", force: :cascade do |t|
+    t.integer "catalog_skill_id", null: false
     t.datetime "created_at", null: false
-    t.text "description"
-    t.string "name", null: false
-    t.string "status"
-    t.integer "strategy_id", null: false
+    t.integer "taxonomy_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["strategy_id"], name: "index_chorus_goals_on_strategy_id"
-  end
-
-  create_table "chorus_issues", force: :cascade do |t|
-    t.integer "agent_id"
-    t.datetime "created_at", null: false
-    t.text "description"
-    t.integer "position"
-    t.integer "project_id", null: false
-    t.string "status"
-    t.string "title", null: false
-    t.datetime "updated_at", null: false
-    t.index ["agent_id"], name: "index_chorus_issues_on_agent_id"
-    t.index ["project_id"], name: "index_chorus_issues_on_project_id"
-  end
-
-  create_table "chorus_projects", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.text "description"
-    t.integer "goal_id", null: false
-    t.string "name", null: false
-    t.string "slug"
-    t.string "status"
-    t.datetime "updated_at", null: false
-    t.index ["goal_id"], name: "index_chorus_projects_on_goal_id"
-  end
-
-  create_table "chorus_roles", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.text "description"
-    t.string "name", null: false
-    t.datetime "updated_at", null: false
+    t.index ["catalog_skill_id", "taxonomy_id"], name: "idx_on_catalog_skill_id_taxonomy_id_7270b7b472", unique: true
+    t.index ["catalog_skill_id"], name: "index_chorus_skill_categorizations_on_catalog_skill_id"
+    t.index ["taxonomy_id"], name: "index_chorus_skill_categorizations_on_taxonomy_id"
   end
 
   create_table "chorus_skills", force: :cascade do |t|
@@ -107,21 +95,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_20_120001) do
     t.index ["type"], name: "index_chorus_sources_on_type"
   end
 
-  create_table "chorus_strategies", force: :cascade do |t|
+  create_table "chorus_taxonomies", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.text "description"
     t.string "name", null: false
-    t.string "status"
+    t.integer "parent_id"
+    t.string "slug", null: false
     t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_chorus_taxonomies_on_parent_id"
+    t.index ["slug"], name: "index_chorus_taxonomies_on_slug", unique: true
   end
 
   create_table "chorus_workspaces", force: :cascade do |t|
-    t.integer "active_project_id"
     t.datetime "created_at", null: false
     t.text "description"
     t.string "name", null: false
     t.datetime "updated_at", null: false
-    t.index ["active_project_id"], name: "index_chorus_workspaces_on_active_project_id"
+    t.integer "workable_id"
+    t.string "workable_type"
+    t.index ["workable_type", "workable_id"], name: "index_chorus_workspaces_on_workable"
   end
 
   create_table "cnfs_okf_bundles", force: :cascade do |t|
@@ -168,14 +159,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_20_120001) do
     t.index ["owner_type", "owner_id"], name: "index_cnfs_okf_view_ports_on_owner"
   end
 
-  add_foreign_key "chorus_agents", "agent_profiles", column: "agent_id"
-  add_foreign_key "chorus_agents", "chorus_roles", column: "role_id"
+  create_table "workable_dummies", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.datetime "updated_at", null: false
+  end
+
+  add_foreign_key "chorus_agents", "chorus_agent_profiles", column: "agent_profile_id"
   add_foreign_key "chorus_artifacts", "chorus_workspaces", column: "workspace_id"
-  add_foreign_key "chorus_goals", "chorus_strategies", column: "strategy_id"
-  add_foreign_key "chorus_issues", "chorus_agents", column: "agent_id"
-  add_foreign_key "chorus_issues", "chorus_projects", column: "project_id"
-  add_foreign_key "chorus_projects", "chorus_goals", column: "goal_id"
-  add_foreign_key "chorus_workspaces", "chorus_projects", column: "active_project_id"
+  add_foreign_key "chorus_skill_categorizations", "chorus_catalog_skills", column: "catalog_skill_id"
+  add_foreign_key "chorus_skill_categorizations", "chorus_taxonomies", column: "taxonomy_id"
+  add_foreign_key "chorus_taxonomies", "chorus_taxonomies", column: "parent_id"
   add_foreign_key "cnfs_okf_concepts", "cnfs_okf_bundles", column: "bundle_id"
   add_foreign_key "cnfs_okf_view_ports", "cnfs_okf_bundles", column: "bundle_id"
 end

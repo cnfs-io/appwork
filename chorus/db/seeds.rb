@@ -1,5 +1,6 @@
+# chorus/seeds.rb
 
-
+# TODO: This should be an onboarding of a bundle; not burried in the seeds
 def create_from_bundle(bun)
   # bundle = CnfsOkf::Bundle.find_or_create_by(path: "~/spikes/chorus/org")
   bundle = CnfsOkf::Bundle.find_or_create_by(path: bun.pathname.to_s)
@@ -19,7 +20,7 @@ src_path = Rails.root
 # NOTE
 # - should probably look at how npx skills does it and maybe adopt their mechanism for installing skills
 
-skills_repos = [ { name: :pocock, src: 'https://github.com/mattpocock/skills.git' } ]
+skills_repos = [] # [ { name: :pocock, src: 'https://github.com/mattpocock/skills.git' } ]
 
 # TODO Broken Bridge
 # since OKF is a brand new standard most documents will not contain compliant frontmatter
