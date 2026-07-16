@@ -14,9 +14,17 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
+    # AgentProfile is an STI base (plan 007 took the fallback plan 001 parked):
+    # per-runtime subclasses (ClaudeCode, OpenCode) carry the invocation behavior
+    # a Concept cannot express (different binary/argv/parsing). `type` is the
+    # Rails STI discriminator — distinct from CnfsOkf::Concept#type (an OKF
+    # frontmatter field), which the two never conflate.
     create_table :chorus_agent_profiles do |t|
+      t.string :type                      # STI discriminator (Chorus::AgentProfile::ClaudeCode, ...)
       t.string :name, null: false
       t.timestamps
+
+      t.index :type
     end
 
     create_table :chorus_agents do |t|
@@ -126,6 +134,52 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
       t.timestamps
 
       t.index [ :catalog_skill_id, :taxonomy_id ], unique: true
+    end
+
+    # --- 007 agent invocation seam -------------------------------------------
+    # Role: a CAPABILITY LOADOUT (not the org-position Role that left in 004 — that
+    # was org structure and lives in micro_manager/IAM). A Role bundles skills (by
+    # stable name, catalog-naive) + OKF knowledge windows for equipping an agent to
+    # execute. Its OWN definition doc is `has_one_okf :concept`; its domain windows
+    # are `has_many_okf :view_ports` — both polymorphic (`as: :owner` on the OKF
+    # tables), so no FK columns here. Catalog-naive and org-naive.
+    create_table :chorus_roles do |t|
+      t.string :name, null: false
+      t.text   :description
+      t.timestamps
+    end
+
+    # SkillRequirement: a role's durable, catalog-naive requirement — a skill named
+    # by STABLE identity (name/slug), NOT an FK into the clobber-refreshed catalog.
+    # A Chorus::SkillResolver maps these names -> concrete catalog rows/git sources
+    # at equip time (§4); pinning a durable Role to the volatile catalog would let a
+    # refresh break Role definitions.
+    create_table :chorus_skill_requirements do |t|
+      t.references :role, null: false, foreign_key: { to_table: :chorus_roles }
+      t.string     :name, null: false   # stable skill identity ("web-design-guidelines")
+      t.string     :slug                 # optional normalized key
+      t.timestamps
+
+      t.index [ :role_id, :name ], unique: true
+    end
+
+    # Result: the durable outcome of an invocation (AR-backed, persisted on EVERY
+    # run — live or dry). Interface is modeled on ActiveModel::Errors (keyed
+    # messages that merge), but the backing is this table so an evaluator can later
+    # append to the SAME record and score the SAME artifact (§5). `success` is the
+    # recorded outcome; `agents_live`/`skills_live` mark which switches were in
+    # effect (§8); `recorded_argv` is the claude/npx argv that ran (or WOULD have
+    # run, in dry mode), so a dry run is fully inspectable; `messages` is the keyed
+    # bag (category -> [msg]).
+    create_table :chorus_results do |t|
+      t.references :artifact,  null: true, foreign_key: { to_table: :chorus_artifacts }
+      t.references :workspace, null: true, foreign_key: { to_table: :chorus_workspaces }
+      t.boolean :success                  # recorded outcome (nil = fall back to empty?)
+      t.boolean :agents_live              # execution-mode marker: was the agent exec live?
+      t.boolean :skills_live              # execution-mode marker: was the npx install live?
+      t.json    :recorded_argv, default: [] # [{ "phase" => "equip"|"invoke", "argv" => [...] }, ...]
+      t.json    :messages,      default: {} # ActiveModel::Errors-shaped bag: { category => [msg] }
+      t.timestamps
     end
   end
 end

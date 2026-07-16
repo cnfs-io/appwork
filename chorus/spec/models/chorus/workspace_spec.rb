@@ -1,8 +1,51 @@
 require "rails_helper"
+require "tmpdir"
 
 RSpec.describe Chorus::Workspace, type: :model do
   it "has a valid factory" do
     expect(build(:chorus_workspace)).to be_valid
+  end
+
+  # # 009 the Workspace IS a directory on disk — the run's cwd, the skills home, and
+  # where output lands. Materialized on demand under a host-configured root, keyed
+  # by id (deterministic), and never deleted.
+  describe "#pathname / #materialize (the execution directory)" do
+    let(:root) { Dir.mktmpdir("chorus-ws-spec") }
+    before { allow(Chorus::Config).to receive(:workspace_root).and_return(root) }
+    after  { FileUtils.remove_entry(root) if File.exist?(root) }
+
+    let(:workspace) { create(:chorus_workspace) }
+
+    it "derives a deterministic path under the configured root, keyed by id" do
+      expect(workspace.directory).to eq(Pathname.new(root).join(workspace.id.to_s))
+    end
+
+    it "is stable across calls (same path every time)" do
+      expect(workspace.pathname).to eq(workspace.pathname)
+    end
+
+    it "materializes the directory on demand" do
+      expect(workspace.pathname).to be_directory
+    end
+
+    it "is idempotent and never deletes existing contents" do
+      marker = workspace.pathname.join("keep.txt")
+      marker.write("hello")
+
+      workspace.materialize   # second call must not clobber
+
+      expect(marker).to exist
+      expect(marker.read).to eq("hello")
+    end
+
+    it "expands ~ in the configured root" do
+      allow(Chorus::Config).to receive(:workspace_root).and_return("~/.chorus/ws-spec")
+      expect(workspace.directory.to_s).to start_with(File.expand_path("~/.chorus/ws-spec"))
+    end
+
+    it "raises for an unpersisted workspace (a programmer error, not operational)" do
+      expect { build(:chorus_workspace).directory }.to raise_error(/must be persisted/)
+    end
   end
 
   describe "validations" do

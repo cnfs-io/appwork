@@ -1,90 +1,53 @@
-require_relative "../../db/seeds"
-
 module Chorus
-  # Idempotent demo seeds for a realistic, non-opinionated organization.
-  # Runnable from the dummy app via `bin/rails db:seed` or `rake chorus:seed`.
+  # Idempotent seed for the 007 console scenario: a "frontend-builder" agent
+  # equipped to build a Phlex table component (§7). Runnable from a host app via
+  # `bin/rails db:seed` or `rake chorus:seed`. Creates RECORDS ONLY — it never
+  # shells out (no npx install, no agent run); invocation is a console/manual act.
   #
-  # The graph follows the intent spine — organization → strategy → goal →
-  # project → issue — with a separate execution surface of durable, serial
-  # workspaces that each host one active project and carry artifacts.
+  # Host-agnostic: the bare workable a Workspace occupies is a HOST model, so the
+  # host passes it in (`seed!(workable: ...)`) — Chorus names no host constant.
+  #
+  # The Role's skill requirements are REAL skills.sh names (both from
+  # vercel-labs/agent-skills), so an authed live run genuinely installs them. They
+  # are framework-agnostic markup/design skills — applicable to a Phlex component
+  # because Phlex emits HTML. (The two evaluator roles that will later score this
+  # Artifact from divergent perspectives are deferred to the goal-4 plan.)
   module Seeds
     module_function
 
-    def seed!
-=begin
-      org = Organization.find_or_create_by!(slug: "acme-chorus") do |o|
-        o.name = "Acme Chorus"
-        o.description = "A non-opinionated demo organization for exploring the Chorus domain."
+    # Real skills.sh name from vercel-labs/agent-skills — resolvable/installable to
+    # `-a claude-code`. `web-design-guidelines` audits rendered markup (semantic
+    # HTML, ARIA, keyboard nav, contrast) — framework-agnostic, so it applies to a
+    # Phlex component (Phlex emits HTML). NOT vercel-react-best-practices: that
+    # scores React perf and would judge Ruby against React rules (§7).
+    #
+    # NOTE: `frontend-design` is NOT in vercel-labs/agent-skills — it lives in
+    # `anthropics/skills`. The stubbed SkillResolver resolves every requirement
+    # against vercel-labs/agent-skills, so a multi-repo requirement can't be
+    # expressed until the resolver learns per-name repo resolution (the deferred
+    # curation-policy work). Single skill for now keeps the resolver stub honest.
+    SEED_SKILLS = %w[web-design-guidelines].freeze
+
+    def seed!(workable: nil)
+      profile = AgentProfile::ClaudeCode.find_or_create_by!(name: "Claude Code")
+
+      agent = Agent.find_or_create_by!(name: "Frontend Builder") { |a| a.agent_profile = profile }
+      agent.update!(agent_profile: profile) if agent.agent_profile.nil?
+
+      role = Role.find_or_create_by!(name: "frontend-builder") do |r|
+        r.description = "Equips an agent to build UI components: markup, a11y, and " \
+                        "front-end design skills."
       end
+      SEED_SKILLS.each { |name| role.skill_requirements.find_or_create_by!(name: name) }
 
-      coordinator = org.roles.find_or_create_by!(name: "Coordinator") { |r| r.description = "Plans and sequences work." }
-      maker       = org.roles.find_or_create_by!(name: "Maker")       { |r| r.description = "Does the building." }
-      reviewer    = org.roles.find_or_create_by!(name: "Reviewer")    { |r| r.description = "Checks and approves." }
-
-      ada    = org.agents.find_or_create_by!(name: "Ada")    { |a| a.kind = "human"; a.role = coordinator }
-      turing = org.agents.find_or_create_by!(name: "Turing") { |a| a.kind = "human"; a.role = reviewer }
-      echo   = org.agents.find_or_create_by!(name: "Echo")   { |a| a.kind = "ai";    a.role = maker }
-      nova   = org.agents.find_or_create_by!(name: "Nova")   { |a| a.kind = "ai" } # deliberately unassigned
-
-      # Intent spine: one active strategy, goals derived from it, projects under goals.
-      strategy = org.strategies.find_or_create_by!(name: "Become the default coordination layer") do |s|
-        s.status = "active"
-        s.description = "Win adoption by staying unopinionated and easy to host."
+      workspace = Workspace.find_or_create_by!(name: "Frontend") do |w|
+        w.description = "Home for the frontend-builder agent's runs and artifacts."
       end
+      # Occupy a bare workable if the host provided one (Workspace occupies at most
+      # one at a time; only set it when currently free).
+      workspace.update!(workable: workable) if workable && workspace.workable.nil?
 
-      delivery_goal = strategy.goals.find_or_create_by!(name: "Ship the flagship") do |g|
-        g.status = "active"
-        g.description = "Get the first product build into users' hands."
-      end
-      reliability_goal = strategy.goals.find_or_create_by!(name: "Keep the lights on") do |g|
-        g.status = "active"
-        g.description = "Operational reliability and security."
-      end
-
-      phoenix = delivery_goal.projects.find_or_create_by!(name: "Phoenix")    { |p| p.slug = "phoenix"; p.status = "active";   p.description = "The flagship build." }
-      atlas   = delivery_goal.projects.find_or_create_by!(name: "Atlas")      { |p| p.slug = "atlas";   p.status = "planning"; p.description = "Next quarter's bets." }
-      beacon  = reliability_goal.projects.find_or_create_by!(name: "Beacon")  { |p| p.slug = "beacon";  p.status = "on_hold";  p.description = "Reliability and security." }
-
-      # Execution surface: durable workspaces, each hosting one active project.
-      delivery = org.workspaces.find_or_create_by!(name: "Delivery") do |w|
-        w.description = "Shipping product work."
-        w.active_project = phoenix
-      end
-      operations = org.workspaces.find_or_create_by!(name: "Operations") do |w|
-        w.description = "Keeping the lights on."
-        w.active_project = beacon
-      end
-
-      seed_artifact(delivery,   "phoenix-app",   kind: "git_repo",   locator: "https://example.com/acme/phoenix.git")
-      seed_artifact(delivery,   "design-bundle", kind: "okf_bundle", locator: "okf://acme/phoenix/design")
-      seed_artifact(operations, "runbooks",      kind: "git_repo",   locator: "https://example.com/acme/runbooks.git")
-
-      seed_issue(phoenix, "Set up CI",            status: "open",        position: 1, agent: echo)
-      seed_issue(phoenix, "Write API spec",       status: "in_progress", position: 2, agent: ada)
-      seed_issue(phoenix, "Review auth flow",     status: "blocked",     position: 3, agent: turing)
-      seed_issue(atlas,   "Draft roadmap",        status: "open",        position: 1, agent: ada)
-      seed_issue(atlas,   "Competitive analysis", status: "done",        position: 2, agent: nil)
-      seed_issue(beacon,  "Rotate credentials",   status: "open",        position: 1, agent: nova)
-      seed_issue(beacon,  "Audit logging",        status: "in_progress", position: 2, agent: echo)
-      seed_issue(beacon,  "Incident runbook",     status: "open",        position: 3, agent: nil)
-
-      org
-    end
-
-    def seed_artifact(workspace, name, kind:, locator:)
-      workspace.artifacts.find_or_create_by!(name: name) do |a|
-        a.kind = kind
-        a.locator = locator
-      end
-    end
-
-    def seed_issue(project, title, status:, position:, agent:)
-      project.issues.find_or_create_by!(title: title) do |i|
-        i.status = status
-        i.position = position
-        i.agent = agent
-      end
-=end
+      { profile: profile, agent: agent, role: role, workspace: workspace }
     end
   end
 end
