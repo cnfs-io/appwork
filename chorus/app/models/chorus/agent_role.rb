@@ -1,15 +1,19 @@
 module Chorus
-  # A CAPABILITY LOADOUT — the equipment an agent takes on to execute a job, NOT an
-  # org-chart position. (The org-position Role deleted in 004 was reporting
-  # lines/ownership; it correctly left for micro_manager/IAM.) A role has skills and
-  # a charter, and nothing else yet — the earlier "skills + view_ports + corpus
-  # window" framing (plan 007) was speculative and is scaled back (plan 010 §2).
-  # Named AgentRole, not Role: a host app may have IAM::Role in scope and the
-  # ambiguity is worse than the stutter in `agent.agent_role`.
+  # An ORG ROLE — the HR-shaped job a participant holds ("project manager", "swe"),
+  # with a charter and skills. When 004 evicted the org-position Role it was on the
+  # grounds that IAM owned Role; IAM's Role has since narrowed to authorization
+  # (AAA) only, so the HR-shaped role had no home and belongs here (plan 010 §1). It
+  # is what `Agent belongs_to`. Named AgentRole, not Role: a host app may have
+  # IAM::Role in scope and the ambiguity is worse than the stutter in
+  # `agent.agent_role`.
   #
-  #   - has_one_okf :concept — the role's OWN self-definition (its charter; what a
-  #     "project manager" IS), the corpus that will feed a system prompt.
-  #   - has_many :skills, through :role_skills — the skills this role equips.
+  #   - has_one_okf :concept — the role's charter (what a "project manager" IS), the
+  #     corpus that will feed a system prompt.
+  #   - has_many :skills, through :role_skills — the skills this role carries.
+  #
+  # A role has a charter and skills, and nothing else yet: the earlier "capability
+  # loadout" framing (skills + view_ports + corpus window, plan 007) was speculative
+  # and is scaled back (plan 010 §2).
   class AgentRole < ApplicationRecord
     has_one_okf :concept          # the role's own definition doc (its charter)
     has_many :role_skills, dependent: :destroy

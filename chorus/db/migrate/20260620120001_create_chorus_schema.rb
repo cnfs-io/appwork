@@ -161,13 +161,14 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     end
 
     # --- 007 agent invocation seam -------------------------------------------
-    # AgentRole: a CAPABILITY LOADOUT (not the org-position Role that left in 004 —
-    # that was org structure and lives in micro_manager/IAM). An AgentRole bundles
-    # skills (by stable name, catalog-naive) + OKF knowledge windows for equipping an
-    # agent to execute. Its OWN definition doc is `has_one_okf :concept`; its domain
-    # windows are `has_many_okf :view_ports` — both polymorphic (`as: :owner` on the
-    # OKF tables), so no FK columns here. Catalog-naive and org-naive. (Named
-    # AgentRole, not Role: a host may have IAM::Role in scope.)
+    # AgentRole: an ORG ROLE — the HR-shaped job a participant holds ("project
+    # manager", "swe"), with a charter and skills. The org-position Role left in 004
+    # because IAM owned Role; IAM's Role has since narrowed to authorization only, so
+    # the HR role belongs here (plan 010 §1). Its charter is `has_one_okf :concept`
+    # (polymorphic, `as: :owner`, so no FK column here); its skills attach through
+    # the chorus_role_skills join. Scaled back in 010 §2 from the speculative
+    # "capability loadout" (skills + view_ports + corpus window). (Named AgentRole,
+    # not Role: a host may have IAM::Role in scope.)
     create_table :chorus_agent_roles do |t|
       t.string :name, null: false
       t.text   :description

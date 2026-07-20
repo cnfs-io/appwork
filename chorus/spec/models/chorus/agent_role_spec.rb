@@ -1,8 +1,9 @@
 require "rails_helper"
 
-# Chorus::AgentRole — a CAPABILITY LOADOUT scaled back (plan 010 §2) to a charter
-# (has_one_okf :concept) plus skills through the RoleSkill join. Distinct from the
-# departed org-position Role (004).
+# Chorus::AgentRole — an ORG ROLE (the HR-shaped job a participant holds) with a
+# charter (has_one_okf :concept) and skills through the RoleSkill join. The HR role
+# that had no home once IAM's Role narrowed to authorization (plan 010 §1); scaled
+# back in §2 from the speculative "capability loadout + view_ports" framing.
 RSpec.describe Chorus::AgentRole, type: :model do
   it "has a valid factory" do
     expect(build(:chorus_agent_role)).to be_valid
