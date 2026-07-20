@@ -56,6 +56,18 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
+    # Plan (plan 010 §5): an OKF-backed markdown document an agent writes into its
+    # workspace's doc/ bundle. The row claims OWNERSHIP of the synced Concept
+    # (has_one_okf :concept); narrative content lives in the Concept, never a column
+    # here. `name` is the plan's human label; the agent × workspace it belongs to
+    # are real FKs (the Planner that populates this is a later step).
+    create_table :chorus_plans do |t|
+      t.references :workspace, null: false, foreign_key: { to_table: :chorus_workspaces }
+      t.references :agent,     null: false, foreign_key: { to_table: :chorus_agents }
+      t.string     :name,      null: false
+      t.timestamps
+    end
+
     # Source: a managed origin (git repo, S3 prefix, NFS mount) cloned/synced to
     # a path on disk. STI on `type`; shared/queryable fields are real columns,
     # per-kind config lives in the serialized `settings` bag. Account-scoped by

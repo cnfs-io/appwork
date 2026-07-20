@@ -75,6 +75,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_120001) do
     t.index ["type", "name"], name: "index_chorus_external_accounts_on_type_and_name", unique: true
   end
 
+  create_table "chorus_plans", force: :cascade do |t|
+    t.integer "agent_id", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.integer "workspace_id", null: false
+    t.index ["agent_id"], name: "index_chorus_plans_on_agent_id"
+    t.index ["workspace_id"], name: "index_chorus_plans_on_workspace_id"
+  end
+
   create_table "chorus_results", force: :cascade do |t|
     t.boolean "agents_live"
     t.integer "artifact_id"
@@ -210,6 +220,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_120001) do
 
   add_foreign_key "chorus_agents", "chorus_agent_adapters", column: "agent_adapter_id"
   add_foreign_key "chorus_artifacts", "chorus_workspaces", column: "workspace_id"
+  add_foreign_key "chorus_plans", "chorus_agents", column: "agent_id"
+  add_foreign_key "chorus_plans", "chorus_workspaces", column: "workspace_id"
   add_foreign_key "chorus_results", "chorus_artifacts", column: "artifact_id"
   add_foreign_key "chorus_results", "chorus_workspaces", column: "workspace_id"
   add_foreign_key "chorus_role_skills", "chorus_agent_roles", column: "agent_role_id"
