@@ -1,7 +1,8 @@
 require "rails_helper"
 
-# Chorus::AgentRole — a CAPABILITY LOADOUT (skills-by-name + OKF concept + view_ports),
-# catalog-naive and org-naive. Distinct from the departed org-position Role (004).
+# Chorus::AgentRole — a CAPABILITY LOADOUT scaled back (plan 010 §2) to a charter
+# (has_one_okf :concept) plus skills through the RoleSkill join. Distinct from the
+# departed org-position Role (004).
 RSpec.describe Chorus::AgentRole, type: :model do
   it "has a valid factory" do
     expect(build(:chorus_agent_role)).to be_valid
@@ -15,35 +16,47 @@ RSpec.describe Chorus::AgentRole, type: :model do
     end
   end
 
-  describe "the two OKF bindings (self-definition + domain windows)" do
-    it "has_one_okf :concept — the role's own charter" do
+  describe "the charter (its own OKF self-definition)" do
+    it "has_one_okf :concept" do
       reflection = described_class.reflect_on_association(:concept)
       expect(reflection.macro).to eq(:has_one)
       expect(reflection.options[:as]).to eq(:owner)
       expect(reflection.klass).to eq(CnfsOkf::Concept)
     end
 
-    it "has_many_okf :view_ports — the role's domain-knowledge windows" do
-      reflection = described_class.reflect_on_association(:view_ports)
-      expect(reflection.macro).to eq(:has_many)
-      expect(reflection.options[:as]).to eq(:owner)
-      expect(reflection.klass).to eq(CnfsOkf::ViewPort)
+    # Scaled back in 010 §2: view_ports was speculative structure with no consumer.
+    it "no longer carries view_ports" do
+      expect(described_class.reflect_on_association(:view_ports)).to be_nil
     end
   end
 
-  describe "skills by stable name (NOT a catalog FK)" do
-    it "has_many :skill_requirements" do
-      expect(described_class.reflect_on_association(:skill_requirements).macro).to eq(:has_many)
+  describe "skills through the RoleSkill join (§3)" do
+    it "has_many :skills, through: :role_skills" do
+      reflection = described_class.reflect_on_association(:skills)
+      expect(reflection.macro).to eq(:has_many)
+      expect(reflection.options[:through]).to eq(:role_skills)
     end
 
-    it "requirements are name-only — no catalog FK on the role" do
-      expect(described_class.reflect_on_association(:catalog_skills)).to be_nil
-      expect(described_class.reflect_on_association(:catalog_skill)).to be_nil
+    it "equips a skill and reads it back" do
+      role  = create(:chorus_agent_role)
+      skill = create(:chorus_skill)
+      role.skills << skill
+      expect(role.reload.skills).to contain_exactly(skill)
     end
 
-    it "destroys its requirements with it" do
-      role = create(:chorus_agent_role, :with_requirements)
-      expect { role.destroy }.to change(Chorus::SkillRequirement, :count).by(-2)
+    it "destroys its role_skills with it (join rows, not the skills)" do
+      role  = create(:chorus_agent_role)
+      skill = create(:chorus_skill)
+      role.skills << skill
+
+      expect { role.destroy }.to change(Chorus::RoleSkill, :count).by(-1)
+      expect(Chorus::Skill.exists?(skill.id)).to be(true)
+    end
+
+    # No longer reaches SkillRequirement (010 §2 dropped the association; that join
+    # is parked, keyed directly by agent_role).
+    it "does not couple to skill_requirements" do
+      expect(described_class.reflect_on_association(:skill_requirements)).to be_nil
     end
   end
 

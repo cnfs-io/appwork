@@ -38,7 +38,9 @@ module Chorus
         r.description = "Equips an agent to build UI components: markup, a11y, and " \
                         "front-end design skills."
       end
-      SEED_SKILLS.each { |name| role.skill_requirements.find_or_create_by!(name: name) }
+      # SkillRequirement is inert after plan 010 §2 (AgentRole no longer has_many
+      # :skill_requirements); create it keyed directly by agent_role.
+      SEED_SKILLS.each { |name| SkillRequirement.find_or_create_by!(agent_role: role, name: name) }
 
       workspace = Workspace.find_or_create_by!(name: "Frontend") do |w|
         w.description = "Home for the frontend-builder agent's runs and artifacts."

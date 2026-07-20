@@ -14,6 +14,18 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
+    # RoleSkill: the AgentRole <-> Skill join (plan 010 §3). A real join model, not
+    # HABTM, because attributes are likely (`required`, `position`, ordering) and
+    # adding them later to a HABTM table means a migration AND a new model. Carries
+    # no attributes yet beyond the two FKs; a role's skills are unique on the pair.
+    create_table :chorus_role_skills do |t|
+      t.references :agent_role, null: false, foreign_key: { to_table: :chorus_agent_roles }
+      t.references :skill,      null: false, foreign_key: { to_table: :chorus_skills }
+      t.timestamps
+
+      t.index [ :agent_role_id, :skill_id ], unique: true
+    end
+
     # AgentAdapter is an STI base (plan 007 took the fallback plan 001 parked):
     # per-runtime subclasses (ClaudeCode, OpenCode) are ADAPTERS carrying the
     # invocation behavior a Concept cannot express (different binary/argv/parsing).

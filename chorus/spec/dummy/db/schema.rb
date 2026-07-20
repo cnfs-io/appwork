@@ -89,6 +89,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_120001) do
     t.index ["workspace_id"], name: "index_chorus_results_on_workspace_id"
   end
 
+  create_table "chorus_role_skills", force: :cascade do |t|
+    t.integer "agent_role_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "skill_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agent_role_id", "skill_id"], name: "index_chorus_role_skills_on_agent_role_id_and_skill_id", unique: true
+    t.index ["agent_role_id"], name: "index_chorus_role_skills_on_agent_role_id"
+    t.index ["skill_id"], name: "index_chorus_role_skills_on_skill_id"
+  end
+
   create_table "chorus_skill_categorizations", force: :cascade do |t|
     t.integer "catalog_skill_id", null: false
     t.datetime "created_at", null: false
@@ -202,6 +212,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_120001) do
   add_foreign_key "chorus_artifacts", "chorus_workspaces", column: "workspace_id"
   add_foreign_key "chorus_results", "chorus_artifacts", column: "artifact_id"
   add_foreign_key "chorus_results", "chorus_workspaces", column: "workspace_id"
+  add_foreign_key "chorus_role_skills", "chorus_agent_roles", column: "agent_role_id"
+  add_foreign_key "chorus_role_skills", "chorus_skills", column: "skill_id"
   add_foreign_key "chorus_skill_categorizations", "chorus_catalog_skills", column: "catalog_skill_id"
   add_foreign_key "chorus_skill_categorizations", "chorus_taxonomies", column: "taxonomy_id"
   add_foreign_key "chorus_skill_requirements", "chorus_agent_roles", column: "agent_role_id"
