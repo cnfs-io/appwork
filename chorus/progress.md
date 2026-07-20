@@ -628,3 +628,119 @@ lifecycle/teardown/occupancy (session work); the Review/evaluator model (008).
     bundle exec rubocop                       # clean
 
 No commit made.
+
+# 010 — Agent refactor: adapter/role renames, skills join, Workspace bundle, and the Plan
+
+`doc/plans/010-agent-refactor-and-plan.md` executed and green. The center is now
+validated end to end: an Agent with an AgentRole and hand-created Skills receives a
+prompt, the agent writes a markdown plan into its workspace with its own tools, and
+Chorus discovers it, claims it, and stamps its frontmatter — leaving a durable `Plan`
+backed by an OKF `Concept`. The renaming makes the names carry their weight
+(`AgentProfile`→`AgentAdapter` because each subclass is an adapter; `Role`→`AgentRole`
+because it is the HR-shaped org role IAM no longer houses), and the model set is
+scaled back to what a smoke test needs.
+
+**Green count:** chorus **219 examples, 0 failures** (was 196; +23 net — new RoleSkill,
+Plan, Workspace-bundle, AgentAdapter-contract, and Planner specs, less the retired
+`invocation_spec`). RuboCop clean (115 files). `db:drop db:create db:migrate db:seed`
+works; `db:test:prepare` per the pattern. Committed per step (steps 1–4 landed and
+reviewed separately; 5–8 here).
+
+## What shipped
+
+- **Renames (§1).** `Chorus::AgentProfile` → `Chorus::AgentAdapter` (table
+  `chorus_agent_adapters`, STI subclass paths, instrumentation `cnfs_chorus.agent_adapter.*`);
+  `Chorus::Role` → `Chorus::AgentRole` (table `chorus_agent_roles`);
+  `chorus_agents.agent_profile_id` → `agent_adapter_id`;
+  `chorus_skill_requirements.role_id` → `agent_role_id`. Rename-through only.
+- **`AgentRole` scaled back (§2).** Dropped `has_many_okf :view_ports` and
+  `has_many :skill_requirements`; kept `has_one_okf :concept` (the charter); added
+  `has_many :skills, through: :role_skills`. An AgentRole is an org role with a charter
+  and skills, nothing else yet.
+- **`RoleSkill` (§3).** New join model + `chorus_role_skills` (`agent_role_id`,
+  `skill_id`, unique on the pair). `Skill` gained the reverse `has_many :agent_roles`.
+- **`Workspace` bundle (§4).** `has_one_okf :bundle`, `#doc_pathname`,
+  `#materialize_bundle` (mkpath the `doc/` dir so the Bundle's dev-from-stat validation
+  passes, then find-or-create the Bundle rooted at `doc/`; idempotent). Rooted at
+  `doc/`, not the workspace root, so concept paths are bundle-relative.
+- **`Plan` (§5).** `belongs_to :workspace, :agent`; `has_one_okf :concept`;
+  `validates :name`. No content column — narrative lives in the concept.
+- **`AgentAdapter` contract (§7).** The four-method contract (`build_argv`, `invoke`,
+  `parse_event`, `skills_agent_key`) as `NotImplementedError` on the STI base, filled in
+  on `ClaudeCode`, which drives `claude` through `CnfsSupport::Shell.stream`:
+  `claude -p <prompt> --output-format stream-json --verbose --include-partial-messages
+  --allowedTools Read,Write,Edit,Bash`, each stdout line normalized by `parse_event`
+  (text_delta → `:text`, assistant tool_use → `:tool_use`, `result` → `:result` with
+  `session_id` surfaced; malformed/unknown → `nil`). The pasted `CodingAgent` reference
+  script is gone.
+- **`Chorus::Planner` (§8).** A PORO. Picks `doc/plans/<seq>-<slug>.md`, prompts the
+  agent to write there (no frontmatter requested), streams to stdout, verifies the file,
+  runs `CnfsOkf::Sync`, finds the concept by bundle-relative path, builds the `Plan`
+  with it (ownership), and stamps `concept.type = "plan"` (one disk write, body verbatim).
+
+## Decisions / things to flag
+
+1. **`invocation_spec` retired; `Invocation` model kept, parked.** §7 replaces the
+   `invoke` contract (old `invoke(task:, role:, result:, workspace:)` → streaming
+   `invoke(prompt:, workspace:, resume:, &block)`). The parked `Invocation` calls the
+   old signature and records into a `Result` the new `invoke` no longer produces, so its
+   spec cannot pass against the new contract. The model file stays (loads, parked); its
+   spec was removed. `Equipper`/`SkillResolver`/`SkillRequirement` still load and stay
+   green (they touch `skills_agent_key`/`SkillRequirement`, not `invoke`).
+2. **`OpenCode` reduced to `skills_agent_key`.** Its old invoke used the now-removed
+   `run_invocation`/`capture_cli`. 010 rebuilds only ClaudeCode on `Shell.stream`, and
+   opencode's real stream format is unknown, so the rest of its contract inherits
+   `NotImplementedError` until it earns a streaming path. Not deleted.
+3. **`resume:` accepted and ignored.** `build_argv`/`invoke` take `resume:` for
+   forward-compat (session work) but do not wire `--resume` this phase; argv is identical
+   with or without it (asserted).
+4. **`--include-hook-events` dropped, TODO left.** Named in `build_argv` with the reason
+   (nothing consumes hook events yet) and the intended shape (a settable capability bag
+   following `Source`/`ExternalAccount`, `allowed_tools` the second candidate).
+5. **`SkillResolver`/seed repointed off the dropped association (step 2).** Both queried
+   `role.skill_requirements`; now query `SkillRequirement.where(agent_role:)` directly —
+   the minimal touch to keep parked code and the seed green after §2.
+6. **`db:migrate` gotcha (resolved).** The dummy's `db:create` loads `schema.rb`, so an
+   in-place migration edit (same version) no-ops under `db:drop db:create db:migrate`. Each
+   step regenerated `schema.rb` by removing it and re-migrating; `schema.rb` is now current,
+   so the standard reset reproduces a correct DB (verified).
+
+## Deferred (named in the plan)
+
+Session / `--resume` (a `Session` model keyed on workable × agent — the highest-risk
+unknown remaining); run records (`Result` with cost/tokens/duration/argv); the foreman
+loop; `Workable#work_units`; equipping (`Equipper` stays parked — the agent runs
+unskilled this phase); skill-catalog resolution; concurrent path selection; skills as
+view_ports; adapter capabilities → argv.
+
+## How to run it
+
+    cd gems/support && bundle exec rspec     # Shell.stream lives here
+    cd gems/chorus
+    rm -f spec/dummy/db/schema.rb spec/dummy/storage/*.sqlite3*
+    bin/rails db:create db:migrate db:seed
+    RAILS_ENV=test bin/rails db:test:prepare
+    bundle exec rspec                         # 219 examples, 0 failures
+    bundle exec rubocop                       # clean
+
+Manual smoke (a console act — needs a live, authed `claude`; no live claude in the suite):
+
+    adapter = Chorus::AgentAdapter::ClaudeCode.create!(name: "claude-code")
+    role    = Chorus::AgentRole.create!(name: "swe")
+    role.skills << Chorus::Skill.create!(name: "ruby")          # RoleSkill join (§3)
+    agent   = Chorus::Agent.create!(name: "swe-1", agent_adapter: adapter)
+    ws      = Chorus::Workspace.create!(name: "smoke"); ws.materialize_bundle
+    plan    = Chorus::Planner.new(agent:, workspace: ws).call(
+                prompt: "Write a short plan for adding user authentication.", slug: "user-auth")
+    plan.concept.path          # => "plans/001-user-auth.md"
+    plan.concept.type          # => "plan"
+    plan.concept.pathname.read # => frontmatter block + the agent's markdown
+
+**Open gap — `Agent belongs_to :agent_role` not landed.** The plan's "Done means" and the
+manual-verification snippet in `doc/plans/010` both link the agent to its role
+(`agent_role: role`), but no `chorus_agents.agent_role_id` column or `belongs_to
+:agent_role` was ever added: steps 1–4 were renames-only ("no behavior changes"), and the
+step breakdown never called it out. Nothing in the executed flow needs it — the Planner
+runs the agent unskilled (Equipper parked), so it takes only `agent_adapter` + `workspace`.
+The Agent↔AgentRole FK direction remains the unsettled question 001 flagged; wiring it (a
+migration column + the association, or the inverse direction) is a small, separate follow-up.
