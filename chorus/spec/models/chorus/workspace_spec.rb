@@ -48,6 +48,42 @@ RSpec.describe Chorus::Workspace, type: :model do
     end
   end
 
+  # Plan 010 §4: the workspace gets a `doc/` bundle so authored documents (Plans)
+  # have somewhere to live as Concepts. Rooted at `doc/`, not the workspace root.
+  describe "#materialize_bundle (the doc/ OKF bundle)" do
+    let(:root) { Dir.mktmpdir("chorus-ws-bundle") }
+    before { allow(Chorus::Config).to receive(:workspace_root).and_return(root) }
+    after  { FileUtils.remove_entry(root) if File.exist?(root) }
+
+    let(:workspace) { create(:chorus_workspace) }
+
+    it "creates the doc/ directory" do
+      workspace.materialize_bundle
+      expect(workspace.doc_pathname).to be_directory
+    end
+
+    it "creates an OKF Bundle rooted at doc/, not the workspace root" do
+      bundle = workspace.materialize_bundle
+      expect(bundle).to be_a(CnfsOkf::Bundle)
+      expect(bundle).to be_persisted
+      expect(bundle.path).to eq(workspace.doc_pathname.to_s)
+      expect(bundle.owner).to eq(workspace)
+    end
+
+    it "is idempotent — a second call returns the same bundle, creating no new one" do
+      first = workspace.materialize_bundle
+      expect { workspace.materialize_bundle }.not_to change(CnfsOkf::Bundle, :count)
+      expect(workspace.reload.bundle).to eq(first)
+    end
+
+    it "has_one_okf :bundle" do
+      reflection = described_class.reflect_on_association(:bundle)
+      expect(reflection.macro).to eq(:has_one)
+      expect(reflection.options[:as]).to eq(:owner)
+      expect(reflection.klass).to eq(CnfsOkf::Bundle)
+    end
+  end
+
   describe "validations" do
     it "requires a name" do
       workspace = build(:chorus_workspace, name: nil)
