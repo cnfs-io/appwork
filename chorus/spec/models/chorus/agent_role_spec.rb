@@ -1,15 +1,15 @@
 require "rails_helper"
 
-# Chorus::Role — a CAPABILITY LOADOUT (skills-by-name + OKF concept + view_ports),
+# Chorus::AgentRole — a CAPABILITY LOADOUT (skills-by-name + OKF concept + view_ports),
 # catalog-naive and org-naive. Distinct from the departed org-position Role (004).
-RSpec.describe Chorus::Role, type: :model do
+RSpec.describe Chorus::AgentRole, type: :model do
   it "has a valid factory" do
-    expect(build(:chorus_role)).to be_valid
+    expect(build(:chorus_agent_role)).to be_valid
   end
 
   describe "validations" do
     it "requires a name" do
-      role = build(:chorus_role, name: nil)
+      role = build(:chorus_agent_role, name: nil)
       expect(role).not_to be_valid
       expect(role.errors[:name]).to be_present
     end
@@ -42,7 +42,7 @@ RSpec.describe Chorus::Role, type: :model do
     end
 
     it "destroys its requirements with it" do
-      role = create(:chorus_role, :with_requirements)
+      role = create(:chorus_agent_role, :with_requirements)
       expect { role.destroy }.to change(Chorus::SkillRequirement, :count).by(-2)
     end
   end

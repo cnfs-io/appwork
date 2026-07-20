@@ -29,12 +29,12 @@ module Chorus
     SEED_SKILLS = %w[web-design-guidelines].freeze
 
     def seed!(workable: nil)
-      profile = AgentProfile::ClaudeCode.find_or_create_by!(name: "Claude Code")
+      adapter = AgentAdapter::ClaudeCode.find_or_create_by!(name: "Claude Code")
 
-      agent = Agent.find_or_create_by!(name: "Frontend Builder") { |a| a.agent_profile = profile }
-      agent.update!(agent_profile: profile) if agent.agent_profile.nil?
+      agent = Agent.find_or_create_by!(name: "Frontend Builder") { |a| a.agent_adapter = adapter }
+      agent.update!(agent_adapter: adapter) if agent.agent_adapter.nil?
 
-      role = Role.find_or_create_by!(name: "frontend-builder") do |r|
+      role = AgentRole.find_or_create_by!(name: "frontend-builder") do |r|
         r.description = "Equips an agent to build UI components: markup, a11y, and " \
                         "front-end design skills."
       end
@@ -47,7 +47,7 @@ module Chorus
       # one at a time; only set it when currently free).
       workspace.update!(workable: workable) if workable && workspace.workable.nil?
 
-      { profile: profile, agent: agent, role: role, workspace: workspace }
+      { adapter: adapter, agent: agent, role: role, workspace: workspace }
     end
   end
 end

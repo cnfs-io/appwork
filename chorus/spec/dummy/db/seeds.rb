@@ -5,7 +5,7 @@
 # After `bin/rails db:seed`, in `bin/rails console`:
 #
 #   agent = Chorus::Agent.find_by(name: "Frontend Builder")
-#   role  = Chorus::Role.find_by(name: "frontend-builder")
+#   role  = Chorus::AgentRole.find_by(name: "frontend-builder")
 #   task  = "Build a Phlex searchable, sortable table component for Rails: a view " \
 #           "component taking rows and columns, rendering a semantic HTML table " \
 #           "with a search input that filters rows. Choose server-side (Turbo) or " \

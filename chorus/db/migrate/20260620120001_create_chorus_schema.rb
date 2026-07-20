@@ -14,13 +14,13 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    # AgentProfile is an STI base (plan 007 took the fallback plan 001 parked):
-    # per-runtime subclasses (ClaudeCode, OpenCode) carry the invocation behavior
-    # a Concept cannot express (different binary/argv/parsing). `type` is the
-    # Rails STI discriminator — distinct from CnfsOkf::Concept#type (an OKF
-    # frontmatter field), which the two never conflate.
-    create_table :chorus_agent_profiles do |t|
-      t.string :type                      # STI discriminator (Chorus::AgentProfile::ClaudeCode, ...)
+    # AgentAdapter is an STI base (plan 007 took the fallback plan 001 parked):
+    # per-runtime subclasses (ClaudeCode, OpenCode) are ADAPTERS carrying the
+    # invocation behavior a Concept cannot express (different binary/argv/parsing).
+    # `type` is the Rails STI discriminator — distinct from CnfsOkf::Concept#type (an
+    # OKF frontmatter field), which the two never conflate.
+    create_table :chorus_agent_adapters do |t|
+      t.string :type                      # STI discriminator (Chorus::AgentAdapter::ClaudeCode, ...)
       t.string :name, null: false
       t.timestamps
 
@@ -28,7 +28,7 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     end
 
     create_table :chorus_agents do |t|
-      t.references :agent_profile, null: true, foreign_key: { to_table: :chorus_agent_profiles }
+      t.references :agent_adapter, null: true, foreign_key: { to_table: :chorus_agent_adapters }
       t.string :name, null: false
       t.timestamps
     end
@@ -137,13 +137,14 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     end
 
     # --- 007 agent invocation seam -------------------------------------------
-    # Role: a CAPABILITY LOADOUT (not the org-position Role that left in 004 — that
-    # was org structure and lives in micro_manager/IAM). A Role bundles skills (by
-    # stable name, catalog-naive) + OKF knowledge windows for equipping an agent to
-    # execute. Its OWN definition doc is `has_one_okf :concept`; its domain windows
-    # are `has_many_okf :view_ports` — both polymorphic (`as: :owner` on the OKF
-    # tables), so no FK columns here. Catalog-naive and org-naive.
-    create_table :chorus_roles do |t|
+    # AgentRole: a CAPABILITY LOADOUT (not the org-position Role that left in 004 —
+    # that was org structure and lives in micro_manager/IAM). An AgentRole bundles
+    # skills (by stable name, catalog-naive) + OKF knowledge windows for equipping an
+    # agent to execute. Its OWN definition doc is `has_one_okf :concept`; its domain
+    # windows are `has_many_okf :view_ports` — both polymorphic (`as: :owner` on the
+    # OKF tables), so no FK columns here. Catalog-naive and org-naive. (Named
+    # AgentRole, not Role: a host may have IAM::Role in scope.)
+    create_table :chorus_agent_roles do |t|
       t.string :name, null: false
       t.text   :description
       t.timestamps
@@ -152,15 +153,15 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # SkillRequirement: a role's durable, catalog-naive requirement — a skill named
     # by STABLE identity (name/slug), NOT an FK into the clobber-refreshed catalog.
     # A Chorus::SkillResolver maps these names -> concrete catalog rows/git sources
-    # at equip time (§4); pinning a durable Role to the volatile catalog would let a
-    # refresh break Role definitions.
+    # at equip time (§4); pinning a durable AgentRole to the volatile catalog would
+    # let a refresh break role definitions.
     create_table :chorus_skill_requirements do |t|
-      t.references :role, null: false, foreign_key: { to_table: :chorus_roles }
+      t.references :agent_role, null: false, foreign_key: { to_table: :chorus_agent_roles }
       t.string     :name, null: false   # stable skill identity ("web-design-guidelines")
       t.string     :slug                 # optional normalized key
       t.timestamps
 
-      t.index [ :role_id, :name ], unique: true
+      t.index [ :agent_role_id, :name ], unique: true
     end
 
     # Result: the durable outcome of an invocation (AR-backed, persisted on EVERY

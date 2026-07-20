@@ -1,20 +1,20 @@
 module Chorus
   # The invocation seam's coordinator: given an Agent (bound to a runtime via its
-  # AgentProfile), a Role (a capability loadout), and a task, it resolves the role's
-  # skills, equips the agent's runtime, invokes it, and persists a durable Result +
-  # Artifact — every run, live or dry (§5). Returns the Result.
+  # AgentAdapter), an AgentRole (a capability loadout), and a task, it resolves the
+  # role's skills, equips the agent's runtime, invokes it, and persists a durable
+  # Result + Artifact — every run, live or dry (§5). Returns the Result.
   #
-  #   resolve (SkillResolver) -> equip (Equipper) -> invoke (AgentProfile) ->
+  #   resolve (SkillResolver) -> equip (Equipper) -> invoke (AgentAdapter) ->
   #   persist Result + Artifact
   #
   # It honors the §8 config switches THROUGH the collaborators: the Equipper gates
-  # on skills_live, the AgentProfile gates on agents_live. The coordinator records
+  # on skills_live, the AgentAdapter gates on agents_live. The coordinator records
   # which switches were in effect onto the Result so a dry run is fully inspectable.
   #
   # Console entry point (§7) — after `bin/rails db:seed`, in `bin/rails console`:
   #
   #   agent = Chorus::Agent.find_by(name: "Frontend Builder")
-  #   role  = Chorus::Role.find_by(name: "frontend-builder")
+  #   role  = Chorus::AgentRole.find_by(name: "frontend-builder")
   #   task  = "Build a Phlex searchable, sortable table component for Rails ..."
   #   result = Chorus::Invocation.new(agent:, role:, task:).call
   #   result.success?       # => true/false
@@ -37,8 +37,8 @@ module Chorus
     end
 
     def call
-      profile = @agent.agent_profile
-      raise ArgumentError, "agent #{@agent.name.inspect} has no agent_profile" if profile.nil?
+      adapter = @agent.agent_adapter
+      raise ArgumentError, "agent #{@agent.name.inspect} has no agent_adapter" if adapter.nil?
 
       result = Chorus::Result.new(
         workspace:   @workspace,
@@ -47,9 +47,9 @@ module Chorus
       )
 
       resolved = SkillResolver.new(@role).resolve
-      Equipper.new(profile: profile, result: result, workspace: @workspace).equip(resolved)
+      Equipper.new(adapter: adapter, result: result, workspace: @workspace).equip(resolved)
 
-      profile.invoke(task: @task, role: @role, result: result, workspace: @workspace)
+      adapter.invoke(task: @task, role: @role, result: result, workspace: @workspace)
 
       result.artifact = capture_artifact
       # Respect what equip/invoke recorded: an operational failure already flipped

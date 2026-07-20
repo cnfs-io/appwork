@@ -1,9 +1,9 @@
 module Chorus
   # Mounts a set of resolved skills onto ONE agent runtime, INTO the run's workspace
   # directory (§4). Mounting is runtime-PARAMETERIZED, not runtime-polymorphic (§2):
-  # each AgentProfile subclass declares only its `skills_agent_key`, and this one
+  # each AgentAdapter subclass declares only its `skills_agent_key`, and this one
   # shared PORO drives SkillCatalog#add once per skill, passing
-  # `agents: [profile.skills_agent_key]` and `path: workspace.pathname` — so the
+  # `agents: [adapter.skills_agent_key]` and `path: workspace.pathname` — so the
   # install is project-scoped into the workspace (no `-g`, no `~/.claude` pollution),
   # unattended (`-y`), copy-or-symlink per config. The Equipper owns NO shell of its
   # own — SkillCatalog owns the `npx` boundary.
@@ -21,8 +21,8 @@ module Chorus
     # heuristic on unstable CLI text — deliberately narrow to avoid false positives.
     SKILL_NOT_FOUND = /no matching skills? found|skills? not found|couldn't find|could not find/i
 
-    def initialize(profile:, result:, workspace:, catalog: SkillCatalog.new)
-      @profile   = profile
+    def initialize(adapter:, result:, workspace:, catalog: SkillCatalog.new)
+      @adapter   = adapter
       @result    = result
       @workspace = workspace
       @catalog   = catalog
@@ -50,7 +50,7 @@ module Chorus
     end
 
     def agents
-      [ @profile.skills_agent_key ]
+      [ @adapter.skills_agent_key ]
     end
 
     # Record an operational failure into the Result (never raise): a non-zero install,

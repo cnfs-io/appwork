@@ -6,9 +6,9 @@ require "rails_helper"
 # console act.
 RSpec.describe Chorus::Invocation do
   let(:workspace) { create(:chorus_workspace) }
-  let(:profile)   { create(:chorus_agent_profile_claude_code) }
-  let(:agent)     { create(:chorus_agent, agent_profile: profile) }
-  let(:role)      { create(:chorus_role, :with_requirements) }
+  let(:adapter)   { create(:chorus_agent_adapter_claude_code) }
+  let(:agent)     { create(:chorus_agent, agent_adapter: adapter) }
+  let(:role)      { create(:chorus_agent_role, :with_requirements) }
   let(:task)      { "Build a Phlex searchable, sortable table component for Rails." }
 
   subject(:invocation) { described_class.new(agent: agent, role: role, task: task, workspace: workspace) }
@@ -55,7 +55,7 @@ RSpec.describe Chorus::Invocation do
   end
 
   it "never shells out in dry mode" do
-    expect_any_instance_of(Chorus::AgentProfile::ClaudeCode).not_to receive(:capture_cli)
+    expect_any_instance_of(Chorus::AgentAdapter::ClaudeCode).not_to receive(:capture_cli)
     expect_any_instance_of(Chorus::SkillCatalog).not_to receive(:add)
     invocation.call
   end
@@ -64,10 +64,10 @@ RSpec.describe Chorus::Invocation do
     expect(invocation.call.success?).to be(true)
   end
 
-  it "raises a clear error when the agent has no profile" do
-    profileless = create(:chorus_agent, agent_profile: nil)
+  it "raises a clear error when the agent has no adapter" do
+    adapterless = create(:chorus_agent, agent_adapter: nil)
     expect {
-      described_class.new(agent: profileless, role: role, task: task, workspace: workspace).call
-    }.to raise_error(ArgumentError, /no agent_profile/)
+      described_class.new(agent: adapterless, role: role, task: task, workspace: workspace).call
+    }.to raise_error(ArgumentError, /no agent_adapter/)
   end
 end

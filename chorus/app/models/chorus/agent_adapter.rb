@@ -1,23 +1,23 @@
 module Chorus
-  # STI base for an agent's runtime binding. Plan 007 takes the fallback plan 001
-  # parked: invoking `claude` vs `opencode` is different binary, argv, output
-  # parsing, and skills-agent key — behavior a Concept cannot carry — so the
-  # per-runtime variation lives in Rails STI subclasses (ClaudeCode, OpenCode).
-  # The Concept still carries CONTENT (system-prompt prose, usage notes) via
+  # STI base for an agent's runtime binding. Each subclass is an ADAPTER: it
+  # translates "invoke this agent" into one runtime's binary, argv, output format,
+  # and skills-agent key — behavior a Concept cannot carry — so the per-runtime
+  # variation lives in Rails STI subclasses (ClaudeCode, OpenCode). The Concept
+  # still carries CONTENT (system-prompt prose, usage notes) via
   # `has_one_okf :concept`; STI carries INVOCATION BEHAVIOR. The two `type`s stay
   # unconflated: CnfsOkf::Concept#type is an OKF frontmatter field
-  # (inheritance_column = nil); AgentProfile#type is the Rails STI discriminator.
+  # (inheritance_column = nil); AgentAdapter#type is the Rails STI discriminator.
   #
   # The seam is deliberately thin (no Ruby agent framework fits CLI-runtime
   # invocation — §1), modeled on the Source::Git / SkillCatalog shell idiom. It is
-  # thin enough that a future API-backed profile (a single structured RubyLLM call,
+  # thin enough that a future API-backed adapter (a single structured RubyLLM call,
   # not a CLI runtime) can slot in beside the CLI subclasses without reshaping it.
-  class AgentProfile < ApplicationRecord
+  class AgentAdapter < ApplicationRecord
     has_many :agents, dependent: :nullify
     has_one_okf :concept
 
     validates :name, presence: true
-    validates :type, presence: true   # STI: a bare base profile is not invocable
+    validates :type, presence: true   # STI: a bare base adapter is not invocable
 
     # Build (and, when Config#agents_live, run) this runtime's CLI invocation IN the
     # run's `workspace` directory (§4), recording the would-run/did-run argv + cwd
@@ -61,7 +61,7 @@ module Chorus
     # no shell, separated stdout/stderr, timeout, non-raising). This is the SOLE
     # swap point if a runtime is ever driven by something other than a subprocess.
     # Returns the normalized Shell::Result; the caller (run_invocation) decides how
-    # to treat success vs. failure. The `cnfs_chorus.agent_profile.invoke` event is
+    # to treat success vs. failure. The `cnfs_chorus.agent_adapter.invoke` event is
     # preserved by wrapping the adapter call, so the sink is unaffected; the adapter
     # emits its own `cnfs_support.shell.run` span inside.
     def capture_cli(*argv, cwd: nil)
@@ -71,10 +71,10 @@ module Chorus
       end
     end
 
-    # Emit AgentProfile instrumentation under a stable `cnfs_chorus.agent_profile.*`
+    # Emit AgentAdapter instrumentation under a stable `cnfs_chorus.agent_adapter.*`
     # prefix regardless of STI subclass (mirrors Source pinning its subject).
     def instrument(verb, **payload, &block)
-      name = CnfsSupport::Instrumentable.event_name("Chorus::AgentProfile", verb)
+      name = CnfsSupport::Instrumentable.event_name("Chorus::AgentAdapter", verb)
       ActiveSupport::Notifications.instrument(name, **payload, &block)
     end
   end

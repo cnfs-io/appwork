@@ -6,7 +6,7 @@ require "rails_helper"
 # and confirms the skill actually landed — recording any failure into the Result
 # rather than raising (§5). Unit-tested with the SkillCatalog boundary stubbed.
 RSpec.describe Chorus::Equipper do
-  let(:profile) { create(:chorus_agent_profile_claude_code) }
+  let(:adapter) { create(:chorus_agent_adapter_claude_code) }
   let(:result)  { build(:chorus_result) }
   let(:catalog) { instance_double(Chorus::SkillCatalog) }
 
@@ -21,7 +21,7 @@ RSpec.describe Chorus::Equipper do
     ]
   end
 
-  subject(:equipper) { described_class.new(profile: profile, result: result, workspace: workspace, catalog: catalog) }
+  subject(:equipper) { described_class.new(adapter: adapter, result: result, workspace: workspace, catalog: catalog) }
 
   # The real builders drive the recorded argv, so the record can't drift from a run.
   before do
@@ -37,7 +37,7 @@ RSpec.describe Chorus::Equipper do
   context "in live mode (skills_live: true)" do
     before { allow(Chorus::Config).to receive(:skills_live).and_return(true) }
 
-    it "installs each skill into the workspace path, keyed to the profile's agent key" do
+    it "installs each skill into the workspace path, keyed to the adapter's agent key" do
       allow(catalog).to receive(:add).and_return(ok)
 
       equipper.equip(resolved)

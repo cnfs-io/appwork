@@ -5,7 +5,7 @@ require "rails_helper"
 # later; for now it echoes each requirement against the default repo.
 RSpec.describe Chorus::SkillResolver do
   it "resolves each requirement to an installable (resource, skill) source" do
-    role = create(:chorus_role, :with_requirements)
+    role = create(:chorus_agent_role, :with_requirements)
 
     resolved = described_class.new(role).resolve
 
@@ -15,7 +15,7 @@ RSpec.describe Chorus::SkillResolver do
   end
 
   it "returns nothing for a role with no requirements" do
-    role = create(:chorus_role)
+    role = create(:chorus_agent_role)
     expect(described_class.new(role).resolve).to eq([])
   end
 end
