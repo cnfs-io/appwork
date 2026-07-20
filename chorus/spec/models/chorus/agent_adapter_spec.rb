@@ -14,10 +14,11 @@ RSpec.describe Chorus::AgentAdapter, type: :model do
       expect(adapter.errors[:name]).to be_present
     end
 
-    it "leaves the invocation interface unimplemented" do
+    it "leaves the four-method contract unimplemented" do
       base = Chorus::AgentAdapter.new
-      result = build(:chorus_result)
-      expect { base.invoke(task: "t", role: nil, result: result, workspace: nil) }.to raise_error(NotImplementedError)
+      expect { base.build_argv(prompt: "p") }.to raise_error(NotImplementedError)
+      expect { base.invoke(prompt: "p", workspace: nil) }.to raise_error(NotImplementedError)
+      expect { base.parse_event("{}") }.to raise_error(NotImplementedError)
       expect { base.skills_agent_key }.to raise_error(NotImplementedError)
     end
 
@@ -32,76 +33,95 @@ RSpec.describe Chorus::AgentAdapter, type: :model do
     end
   end
 
-  # Both runtimes are proven identically (§6): skills_agent_key + argv construction,
-  # unit-tested in DRY mode — the argv is recorded into the Result but never run.
-  # No :live test, no model spend, no auth.
-  shared_examples "a CLI runtime adapter" do |factory:, agent_key:, expected_argv:|
-    let(:adapter) { create(factory) }
-    let(:result) { build(:chorus_result) }
-    # The run's workspace directory is the cwd (§4). A double so the unit spec
-    # asserts cwd threading without touching disk.
-    let(:ws_path)   { Pathname.new("/tmp/chorus-ws-spec") }
-    let(:workspace) { instance_double(Chorus::Workspace, directory: ws_path, pathname: ws_path) }
+  describe Chorus::AgentAdapter::ClaudeCode do
+    subject(:adapter) { create(:chorus_agent_adapter_claude_code) }
 
     it "declares its skills_agent_key" do
-      expect(adapter.skills_agent_key).to eq(agent_key)
+      expect(adapter.skills_agent_key).to eq("claude-code")
     end
 
-    context "in dry mode (agents_live: false)" do
-      before { allow(Chorus::Config).to receive(:agents_live).and_return(false) }
+    describe "#build_argv (the tested surface)" do
+      it "builds the exact headless streaming argv" do
+        expect(adapter.build_argv(prompt: "Build a table")).to eq([
+          "claude", "-p", "Build a table",
+          "--output-format", "stream-json",
+          "--verbose",
+          "--include-partial-messages",
+          "--allowedTools", "Read,Write,Edit,Bash"
+        ])
+      end
 
-      it "records the would-run argv AND the project cwd, and does not exec" do
-        expect(adapter).not_to receive(:capture_cli)
-        output = adapter.invoke(task: "Build a table", role: nil, result: result, workspace: workspace)
+      it "does not pass --include-hook-events this phase" do
+        expect(adapter.build_argv(prompt: "x")).not_to include("--include-hook-events")
+      end
 
-        expect(output).to be_nil
-        expect(result.argv_for(:invoke)).to eq([ expected_argv ])
-        expect(result.cwd_for(:invoke)).to eq([ ws_path.to_s ])
+      it "ignores resume this phase (argv is identical with or without it)" do
+        expect(adapter.build_argv(prompt: "x", resume: "sess-1")).to eq(adapter.build_argv(prompt: "x"))
       end
     end
 
-    context "in live mode (agents_live: true)" do
-      before { allow(Chorus::Config).to receive(:agents_live).and_return(true) }
-
-      # The shell seam now returns a normalized CnfsSupport::Shell::Result; on
-      # success invoke returns its stdout. Stubbed — never a real run.
-      it "records the argv AND drives the shell seam in the workspace cwd, returning stdout" do
-        shell = CnfsSupport::Shell::Result.new(
-          command: expected_argv, stdout: "stubbed output", stderr: "", exitstatus: 0, shellout: nil
-        )
-        allow(adapter).to receive(:capture_cli).and_return(shell)
-        output = adapter.invoke(task: "Build a table", role: nil, result: result, workspace: workspace)
-
-        expect(output).to eq("stubbed output")
-        expect(adapter).to have_received(:capture_cli).with(*expected_argv, cwd: ws_path)
-        expect(result.argv_for(:invoke)).to eq([ expected_argv ])
+    describe "#parse_event (against captured NDJSON fixture lines)" do
+      let(:lines) do
+        path = File.expand_path("../../fixtures/claude_code/stream.ndjson", __dir__)
+        File.readlines(path, chomp: true)
       end
 
-      it "records an operational failure into the Result instead of raising" do
-        shell = CnfsSupport::Shell::Result.new(
-          command: expected_argv, stdout: "", stderr: "boom", exitstatus: 2, shellout: nil
-        )
-        allow(adapter).to receive(:capture_cli).and_return(shell)
-        output = adapter.invoke(task: "Build a table", role: nil, result: result, workspace: workspace)
+      it "normalizes a text_delta stream_event to a :text event" do
+        expect(adapter.parse_event(lines[1])).to eq({ type: :text, text: "Hello, world" })
+      end
 
-        expect(output).to be_nil
-        expect(result.success).to be(false)
-        expect(result.full_messages.join).to match(/invoke.*exited 2.*boom/)
+      it "returns nil for a non-text delta (e.g. input_json_delta)" do
+        expect(adapter.parse_event(lines[2])).to be_nil
+      end
+
+      it "normalizes an assistant tool_use block to a :tool_use event" do
+        expect(adapter.parse_event(lines[3])).to eq({
+          type: :tool_use, name: "Write",
+          input: { "file_path" => "doc/plans/001-x.md", "content" => "# Plan" }
+        })
+      end
+
+      it "returns nil for an assistant message carrying no tool_use" do
+        expect(adapter.parse_event(lines[4])).to be_nil
+      end
+
+      it "normalizes a result event, surfacing session_id" do
+        expect(adapter.parse_event(lines[5])).to eq({
+          type:        :result,
+          session_id:  "sess-abc",
+          cost_usd:    0.0123,
+          duration_ms: 4567,
+          num_turns:   3,
+          usage:       { "input_tokens" => 100, "output_tokens" => 200 },
+          is_error:    false
+        })
+      end
+
+      it "returns nil for an unknown event type (system init)" do
+        expect(adapter.parse_event(lines[0])).to be_nil
+      end
+
+      it "returns nil for malformed JSON (a partial line is normal, not an error)" do
+        expect(adapter.parse_event('{"type":"resu')).to be_nil
+      end
+
+      it "returns nil for a non-JSON line" do
+        expect(adapter.parse_event("not json at all")).to be_nil
       end
     end
-  end
-
-  describe Chorus::AgentAdapter::ClaudeCode do
-    it_behaves_like "a CLI runtime adapter",
-      factory: :chorus_agent_adapter_claude_code,
-      agent_key: "claude-code",
-      expected_argv: [ "claude", "-p", "Build a table" ]
   end
 
   describe Chorus::AgentAdapter::OpenCode do
-    it_behaves_like "a CLI runtime adapter",
-      factory: :chorus_agent_adapter_open_code,
-      agent_key: "opencode",
-      expected_argv: [ "opencode", "run", "Build a table" ]
+    subject(:adapter) { create(:chorus_agent_adapter_open_code) }
+
+    it "declares its skills_agent_key" do
+      expect(adapter.skills_agent_key).to eq("opencode")
+    end
+
+    # Its streaming adapter is not built this phase (010 rebuilds only ClaudeCode).
+    it "leaves the streaming contract unimplemented" do
+      expect { adapter.build_argv(prompt: "x") }.to raise_error(NotImplementedError)
+      expect { adapter.parse_event("{}") }.to raise_error(NotImplementedError)
+    end
   end
 end
