@@ -93,8 +93,6 @@ RSpec.describe Chorus::Workspace, type: :model do
   end
 
   describe "associations" do
-    it { expect(described_class.reflect_on_association(:artifacts).macro).to eq(:has_many) }
-
     it "carries the role it was provisioned for (§6)" do
       expect(described_class.reflect_on_association(:role).macro).to eq(:belongs_to)
     end
@@ -146,13 +144,14 @@ RSpec.describe Chorus::Workspace, type: :model do
   end
 
   describe "dependent destruction" do
-    it "destroys its artifacts when destroyed" do
+    it "nullifies its work orders when destroyed (they outlive the place)" do
       workspace = create(:chorus_workspace)
-      artifact = create(:chorus_artifact, workspace: workspace)
+      work_order = create(:chorus_work_order, workspace: workspace)
 
       workspace.destroy
 
-      expect(Chorus::Artifact.exists?(artifact.id)).to be(false)
+      expect(Chorus::WorkOrder.exists?(work_order.id)).to be(true)
+      expect(work_order.reload.workspace_id).to be_nil
     end
   end
 end

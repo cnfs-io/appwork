@@ -26,9 +26,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_120001) do
     t.string "kind"
     t.string "locator"
     t.string "name", null: false
+    t.integer "result_id"
     t.datetime "updated_at", null: false
-    t.integer "workspace_id", null: false
-    t.index ["workspace_id"], name: "index_chorus_artifacts_on_workspace_id"
+    t.index ["result_id"], name: "index_chorus_artifacts_on_result_id"
   end
 
   create_table "chorus_catalog_skills", force: :cascade do |t|
@@ -76,17 +76,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_120001) do
   end
 
   create_table "chorus_results", force: :cascade do |t|
-    t.boolean "agents_live"
-    t.integer "artifact_id"
+    t.json "argv", default: []
+    t.decimal "cost_usd", precision: 12, scale: 6
     t.datetime "created_at", null: false
+    t.string "cwd"
+    t.integer "duration_ms"
+    t.string "external_session_id"
+    t.boolean "interrupted"
+    t.boolean "is_error"
     t.json "messages", default: {}
-    t.json "recorded_argv", default: []
-    t.boolean "skills_live"
+    t.integer "num_turns"
+    t.integer "resultable_id", null: false
+    t.string "resultable_type", null: false
     t.boolean "success"
+    t.json "tool_calls"
     t.datetime "updated_at", null: false
-    t.integer "workspace_id"
-    t.index ["artifact_id"], name: "index_chorus_results_on_artifact_id"
-    t.index ["workspace_id"], name: "index_chorus_results_on_workspace_id"
+    t.json "usage"
+    t.index ["resultable_type", "resultable_id"], name: "index_chorus_results_on_resultable"
   end
 
   create_table "chorus_role_skills", force: :cascade do |t|
@@ -236,13 +242,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_120001) do
     t.datetime "updated_at", null: false
   end
 
-  add_foreign_key "chorus_artifacts", "chorus_workspaces", column: "workspace_id"
+  add_foreign_key "chorus_artifacts", "chorus_results", column: "result_id"
   add_foreign_key "chorus_plans", "chorus_agents", column: "agent_id"
   add_foreign_key "chorus_plans", "chorus_roles", column: "role_id"
   add_foreign_key "chorus_plans", "chorus_work_orders", column: "work_order_id"
   add_foreign_key "chorus_plans", "chorus_workspaces", column: "workspace_id"
-  add_foreign_key "chorus_results", "chorus_artifacts", column: "artifact_id"
-  add_foreign_key "chorus_results", "chorus_workspaces", column: "workspace_id"
   add_foreign_key "chorus_role_skills", "chorus_roles", column: "role_id"
   add_foreign_key "chorus_role_skills", "chorus_skills", column: "skill_id"
   add_foreign_key "chorus_skill_categorizations", "chorus_catalog_skills", column: "catalog_skill_id"

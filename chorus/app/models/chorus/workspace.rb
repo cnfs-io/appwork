@@ -25,8 +25,6 @@ module Chorus
     # outlives the teardown of the place it ran in.
     has_many :work_orders, dependent: :nullify
 
-    has_many :artifacts, dependent: :destroy
-
     # The sources (repos) checked out into this workspace — the place owns them
     # (plan 011 §6). Nullify on destroy: a source outlives the place it sat in.
     has_many :sources, as: :owner, dependent: :nullify

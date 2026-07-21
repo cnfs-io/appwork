@@ -54,8 +54,13 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
       t.index :type
     end
 
+    # Artifact (plan 011 §8): something a run PRODUCED, so it belongs to the Result
+    # that produced it (the FK inverted — Result used to belong to Artifact).
+    # Otherwise untouched this phase: no STI, no GitCommit subclass, no source FK
+    # (Phase 2). `result_id` is nullable so an artifact can predate/outlive its run
+    # record.
     create_table :chorus_artifacts do |t|
-      t.references :workspace, null: false, foreign_key: { to_table: :chorus_workspaces }
+      t.references :result, null: true, foreign_key: { to_table: :chorus_results }
       t.string :name, null: false
       t.string :kind
       t.string :locator
@@ -230,22 +235,28 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # here, once chorus_work_orders exists, since the column was created up top.
     add_foreign_key :chorus_workspaces, :chorus_work_orders, column: :current_work_order_id
 
-    # Result: the durable outcome of an invocation (AR-backed, persisted on EVERY
-    # run — live or dry). Interface is modeled on ActiveModel::Errors (keyed
-    # messages that merge), but the backing is this table so an evaluator can later
-    # append to the SAME record and score the SAME artifact (§5). `success` is the
-    # recorded outcome; `agents_live`/`skills_live` mark which switches were in
-    # effect (§8); `recorded_argv` is the claude/npx argv that ran (or WOULD have
-    # run, in dry mode), so a dry run is fully inspectable; `messages` is the keyed
-    # bag (category -> [msg]).
+    # Result: ONE row per invocation (plan 011 §8) — a narrow record of what a single
+    # run did and what it cost, polymorphic over its resultable (a WorkOrder or Plan
+    # now; a Task in Phase 2). This is a rewrite, not a rename: the old
+    # ActiveModel::Errors-shaped accumulator (one durable Result per thing, kept open
+    # for later contributors) is gone. A retry is a SECOND Result, so "did this
+    # succeed?" is a question about `resultable.results` collectively — which is what
+    # gives attempt history and retry a home. `messages` survives only as a plain
+    # json diagnostics bag.
     create_table :chorus_results do |t|
-      t.references :artifact,  null: true, foreign_key: { to_table: :chorus_artifacts }
-      t.references :workspace, null: true, foreign_key: { to_table: :chorus_workspaces }
-      t.boolean :success                  # recorded outcome (nil = fall back to empty?)
-      t.boolean :agents_live              # execution-mode marker: was the agent exec live?
-      t.boolean :skills_live              # execution-mode marker: was the npx install live?
-      t.json    :recorded_argv, default: [] # [{ "phase" => "equip"|"invoke", "argv" => [...] }, ...]
-      t.json    :messages,      default: {} # ActiveModel::Errors-shaped bag: { category => [msg] }
+      t.references :resultable, polymorphic: true, null: false   # WorkOrder or Plan (Task in Phase 2)
+      t.json     :argv,     default: []   # the argv this invocation ran
+      t.string   :cwd                     # the working directory it ran in
+      t.boolean  :success                 # recorded outcome of this one run
+      t.string   :external_session_id     # the runtime session id (latched from the stream)
+      t.decimal  :cost_usd, precision: 12, scale: 6   # what the run cost
+      t.integer  :duration_ms             # wall-clock duration
+      t.integer  :num_turns               # turns taken
+      t.json     :usage                   # token-usage bag
+      t.json     :tool_calls              # tool-call diagnostics bag
+      t.boolean  :interrupted             # did the run get interrupted mid-stream
+      t.boolean  :is_error                # did the runtime report an error
+      t.json     :messages, default: {}   # plain json diagnostics bag
       t.timestamps
     end
   end

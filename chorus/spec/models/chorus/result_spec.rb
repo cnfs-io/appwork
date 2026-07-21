@@ -1,103 +1,78 @@
 require "rails_helper"
 
-# Chorus::Result — AR-backed, ActiveModel::Errors-shaped (§5). The interface is what
-# matters (keyed messages that merge; empty?/success?/full_messages); the backing is
-# a chorus_results row so an evaluator can later append to the SAME record.
+# Chorus::Result — ONE row per invocation (plan 011 §8), polymorphic over its
+# resultable (a WorkOrder or Plan). A rewrite, not a rename: the old
+# ActiveModel::Errors-shaped accumulator is gone. A retry is a SECOND Result, so
+# "did this succeed?" is a question about `resultable.results` collectively.
 RSpec.describe Chorus::Result, type: :model do
+  it "has a valid factory" do
+    expect(build(:chorus_result)).to be_valid
+  end
+
   describe "associations" do
-    it "belongs to an artifact (optional) and a workspace (optional)" do
-      expect(described_class.reflect_on_association(:artifact).options[:optional]).to be(true)
-      expect(described_class.reflect_on_association(:workspace).options[:optional]).to be(true)
+    it "belongs to a polymorphic resultable" do
+      reflection = described_class.reflect_on_association(:resultable)
+      expect(reflection.macro).to eq(:belongs_to)
+      expect(reflection.options[:polymorphic]).to be(true)
     end
 
-    # 007 builds Result review-READY, not reviewed — the Review model lands in 008.
-    it "does NOT declare has_many :reviews (would dangle without chorus_reviews)" do
-      expect(described_class.reflect_on_association(:reviews)).to be_nil
-    end
-  end
-
-  describe "the ActiveModel::Errors-shaped surface" do
-    subject(:result) { build(:chorus_result) }
-
-    it "starts empty" do
-      expect(result).to be_empty
-      expect(result.full_messages).to eq([])
+    it "has many artifacts (the things a run produced), nullify on destroy" do
+      reflection = described_class.reflect_on_association(:artifacts)
+      expect(reflection.macro).to eq(:has_many)
+      expect(reflection.options[:dependent]).to eq(:nullify)
     end
 
-    it "accumulates keyed messages" do
-      result.add(:equip, "web-design-guidelines mounted")
-      result.add(:equip, "frontend-design mounted")
-      result.add(:invoke, "claude -p issued")
-
-      expect(result).not_to be_empty
-      expect(result.full_messages).to contain_exactly(
-        "equip web-design-guidelines mounted",
-        "equip frontend-design mounted",
-        "invoke claude -p issued"
-      )
-    end
-
-    it "is chainable (returns self from #add)" do
-      expect(result.add(:a, "one")).to be(result)
-    end
-  end
-
-  # The merge path is the evaluator-readiness assertion: several contributors
-  # compose into one Result.
-  describe "#merge (multiple contributors compose)" do
-    it "merges another Result's messages in" do
-      a = build(:chorus_result).add(:equip, "equipped")
-      b = build(:chorus_result).add(:invoke, "invoked").add(:invoke, "captured")
-
-      a.merge(b)
-
-      expect(a.full_messages).to contain_exactly(
-        "equip equipped", "invoke invoked", "invoke captured"
-      )
-    end
-
-    it "merges a raw keyed bag in" do
-      result = build(:chorus_result).add(:equip, "equipped")
-      result.merge("review" => [ "a11y ok", "markup ok" ])
-
-      expect(result.full_messages).to include("review a11y ok", "review markup ok", "equip equipped")
-    end
-  end
-
-  describe "#success? (gates delivery the way valid? gates save)" do
-    it "reads the recorded outcome when set" do
-      expect(build(:chorus_result, success: true).success?).to be(true)
-      expect(build(:chorus_result, success: false).success?).to be(false)
-    end
-
-    it "falls back to empty? when the outcome is unset" do
-      result = build(:chorus_result, success: nil)
-      expect(result.success?).to be(true)
-      result.add(:error, "boom")
-      expect(result.success?).to be(false)
-    end
-  end
-
-  describe "argv recording (dry-run inspectability, §8)" do
-    it "records phase-tagged argv and reads it back per phase" do
+    # The old accumulator interface is gone (§8).
+    it "no longer exposes the ActiveModel::Errors-shaped surface" do
       result = build(:chorus_result)
-      result.record_argv(:equip, [ "npx", "skills", "add", "vercel-labs/agent-skills" ])
-      result.record_argv(:invoke, [ "claude", "-p", "task" ])
-
-      expect(result.argv_for(:equip)).to eq([ [ "npx", "skills", "add", "vercel-labs/agent-skills" ] ])
-      expect(result.argv_for(:invoke)).to eq([ [ "claude", "-p", "task" ] ])
+      expect(result).not_to respond_to(:add)
+      expect(result).not_to respond_to(:merge)
+      expect(result).not_to respond_to(:full_messages)
+      expect(result).not_to respond_to(:record_argv)
     end
   end
 
-  describe "persistence round-trip" do
-    it "persists messages and argv and reloads them intact" do
-      result = create(:chorus_result)
-      result.add(:equip, "mounted").record_argv(:invoke, [ "claude", "-p", "task" ])
-      result.save!
+  describe "many per resultable (attempt history)" do
+    it "records each run as its own row, ordered by creation" do
+      work_order = create(:chorus_work_order)
+      first  = create(:chorus_result, resultable: work_order, success: false)
+      second = create(:chorus_result, resultable: work_order, success: true)
 
+      expect(work_order.reload.results.order(:id)).to eq([ first, second ])
+    end
+
+    it "a Plan is equally a resultable" do
+      plan = create(:chorus_plan)
+      result = create(:chorus_result, resultable: plan)
+      expect(plan.reload.results).to contain_exactly(result)
+    end
+  end
+
+  describe "produced artifacts" do
+    it "an artifact points back at the result that produced it" do
+      result = create(:chorus_result)
+      artifact = create(:chorus_artifact, result: result)
+      expect(artifact.reload.result).to eq(result)
+      expect(result.reload.artifacts).to contain_exactly(artifact)
+    end
+  end
+
+  describe "the plain diagnostics bags" do
+    it "defaults argv and messages to empty json, round-tripping intact" do
+      result = create(:chorus_result, argv: [ "claude", "-p", "x" ], messages: { "note" => "hi" })
       reloaded = described_class.find(result.id)
-      expect(reloaded.full_messages).to eq([ "equip mounted" ])
-      expect(reloaded.argv_for(:invoke)).to eq([ [ "claude", "-p", "task" ] ])
+      expect(reloaded.argv).to eq([ "claude", "-p", "x" ])
+      expect(reloaded.messages).to eq("note" => "hi")
+    end
+
+    it "records cost/usage/session columns as plain attributes" do
+      result = create(:chorus_result,
+                      external_session_id: "sess-abc", cost_usd: 0.0123,
+                      duration_ms: 4567, num_turns: 3, is_error: false)
+      reloaded = described_class.find(result.id)
+      expect(reloaded.external_session_id).to eq("sess-abc")
+      expect(reloaded.cost_usd).to eq(0.0123)
+      expect(reloaded.num_turns).to eq(3)
     end
   end
 end

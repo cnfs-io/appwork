@@ -15,21 +15,23 @@ module Chorus
   # skill isn't there" miss, is recorded into the durable Result and success flipped
   # to false (§5), never raised. A silent equip miss (the agent later runs without
   # its skill) is worse than a crash.
+  #
+  # PARKED (plan 011 §8/§12): the Result rewrite removed the argv/failure accumulator
+  # this used to record into. Equipper is inert until the foreman loop replaces it —
+  # its Result coupling was stripped rather than ported (the new per-invocation Result
+  # is not an accumulator). It still installs skills project-scoped when skills_live,
+  # and is otherwise a no-op. The `result:` argument is retained only so the existing
+  # (dead) Invocation constructor keeps matching.
   class Equipper
-    # npx was observed to print a not-found message yet still exit 0. Exit code alone
-    # is therefore not trustworthy; we also scan the output for this signal. A
-    # heuristic on unstable CLI text — deliberately narrow to avoid false positives.
-    SKILL_NOT_FOUND = /no matching skills? found|skills? not found|couldn't find|could not find/i
-
-    def initialize(adapter:, result:, workspace:, catalog: SkillCatalog.new)
+    def initialize(adapter:, result: nil, workspace:, catalog: SkillCatalog.new)
       @adapter   = adapter
       @result    = result
       @workspace = workspace
       @catalog   = catalog
     end
 
-    # Equip each resolved skill; returns the Result (argv + cwd recorded on it, and
-    # any equip failures accumulated as messages).
+    # Equip each resolved skill; installs project-scoped into the workspace when
+    # skills_live, a no-op otherwise. Returns whatever `result:` it was handed.
     def equip(resolved_skills)
       Array(resolved_skills).each { |skill| equip_one(skill) }
       @result
@@ -38,34 +40,14 @@ module Chorus
     private
 
     def equip_one(skill)
-      args = @catalog.add_args(skill.resource, skill: skill.skill, agents: agents)
-      # Record the exact would-run command AND where it runs (the project path), from
-      # the SkillCatalog builders — so the record can never drift from a live run.
-      @result.record_argv(:equip, @catalog.npx_argv(*args), cwd: @workspace.directory)
       return unless Chorus::Config.skills_live
 
-      shell = @catalog.add(skill.resource, skill: skill.skill, agents: agents,
-                           path: @workspace.pathname)
-      confirm_installed(skill, shell)
+      @catalog.add(skill.resource, skill: skill.skill, agents: agents,
+                   path: @workspace.pathname)
     end
 
     def agents
       [ @adapter.skills_agent_key ]
-    end
-
-    # Record an operational failure into the Result (never raise): a non-zero install,
-    # or a zero-exit that nonetheless reported the skill was not found.
-    def confirm_installed(skill, shell)
-      if !shell.success?
-        fail_equip(skill, shell.failure_message)
-      elsif "#{shell.stdout}#{shell.stderr}".match?(SKILL_NOT_FOUND)
-        fail_equip(skill, "npx exited 0 but reported the skill was not found")
-      end
-    end
-
-    def fail_equip(skill, detail)
-      @result.add(:equip, "#{skill.resource} #{skill.skill}: #{detail}")
-      @result.success = false
     end
   end
 end
