@@ -63,15 +63,24 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    # Plan (plan 010 §5): an OKF-backed markdown document an agent writes into its
-    # workspace's doc/ bundle. The row claims OWNERSHIP of the synced Concept
-    # (has_one_okf :concept); narrative content lives in the Concept, never a column
-    # here. `name` is the plan's human label; the agent × workspace it belongs to
-    # are real FKs (the Planner that populates this is a later step).
+    # Plan (plan 011 §7): an OKF-backed markdown document addressed to a role — WHO
+    # should EXECUTE it — under a WorkOrder. `plan.role` differs from
+    # `work_order.role` by design: each level's role is set by the level above
+    # (delegation, not denormalization). The row claims OWNERSHIP of the synced
+    # Concept (has_one_okf :concept); narrative content lives in the Concept, never a
+    # column here.
+    #
+    # TRANSITIONAL: `workspace_id` still lives here and is reachable directly. It is
+    # slated to drop (reachable via work_order.workspace, §7) together with the
+    # deletion of Chorus::Planner in step 7 — the Planner still creates Plans by
+    # workspace, so the column stays until execute! replaces it. Likewise work_order
+    # and role are nullable/optional now; execute! makes them the required spine.
     create_table :chorus_plans do |t|
-      t.references :workspace, null: false, foreign_key: { to_table: :chorus_workspaces }
-      t.references :agent,     null: false, foreign_key: { to_table: :chorus_agents }
-      t.string     :name,      null: false
+      t.references :work_order, null: true, foreign_key: { to_table: :chorus_work_orders }
+      t.references :role,       null: true, foreign_key: { to_table: :chorus_roles }
+      t.references :workspace,  null: true, foreign_key: { to_table: :chorus_workspaces }   # transitional; drops in step 7
+      t.references :agent,      null: true, foreign_key: { to_table: :chorus_agents }
+      t.string     :name,       null: false
       t.timestamps
     end
 
