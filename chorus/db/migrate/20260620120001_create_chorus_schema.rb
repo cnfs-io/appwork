@@ -54,8 +54,6 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
       t.index :type
     end
 
-    add_reference :chorus_workspaces, :workable, polymorphic: true, null: true
-
     create_table :chorus_artifacts do |t|
       t.references :workspace, null: false, foreign_key: { to_table: :chorus_workspaces }
       t.string :name, null: false
@@ -197,6 +195,31 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
 
       t.index [ :role_id, :name ], unique: true
     end
+
+    # WorkOrder (plan 011 §4): a job against a site. A feature request that lands
+    # against a Workspace carrying the role required to execute it; an Agent is hired
+    # to fill that role. The WorkOrder itself IS a document — Claude Desktop writes a
+    # summary of a design conversation as markdown, which is why it carries a concept
+    # (has_one_okf :concept) rather than a text column. `workable` moved here from
+    # Workspace: a place has no subject, a job does. `external_session_id` is latched
+    # from the first stream event (so an interrupt mid-first-turn still leaves a
+    # resumable order); `--resume` is NOT wired this phase. Everything the host
+    # decides (which workspace, which role, which agent) arrives fully specified
+    # (§5). workable/workspace are nullable at the DB so the owning place/subject can
+    # nullify on teardown, but required at the model — a valid order names both.
+    create_table :chorus_work_orders do |t|
+      t.references :workable,  polymorphic: true, null: true   # the occupied subject (nullify on teardown)
+      t.references :workspace, null: true,  foreign_key: { to_table: :chorus_workspaces }
+      t.references :role,      null: false, foreign_key: { to_table: :chorus_roles }
+      t.references :agent,     null: true,  foreign_key: { to_table: :chorus_agents }
+      t.string     :external_session_id     # latched from the first stream event; unused this phase
+      t.string     :state                   # free-string lifecycle marker
+      t.timestamps
+    end
+
+    # The Workspace serial-occupancy claim points at the active WorkOrder (§6). Added
+    # here, once chorus_work_orders exists, since the column was created up top.
+    add_foreign_key :chorus_workspaces, :chorus_work_orders, column: :current_work_order_id
 
     # Result: the durable outcome of an invocation (AR-backed, persisted on EVERY
     # run — live or dry). Interface is modeled on ActiveModel::Errors (keyed

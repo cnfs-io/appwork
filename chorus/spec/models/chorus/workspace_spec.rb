@@ -90,10 +90,6 @@ RSpec.describe Chorus::Workspace, type: :model do
       expect(workspace).not_to be_valid
       expect(workspace.errors[:name]).to be_present
     end
-
-    it "is valid without a workable (the slot is optional)" do
-      expect(build(:chorus_workspace, workable: nil)).to be_valid
-    end
   end
 
   describe "associations" do
@@ -109,14 +105,16 @@ RSpec.describe Chorus::Workspace, type: :model do
       expect(reflection.options[:as]).to eq(:owner)
     end
 
-    it "occupies a polymorphic workable" do
-      reflection = described_class.reflect_on_association(:workable)
-      expect(reflection.macro).to eq(:belongs_to)
-      expect(reflection.options[:polymorphic]).to be(true)
+    it "no longer occupies a workable (the subject moved to WorkOrder, §4)" do
+      expect(described_class.reflect_on_association(:workable)).to be_nil
+      expect(described_class.column_names).not_to include("workable_id", "workable_type")
     end
 
-    it "marks workable as optional" do
-      expect(described_class.reflect_on_association(:workable).options[:optional]).to be(true)
+    it "holds the work orders that landed against it, and its active claim (§6)" do
+      expect(described_class.reflect_on_association(:work_orders).macro).to eq(:has_many)
+      current = described_class.reflect_on_association(:current_work_order)
+      expect(current.macro).to eq(:belongs_to)
+      expect(current.options[:optional]).to be(true)
     end
 
     it "makes no structural claim on the Strategy → Project chain (org models left Chorus)" do
@@ -127,16 +125,15 @@ RSpec.describe Chorus::Workspace, type: :model do
 
   # Serial occupancy (§6): one work order active at a time, taken by an atomic
   # conditional update. The negative case is the point — a second claimant must be
-  # refused, not silently overwrite the first. WorkOrder itself lands next step, so
-  # the claim is exercised with lightweight stand-ins that only need an #id.
+  # refused, not silently overwrite the first.
   describe "#claim!" do
     let(:workspace) { create(:chorus_workspace) }
-    let(:first)  { double("WorkOrder", id: 111) }
-    let(:second) { double("WorkOrder", id: 222) }
+    let(:first)  { create(:chorus_work_order, workspace: workspace) }
+    let(:second) { create(:chorus_work_order, workspace: workspace) }
 
     it "succeeds on an unclaimed workspace, stamping the claim" do
       expect(workspace.claim!(first)).to be(true)
-      expect(workspace.reload.current_work_order_id).to eq(111)
+      expect(workspace.reload.current_work_order_id).to eq(first.id)
       expect(workspace.claimed_at).to be_present
     end
 
@@ -144,7 +141,7 @@ RSpec.describe Chorus::Workspace, type: :model do
       workspace.claim!(first)
 
       expect(workspace.claim!(second)).to be(false)
-      expect(workspace.reload.current_work_order_id).to eq(111)
+      expect(workspace.reload.current_work_order_id).to eq(first.id)
     end
   end
 

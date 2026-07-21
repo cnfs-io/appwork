@@ -44,13 +44,20 @@ module Chorus
       SEED_SKILLS.each { |name| SkillRequirement.find_or_create_by!(role: role, name: name) }
 
       workspace = Workspace.find_or_create_by!(name: "Frontend") do |w|
+        w.role        = role
         w.description = "Home for the frontend-builder agent's runs and artifacts."
       end
-      # Occupy a bare workable if the host provided one (Workspace occupies at most
-      # one at a time; only set it when currently free).
-      workspace.update!(workable: workable) if workable && workspace.workable.nil?
 
-      { agent: agent, role: role, workspace: workspace }
+      # The subject now rides on a WorkOrder, not the Workspace (plan 011 §4): if the
+      # host provided a bare workable, land an order for it against the place.
+      work_order =
+        if workable
+          WorkOrder.find_or_create_by!(workable: workable, workspace: workspace, role: role) do |wo|
+            wo.agent = agent
+          end
+        end
+
+      { agent: agent, role: role, workspace: workspace, work_order: work_order }
     end
   end
 end

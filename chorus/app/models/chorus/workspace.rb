@@ -17,11 +17,13 @@ module Chorus
     # A plot of land carries the role it was provisioned for (plan 011 §6).
     belongs_to :role
 
-    # A workspace occupies at most one workable at a time (a polymorphic target).
-    # NOTE: workable is leaving Workspace for WorkOrder (plan 011 §4) in the next
-    # step of this reshape — a place has no subject. Held here for one more step so
-    # the occupiability concern keeps a home until WorkOrder exists.
-    belongs_to :workable, polymorphic: true, optional: true
+    # The WorkOrder currently occupying this place — the serial-occupancy claim slot
+    # (§6). Optional: an unclaimed workspace holds none.
+    belongs_to :current_work_order, class_name: "Chorus::WorkOrder", optional: true
+
+    # Every work order that has landed against this place. Nullify: a work order
+    # outlives the teardown of the place it ran in.
+    has_many :work_orders, dependent: :nullify
 
     has_many :artifacts, dependent: :destroy
 

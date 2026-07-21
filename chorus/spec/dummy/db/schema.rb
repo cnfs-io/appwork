@@ -154,6 +154,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_120001) do
     t.index ["slug"], name: "index_chorus_taxonomies_on_slug", unique: true
   end
 
+  create_table "chorus_work_orders", force: :cascade do |t|
+    t.integer "agent_id"
+    t.datetime "created_at", null: false
+    t.string "external_session_id"
+    t.integer "role_id", null: false
+    t.string "state"
+    t.datetime "updated_at", null: false
+    t.integer "workable_id"
+    t.string "workable_type"
+    t.integer "workspace_id"
+    t.index ["agent_id"], name: "index_chorus_work_orders_on_agent_id"
+    t.index ["role_id"], name: "index_chorus_work_orders_on_role_id"
+    t.index ["workable_type", "workable_id"], name: "index_chorus_work_orders_on_workable"
+    t.index ["workspace_id"], name: "index_chorus_work_orders_on_workspace_id"
+  end
+
   create_table "chorus_workspaces", force: :cascade do |t|
     t.datetime "claimed_at"
     t.datetime "created_at", null: false
@@ -162,11 +178,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_120001) do
     t.string "name", null: false
     t.integer "role_id", null: false
     t.datetime "updated_at", null: false
-    t.integer "workable_id"
-    t.string "workable_type"
     t.index ["current_work_order_id"], name: "index_chorus_workspaces_on_current_work_order_id"
     t.index ["role_id"], name: "index_chorus_workspaces_on_role_id"
-    t.index ["workable_type", "workable_id"], name: "index_chorus_workspaces_on_workable"
   end
 
   create_table "cnfs_okf_bundles", force: :cascade do |t|
@@ -230,7 +243,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_120001) do
   add_foreign_key "chorus_skill_categorizations", "chorus_taxonomies", column: "taxonomy_id"
   add_foreign_key "chorus_skill_requirements", "chorus_roles", column: "role_id"
   add_foreign_key "chorus_taxonomies", "chorus_taxonomies", column: "parent_id"
+  add_foreign_key "chorus_work_orders", "chorus_agents", column: "agent_id"
+  add_foreign_key "chorus_work_orders", "chorus_roles", column: "role_id"
+  add_foreign_key "chorus_work_orders", "chorus_workspaces", column: "workspace_id"
   add_foreign_key "chorus_workspaces", "chorus_roles", column: "role_id"
+  add_foreign_key "chorus_workspaces", "chorus_work_orders", column: "current_work_order_id"
   add_foreign_key "cnfs_okf_concepts", "cnfs_okf_bundles", column: "bundle_id"
   add_foreign_key "cnfs_okf_view_ports", "cnfs_okf_bundles", column: "bundle_id"
 end

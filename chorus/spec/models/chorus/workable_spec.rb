@@ -2,38 +2,45 @@
 
 require "rails_helper"
 
-# The Chorus::Workable concern — OCCUPIABILITY ONLY (006 moved status out to
-# `okf_frontmatter :status` on each host spine model). Exercised via WorkableDummy
-# (chorus/spec/dummy). Occupiability is concept-independent, so these specs build a
+# The Chorus::Workable concern — the contract a host model satisfies to become the
+# SUBJECT of work (plan 011 §4). After the reshape the subject rides on WorkOrder,
+# not Workspace (a place has no subject, a job does): a workable is addressed by many
+# work orders through the polymorphic inverse. Exercised via WorkableDummy
+# (chorus/spec/dummy). Being workable is concept-independent, so these specs build a
 # bare dummy with no concept.
 RSpec.describe Chorus::Workable, type: :model do
-  describe "occupancy (the polymorphic workspace inverse)" do
-    it "round-trips: a workspace occupies the workable, reachable both ways" do
-      dummy = WorkableDummy.create!(name: "W")
-      workspace = Chorus::Workspace.create!(name: "Delivery", workable: dummy, role: create(:chorus_role))
-
-      expect(dummy.reload.workspace).to eq(workspace)
-      expect(workspace.reload.workable).to eq(dummy)
+  describe "the polymorphic work_orders inverse" do
+    it "provides has_many :work_orders, as: :workable" do
+      reflection = WorkableDummy.reflect_on_association(:work_orders)
+      expect(reflection.macro).to eq(:has_many)
+      expect(reflection.options[:as]).to eq(:workable)
+      expect(reflection.klass).to eq(Chorus::WorkOrder)
     end
 
-    it "releases (workspace goes nil) when the occupying workspace is destroyed" do
+    it "round-trips: a work order names the workable as its subject, reachable both ways" do
       dummy = WorkableDummy.create!(name: "W")
-      workspace = Chorus::Workspace.create!(name: "Delivery", workable: dummy, role: create(:chorus_role))
+      work_order = create(:chorus_work_order, workable: dummy)
 
-      workspace.destroy
-
-      expect(dummy.reload.workspace).to be_nil
-      expect(WorkableDummy.exists?(dummy.id)).to be(true)
+      expect(dummy.reload.work_orders).to contain_exactly(work_order)
+      expect(work_order.reload.workable).to eq(dummy)
     end
 
-    it "nullify: destroying the workable leaves the durable workspace, detached" do
+    it "addresses many work orders over time" do
       dummy = WorkableDummy.create!(name: "W")
-      workspace = Chorus::Workspace.create!(name: "Delivery", workable: dummy, role: create(:chorus_role))
+      a = create(:chorus_work_order, workable: dummy)
+      b = create(:chorus_work_order, workable: dummy)
+
+      expect(dummy.reload.work_orders).to contain_exactly(a, b)
+    end
+
+    it "nullify: destroying the workable leaves its durable work orders, detached" do
+      dummy = WorkableDummy.create!(name: "W")
+      work_order = create(:chorus_work_order, workable: dummy)
 
       dummy.destroy
 
-      expect(Chorus::Workspace.exists?(workspace.id)).to be(true)
-      expect(workspace.reload.workable_id).to be_nil
+      expect(Chorus::WorkOrder.exists?(work_order.id)).to be(true)
+      expect(work_order.reload.workable_id).to be_nil
     end
   end
 end
