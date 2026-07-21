@@ -170,3 +170,112 @@ bin/rails cnfs_okf:listen                   # watch + sync (dedicated process)
 bundle exec rspec            # 44 examples
 bundle exec rubocop app spec lib
 ```
+
+---
+
+## Dummy proving ground: owned-concept policy wired (PLAN-cnfs-support-walker-and-cleanup, Part B)
+
+**What shipped**
+
+- `Account` fixed — was `has_one_okf :bundle` + `has_one_okf :concept` (neither
+  designed). Now `has_many_okf :bundles`; Account owns many bundles, concept
+  ownership belongs to Strategy.
+- Committed fixtures `spec/fixtures/bundles/` (acme + playbook trees): nested
+  dirs, a file with a custom frontmatter key (`priority`), and a
+  frontmatter-less `README.md` (miss path).
+- `spec/dummy/db/seeds.rb` — copies fixtures → gitignored `storage/bundles`,
+  creates an Account + one Bundle per dir (`after_create` → Sync builds
+  concepts), then a Strategy CLAIMS an existing concept (activating the
+  owned_concept_policy branch). Destructive + idempotent at the working-dir
+  level (fresh Account rows each run, by design).
+- `spec/services/cnfs_okf/owned_concept_policy_spec.rb` — the full policy matrix
+  through a REAL Strategy owner + the write-path-under-ownership cases: a UI
+  `content=` edit writes disk, restamps the hash, and `Sync.call` then reports
+  **unchanged, not updated** (the feedback-loop short-circuit); a `priority=`
+  edit round-trips custom frontmatter to YAML with the body untouched.
+- Tailwind entry moved to `application.css.erb` driven by
+  `CnfsSupport.source_paths` (Part A). See the Tailwind ERB note below.
+
+**Decisions worth flagging**
+
+- **tailwindcss-rails 4.6.0 does NOT run ERB over its entry file** (the plan
+  assumed it did) — it hardcodes `application.css` and hands it straight to the
+  CLI. Added `spec/dummy/lib/tasks/tailwind_erb.rake` (`tailwindcss:render_entry`)
+  that renders `application.css.erb` → `application.css` before build/watch, and
+  gitignored the rendered `application.css` (absolute, machine-specific paths).
+  Kept dummy-local by decision (UI gem is on hold); promote to cnfs_ui when it
+  lands.
+- `db:clobber` in the plan is not a real task here; used
+  `db:drop db:create db:migrate`.
+- Console gate confirmed: `Sync.call` after a UI edit → `unchanged=3` (acme has
+  3 concepts), NOT `updated=1`.
+
+**How to run**
+
+```
+bundle exec rspec            # 66 examples (10 new in owned_concept_policy_spec)
+(cd spec/dummy && bin/rails db:drop db:create db:migrate db:seed && bin/rails tailwindcss:build)
+bin/rubocop
+```
+
+---
+
+## `okf_frontmatter` accessor macro (006-frontmatter-macro)
+
+**What shipped** — full suite green: **73 examples, 0 failures** (+7 from 66);
+RuboCop clean (68 files, 0 offenses).
+
+- **`CnfsOkf::Consumer.okf_frontmatter(*names)`** — class macro alongside
+  `has_one_okf` / `has_many_okf`. For each name it defines a delegating
+  read/write accessor pair over the owned `:concept`'s serialized
+  `custom_frontmatter` Hash (string keys). Extracts, verbatim, the pair
+  `Strategy` carried by hand.
+- **`spec/dummy/app/models/strategy.rb`** — hand-written `priority` /
+  `priority=` replaced with `okf_frontmatter :priority`. The
+  `delegate :title, :description, to: :concept` line stays (standard Concept
+  columns, not custom frontmatter).
+- **`spec/models/cnfs_okf/consumer_frontmatter_spec.rb`** — 7 examples pinning
+  read (value / missing-key nil / concept-less nil) and write (store / merge
+  without clobber / persist-to-disk round-trip / concept-less raise).
+
+**Decisions worth flagging**
+
+- **The read/write nil-safety asymmetry is the contract, and is pinned
+  explicitly.** Read is `&.`-guarded — a concept-less consumer reads `nil`.
+  Write is NOT guarded — a concept-less consumer *raises* `NoMethodError`
+  (asserted directly). A consumer that declares `okf_frontmatter` is expected to
+  own a concept (`has_one_okf :concept`); absence is a consumer bug, not a case
+  to defend. The write assertion exists so a later session doesn't "fix" the
+  raise into silent nil-handling and quietly break the contract.
+- **Concept-less fixture is built the honest way** — a bare
+  `account.strategies.create!` that claims no concept, NOT the seed path (which
+  has a Strategy claim an existing concept). Auto-claiming would make the
+  nil/raise branches untestable.
+- **`CnfsOkf::Concept` untouched.** The macro is entirely consumer-side; the
+  existing OKF/Concept specs stayed green, confirming Concept behavior is
+  unchanged.
+
+**Scope held** — accessor pair only. No `okf_projected_fields`, no
+`column_names` introspection, no `cnfs_okf.sync.run` subscriber, no
+precedence/write-loop guard, no migration change, no notifications/callbacks.
+
+**On the horizon (deferred — recorded, not built).** Queryable projection of a
+declared custom-frontmatter key into a first-class AR column
+(`Strategy.where(priority: ...)`) is **explicitly deferred** — speculative until
+a consumer writes a query that needs it, and it carries all the complexity
+(subscriber, disk-wins vs. local-wins precedence, write-loop guard, per-tick
+walk over owned concepts) while the macro carries none. The macro leaves the
+door fully open: projection can land later without changing the accessor surface
+consumers already use. Three questions to settle *then*, none now — **trigger**
+(subscribe to `cnfs_okf.sync.run` and follow `concept.owner` back, vs. a
+macro-wired per-concept reload callback), **precedence** (recommend disk-wins;
+a runtime-authoritative value shouldn't be modeled as a projected column), and
+**write-loop/cost** (project without a concept persist; save the owner only on
+an actual change). See `doc/plans/006-frontmatter-macro.md` "On the horizon".
+
+**How to run**
+
+```
+bundle exec rspec            # 73 examples
+bin/rubocop
+```

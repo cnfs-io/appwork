@@ -4,16 +4,10 @@ class Strategy < ApplicationRecord
 
   has_one_okf :concept
 
-  # Delegate frontmatter access to the owned concept — BY HAND (no DSL yet).
-  # Standard fields via delegate; a custom field written long-form so we can
-  # feel what a future `cnfs_okf_frontmatter :priority` macro would generate.
+  # Standard Concept columns via plain delegate; a custom-frontmatter key via
+  # the okf_frontmatter macro (generates the priority/priority= accessor pair
+  # over concept.custom_frontmatter).
   delegate :title, :description, to: :concept, allow_nil: true
 
-  def priority
-    concept&.custom_frontmatter&.dig("priority")
-  end
-
-  def priority=(value)
-    concept.custom_frontmatter = (concept.custom_frontmatter || {}).merge("priority" => value)
-  end
+  okf_frontmatter :priority
 end
