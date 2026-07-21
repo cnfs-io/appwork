@@ -10,7 +10,7 @@ RSpec.describe Chorus::Workable, type: :model do
   describe "occupancy (the polymorphic workspace inverse)" do
     it "round-trips: a workspace occupies the workable, reachable both ways" do
       dummy = WorkableDummy.create!(name: "W")
-      workspace = Chorus::Workspace.create!(name: "Delivery", workable: dummy)
+      workspace = Chorus::Workspace.create!(name: "Delivery", workable: dummy, role: create(:chorus_role))
 
       expect(dummy.reload.workspace).to eq(workspace)
       expect(workspace.reload.workable).to eq(dummy)
@@ -18,7 +18,7 @@ RSpec.describe Chorus::Workable, type: :model do
 
     it "releases (workspace goes nil) when the occupying workspace is destroyed" do
       dummy = WorkableDummy.create!(name: "W")
-      workspace = Chorus::Workspace.create!(name: "Delivery", workable: dummy)
+      workspace = Chorus::Workspace.create!(name: "Delivery", workable: dummy, role: create(:chorus_role))
 
       workspace.destroy
 
@@ -28,7 +28,7 @@ RSpec.describe Chorus::Workable, type: :model do
 
     it "nullify: destroying the workable leaves the durable workspace, detached" do
       dummy = WorkableDummy.create!(name: "W")
-      workspace = Chorus::Workspace.create!(name: "Delivery", workable: dummy)
+      workspace = Chorus::Workspace.create!(name: "Delivery", workable: dummy, role: create(:chorus_role))
 
       dummy.destroy
 

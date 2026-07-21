@@ -6,7 +6,7 @@ module Chorus
     # Skill from an org spine.
     has_one_okf :concept
     has_many :role_skills, dependent: :destroy
-    has_many :agent_roles, through: :role_skills
+    has_many :roles, through: :role_skills
 
     validates :name, presence: true
   end

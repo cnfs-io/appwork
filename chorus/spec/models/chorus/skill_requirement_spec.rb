@@ -13,8 +13,8 @@ RSpec.describe Chorus::SkillRequirement, type: :model do
     expect(req.errors[:name]).to be_present
   end
 
-  it "belongs to an agent_role" do
-    reflection = described_class.reflect_on_association(:agent_role)
+  it "belongs to a role" do
+    reflection = described_class.reflect_on_association(:role)
     expect(reflection.macro).to eq(:belongs_to)
   end
 
@@ -23,10 +23,10 @@ RSpec.describe Chorus::SkillRequirement, type: :model do
     expect(described_class.column_names).not_to include("catalog_skill_id")
   end
 
-  it "is unique per [agent_role, name]" do
-    role = create(:chorus_agent_role)
-    create(:chorus_skill_requirement, agent_role: role, name: "code-review")
-    dup = build(:chorus_skill_requirement, agent_role: role, name: "code-review")
+  it "is unique per [role, name]" do
+    role = create(:chorus_role)
+    create(:chorus_skill_requirement, role: role, name: "code-review")
+    dup = build(:chorus_skill_requirement, role: role, name: "code-review")
     expect { dup.save!(validate: false) }.to raise_error(ActiveRecord::RecordNotUnique)
   end
 end

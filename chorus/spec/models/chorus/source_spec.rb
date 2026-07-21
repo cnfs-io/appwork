@@ -38,6 +38,22 @@ RSpec.describe Chorus::Source, type: :model do
     end
   end
 
+  describe "ownership (§6)" do
+    it "belongs to a polymorphic owner, optionally" do
+      reflection = described_class.reflect_on_association(:owner)
+      expect(reflection.macro).to eq(:belongs_to)
+      expect(reflection.options[:polymorphic]).to be(true)
+      expect(reflection.options[:optional]).to be(true)
+    end
+
+    it "a workspace owns the sources checked out into it" do
+      workspace = create(:chorus_workspace)
+      source = create(:chorus_source_git, owner: workspace)
+      expect(source.reload.owner).to eq(workspace)
+      expect(workspace.reload.sources).to contain_exactly(source)
+    end
+  end
+
   describe "STI" do
     it "resolves the concrete class from the type column" do
       git = create(:chorus_source_git)

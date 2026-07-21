@@ -30,9 +30,6 @@ module Chorus
     end
 
     def call(prompt:, slug:)
-      adapter = @agent.agent_adapter
-      raise ArgumentError, "agent #{@agent.name.inspect} has no agent_adapter" if adapter.nil?
-
       @workspace.materialize_bundle
 
       filename      = "#{next_sequence}-#{slug}.md"
@@ -40,7 +37,7 @@ module Chorus
       workspace_rel = File.join("doc", bundle_rel)              # "doc/plans/001-user-auth.md"
       abs_path      = @workspace.pathname.join(workspace_rel)
 
-      adapter.invoke(prompt: build_prompt(prompt, workspace_rel), workspace: @workspace) do |event|
+      @agent.invoke(prompt: build_prompt(prompt, workspace_rel), workspace: @workspace) do |event|
         next unless event[:type] == :text
 
         print event[:text]

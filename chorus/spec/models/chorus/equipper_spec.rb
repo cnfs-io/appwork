@@ -6,7 +6,7 @@ require "rails_helper"
 # and confirms the skill actually landed — recording any failure into the Result
 # rather than raising (§5). Unit-tested with the SkillCatalog boundary stubbed.
 RSpec.describe Chorus::Equipper do
-  let(:adapter) { create(:chorus_agent_adapter_claude_code) }
+  let(:adapter) { create(:chorus_agent) }   # the agent IS its runtime now (011 §2)
   let(:result)  { build(:chorus_result) }
   let(:catalog) { instance_double(Chorus::SkillCatalog) }
 

@@ -10,8 +10,7 @@ RSpec.describe Chorus::Planner do
   before { allow(Chorus::Config).to receive(:workspace_root).and_return(root) }
   after  { FileUtils.remove_entry(root) if File.exist?(root) }
 
-  let(:adapter)   { create(:chorus_agent_adapter_claude_code) }
-  let(:agent)     { create(:chorus_agent, agent_adapter: adapter) }
+  let(:agent)     { create(:chorus_agent) }   # the agent IS its runtime now (011 §2)
   let(:workspace) { create(:chorus_workspace) }
 
   subject(:planner) { described_class.new(agent: agent, workspace: workspace) }
@@ -20,8 +19,7 @@ RSpec.describe Chorus::Planner do
   # writes a frontmatter-less markdown body there, streams a couple of events, and
   # returns a Shell::Result — exactly the observable shape of a real run.
   def stub_agent_writing(body: "# Auth plan\n\nAdd sign-in and sign-out.\n")
-    allow(agent).to receive(:agent_adapter).and_return(adapter)
-    allow(adapter).to receive(:invoke) do |prompt:, workspace:, **_rest, &block|
+    allow(agent).to receive(:invoke) do |prompt:, workspace:, **_rest, &block|
       rel = prompt[%r{doc/plans/\S+\.md}]
       target = workspace.pathname.join(rel)
       target.dirname.mkpath
@@ -84,8 +82,7 @@ RSpec.describe Chorus::Planner do
 
   describe "failure: the agent wrote no file" do
     it "raises a clear error (there is no Result to record into this phase)" do
-      allow(agent).to receive(:agent_adapter).and_return(adapter)
-      allow(adapter).to receive(:invoke) do |**_kw, &block|
+      allow(agent).to receive(:invoke) do |**_kw, &block|
         block&.call({ type: :text, text: "I refuse" })
         CnfsSupport::Shell::Result.new(command: %w[claude], stdout: "", stderr: "", exitstatus: 0, shellout: nil)
       end

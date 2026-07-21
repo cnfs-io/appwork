@@ -1,20 +1,20 @@
 module Chorus
-  # The invocation seam's coordinator: given an Agent (bound to a runtime via its
-  # AgentAdapter), an AgentRole (a capability loadout), and a task, it resolves the
-  # role's skills, equips the agent's runtime, invokes it, and persists a durable
-  # Result + Artifact — every run, live or dry (§5). Returns the Result.
+  # The invocation seam's coordinator: given an Agent (which IS its runtime), a Role
+  # (a capability loadout), and a task, it resolves the role's skills, equips the
+  # agent's runtime, invokes it, and persists a durable Result + Artifact — every
+  # run, live or dry (§5). Returns the Result.
   #
-  #   resolve (SkillResolver) -> equip (Equipper) -> invoke (AgentAdapter) ->
+  #   resolve (SkillResolver) -> equip (Equipper) -> invoke (Agent) ->
   #   persist Result + Artifact
   #
   # It honors the §8 config switches THROUGH the collaborators: the Equipper gates
-  # on skills_live, the AgentAdapter gates on agents_live. The coordinator records
-  # which switches were in effect onto the Result so a dry run is fully inspectable.
+  # on skills_live, the Agent gates on agents_live. The coordinator records which
+  # switches were in effect onto the Result so a dry run is fully inspectable.
   #
   # Console entry point (§7) — after `bin/rails db:seed`, in `bin/rails console`:
   #
   #   agent = Chorus::Agent.find_by(name: "Frontend Builder")
-  #   role  = Chorus::AgentRole.find_by(name: "frontend-builder")
+  #   role  = Chorus::Role.find_by(name: "frontend-builder")
   #   task  = "Build a Phlex searchable, sortable table component for Rails ..."
   #   result = Chorus::Invocation.new(agent:, role:, task:).call
   #   result.success?       # => true/false
@@ -37,8 +37,10 @@ module Chorus
     end
 
     def call
-      adapter = @agent.agent_adapter
-      raise ArgumentError, "agent #{@agent.name.inspect} has no agent_adapter" if adapter.nil?
+      # Agent IS its runtime adapter now (plan 011 §2 collapsed AgentAdapter in). This
+      # coordinator is inert dead code (its spec was retired in 010); the foreman loop
+      # replaces it. Kept rename-through only so it loads.
+      adapter = @agent
 
       result = Chorus::Result.new(
         workspace:   @workspace,

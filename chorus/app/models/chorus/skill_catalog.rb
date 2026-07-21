@@ -17,7 +17,7 @@ module Chorus
   # capture raw text; parsers interpret it).
   #
   # # 004 deferred: workspace materialization — the on-demand copy/format of chosen
-  # skills into a Workspace for a specific AgentAdapter (the `-a <agent>` path
+  # skills into a Workspace for a specific Agent runtime (the `-a <agent>` path
   # targeting a workspace directory) — is the day-to-day runtime act and a separate
   # design (ephemeral setup vs a recorded SkillInstallation join). #add exposes the
   # `-a`/`path:` plumbing; it does not record a materialization.

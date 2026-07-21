@@ -29,18 +29,19 @@ module Chorus
     SEED_SKILLS = %w[web-design-guidelines].freeze
 
     def seed!(workable: nil)
-      adapter = AgentAdapter::ClaudeCode.find_or_create_by!(name: "Claude Code")
+      # Agent IS its runtime now (plan 011 §2): a concrete STI subclass carrying its
+      # model, no separate adapter row.
+      agent = Agent::ClaudeCode.find_or_create_by!(name: "Frontend Builder") do |a|
+        a.model = "opus-4.8"
+      end
 
-      agent = Agent.find_or_create_by!(name: "Frontend Builder") { |a| a.agent_adapter = adapter }
-      agent.update!(agent_adapter: adapter) if agent.agent_adapter.nil?
-
-      role = AgentRole.find_or_create_by!(name: "frontend-builder") do |r|
+      role = Role.find_or_create_by!(name: "frontend-builder") do |r|
         r.description = "Equips an agent to build UI components: markup, a11y, and " \
                         "front-end design skills."
       end
-      # SkillRequirement is inert after plan 010 §2 (AgentRole no longer has_many
-      # :skill_requirements); create it keyed directly by agent_role.
-      SEED_SKILLS.each { |name| SkillRequirement.find_or_create_by!(agent_role: role, name: name) }
+      # SkillRequirement is inert after plan 010 §2 (Role no longer has_many
+      # :skill_requirements); create it keyed directly by role.
+      SEED_SKILLS.each { |name| SkillRequirement.find_or_create_by!(role: role, name: name) }
 
       workspace = Workspace.find_or_create_by!(name: "Frontend") do |w|
         w.description = "Home for the frontend-builder agent's runs and artifacts."
@@ -49,7 +50,7 @@ module Chorus
       # one at a time; only set it when currently free).
       workspace.update!(workable: workable) if workable && workspace.workable.nil?
 
-      { adapter: adapter, agent: agent, role: role, workspace: workspace }
+      { agent: agent, role: role, workspace: workspace }
     end
   end
 end

@@ -14,10 +14,20 @@ module Chorus
   # archival timing is entangled with session/claim work and is deferred
   # (doc/plans/003-heartbeat-and-checkout.md).
   class Workspace < ApplicationRecord
+    # A plot of land carries the role it was provisioned for (plan 011 §6).
+    belongs_to :role
+
     # A workspace occupies at most one workable at a time (a polymorphic target).
+    # NOTE: workable is leaving Workspace for WorkOrder (plan 011 §4) in the next
+    # step of this reshape — a place has no subject. Held here for one more step so
+    # the occupiability concern keeps a home until WorkOrder exists.
     belongs_to :workable, polymorphic: true, optional: true
 
     has_many :artifacts, dependent: :destroy
+
+    # The sources (repos) checked out into this workspace — the place owns them
+    # (plan 011 §6). Nullify on destroy: a source outlives the place it sat in.
+    has_many :sources, as: :owner, dependent: :nullify
 
     # The OKF bundle rooted at the workspace's `doc/` — where authored documents
     # (Plans, and later Tasks/notes) live as Concepts. Materialized on demand via
@@ -25,6 +35,24 @@ module Chorus
     has_one_okf :bundle
 
     validates :name, presence: true
+
+    # Take serial occupancy of this workspace for `work_order` — an atomic
+    # conditional update that writes the claim only when the slot is free. Returns
+    # true on success, false when another work order already holds it (0 rows
+    # updated). One work order active at a time: a resumed CLI conversation is not
+    # concurrency-safe, so two turns against one thread must never both hold the same
+    # workspace — the check is a WHERE on `current_work_order_id: nil`, not a Ruby
+    # guard, so concurrent claimants race in the database and exactly one wins (plan
+    # 011 §6). The stale-claim reaper (a worker dying mid-turn holds the claim
+    # forever otherwise) is deferred.
+    def claim!(work_order)
+      won = self.class.where(id: id, current_work_order_id: nil)
+                .update_all(current_work_order_id: work_order.id, claimed_at: Time.current)
+      return false unless won == 1
+
+      reload
+      true
+    end
 
     # The directory this Workspace IS on disk — materialized on demand (idempotent
     # mkpath, memoized so it happens once per instance). The single value callers

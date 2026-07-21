@@ -99,6 +99,16 @@ RSpec.describe Chorus::Workspace, type: :model do
   describe "associations" do
     it { expect(described_class.reflect_on_association(:artifacts).macro).to eq(:has_many) }
 
+    it "carries the role it was provisioned for (§6)" do
+      expect(described_class.reflect_on_association(:role).macro).to eq(:belongs_to)
+    end
+
+    it "owns the sources checked out into it (§6)" do
+      reflection = described_class.reflect_on_association(:sources)
+      expect(reflection.macro).to eq(:has_many)
+      expect(reflection.options[:as]).to eq(:owner)
+    end
+
     it "occupies a polymorphic workable" do
       reflection = described_class.reflect_on_association(:workable)
       expect(reflection.macro).to eq(:belongs_to)
@@ -112,6 +122,29 @@ RSpec.describe Chorus::Workspace, type: :model do
     it "makes no structural claim on the Strategy → Project chain (org models left Chorus)" do
       expect(described_class.reflect_on_association(:active_project)).to be_nil
       expect(described_class.reflect_on_association(:projects)).to be_nil
+    end
+  end
+
+  # Serial occupancy (§6): one work order active at a time, taken by an atomic
+  # conditional update. The negative case is the point — a second claimant must be
+  # refused, not silently overwrite the first. WorkOrder itself lands next step, so
+  # the claim is exercised with lightweight stand-ins that only need an #id.
+  describe "#claim!" do
+    let(:workspace) { create(:chorus_workspace) }
+    let(:first)  { double("WorkOrder", id: 111) }
+    let(:second) { double("WorkOrder", id: 222) }
+
+    it "succeeds on an unclaimed workspace, stamping the claim" do
+      expect(workspace.claim!(first)).to be(true)
+      expect(workspace.reload.current_work_order_id).to eq(111)
+      expect(workspace.claimed_at).to be_present
+    end
+
+    it "refuses a second claimant, leaving the first claim intact" do
+      workspace.claim!(first)
+
+      expect(workspace.claim!(second)).to be(false)
+      expect(workspace.reload.current_work_order_id).to eq(111)
     end
   end
 

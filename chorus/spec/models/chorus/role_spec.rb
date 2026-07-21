@@ -1,17 +1,16 @@
 require "rails_helper"
 
-# Chorus::AgentRole — an ORG ROLE (the HR-shaped job a participant holds) with a
-# charter (has_one_okf :concept) and skills through the RoleSkill join. The HR role
-# that had no home once IAM's Role narrowed to authorization (plan 010 §1); scaled
-# back in §2 from the speculative "capability loadout + view_ports" framing.
-RSpec.describe Chorus::AgentRole, type: :model do
+# Chorus::Role — the requirement a piece of work carries (plan 011 §1): a charter
+# (has_one_okf :concept) and skills through the RoleSkill join. The former AgentRole,
+# renamed now that IAM's Role narrowed to authorization and no collision remains.
+RSpec.describe Chorus::Role, type: :model do
   it "has a valid factory" do
-    expect(build(:chorus_agent_role)).to be_valid
+    expect(build(:chorus_role)).to be_valid
   end
 
   describe "validations" do
     it "requires a name" do
-      role = build(:chorus_agent_role, name: nil)
+      role = build(:chorus_role, name: nil)
       expect(role).not_to be_valid
       expect(role.errors[:name]).to be_present
     end
@@ -39,14 +38,14 @@ RSpec.describe Chorus::AgentRole, type: :model do
     end
 
     it "equips a skill and reads it back" do
-      role  = create(:chorus_agent_role)
+      role  = create(:chorus_role)
       skill = create(:chorus_skill)
       role.skills << skill
       expect(role.reload.skills).to contain_exactly(skill)
     end
 
     it "destroys its role_skills with it (join rows, not the skills)" do
-      role  = create(:chorus_agent_role)
+      role  = create(:chorus_role)
       skill = create(:chorus_skill)
       role.skills << skill
 
@@ -55,7 +54,7 @@ RSpec.describe Chorus::AgentRole, type: :model do
     end
 
     # No longer reaches SkillRequirement (010 §2 dropped the association; that join
-    # is parked, keyed directly by agent_role).
+    # is parked, keyed directly by role).
     it "does not couple to skill_requirements" do
       expect(described_class.reflect_on_association(:skill_requirements)).to be_nil
     end

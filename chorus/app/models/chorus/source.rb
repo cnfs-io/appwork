@@ -17,6 +17,10 @@ module Chorus
   # lease/claim relationship (one holder at a time, wait-and-release) is deferred
   # to PHASE-B and deliberately absent here.
   class Source < ApplicationRecord
+    # A Workspace owns the sources checked out into it (plan 011 §6); optional so a
+    # source may exist before it is attached to a place.
+    belongs_to :owner, polymorphic: true, optional: true
+
     serialize :settings, coder: YAML, type: Hash
 
     validates :type, presence: true

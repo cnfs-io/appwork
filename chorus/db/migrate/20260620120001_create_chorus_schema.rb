@@ -3,10 +3,21 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # Workspace occupies a polymorphic `workable` (added after create so the
     # column set reads together). Org models (Strategy/Goal/Project/Issue) and
     # Role left Chorus in plan 004; the workable target lives in the org gem.
+    # Workspace (plan 011 §6): a plot of land — a role, the sources it owns, a
+    # viewport, and a serial-occupancy claim. Top-level root scoped by the database;
+    # `current_work_order_id` is the claim slot (one work order active at a time, set
+    # by atomic conditional update), `claimed_at` its stamp. `workable` no longer
+    # lives here — a workspace is a place and places have no subject; the workable
+    # moved to WorkOrder (plan 011 §4).
     create_table :chorus_workspaces do |t|
+      t.references :role, null: false, foreign_key: { to_table: :chorus_roles }
       t.string :name, null: false
       t.text :description
+      t.bigint :current_work_order_id      # the serial-occupancy claim (FK added with chorus_work_orders)
+      t.datetime :claimed_at               # when the current claim was taken
       t.timestamps
+
+      t.index :current_work_order_id
     end
 
     create_table :chorus_skills do |t|
@@ -14,35 +25,33 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    # RoleSkill: the AgentRole <-> Skill join (plan 010 §3). A real join model, not
+    # RoleSkill: the Role <-> Skill join (plan 010 §3). A real join model, not
     # HABTM, because attributes are likely (`required`, `position`, ordering) and
     # adding them later to a HABTM table means a migration AND a new model. Carries
     # no attributes yet beyond the two FKs; a role's skills are unique on the pair.
     create_table :chorus_role_skills do |t|
-      t.references :agent_role, null: false, foreign_key: { to_table: :chorus_agent_roles }
-      t.references :skill,      null: false, foreign_key: { to_table: :chorus_skills }
+      t.references :role,  null: false, foreign_key: { to_table: :chorus_roles }
+      t.references :skill, null: false, foreign_key: { to_table: :chorus_skills }
       t.timestamps
 
-      t.index [ :agent_role_id, :skill_id ], unique: true
+      t.index [ :role_id, :skill_id ], unique: true
     end
 
-    # AgentAdapter is an STI base (plan 007 took the fallback plan 001 parked):
-    # per-runtime subclasses (ClaudeCode, OpenCode) are ADAPTERS carrying the
-    # invocation behavior a Concept cannot express (different binary/argv/parsing).
-    # `type` is the Rails STI discriminator — distinct from CnfsOkf::Concept#type (an
-    # OKF frontmatter field), which the two never conflate.
-    create_table :chorus_agent_adapters do |t|
-      t.string :type                      # STI discriminator (Chorus::AgentAdapter::ClaudeCode, ...)
+    # Agent is an STI base on its RUNTIME (plan 011 §2): the former AgentAdapter
+    # collapsed into Agent because with `model` on the row every agent is a distinct
+    # (runtime, model) pairing with nothing left to share. Per-runtime subclasses
+    # (Chorus::Agent::ClaudeCode, Chorus::Agent::OpenCode) carry the invocation
+    # behavior a Concept cannot express (binary/argv/stream parsing). `type` is the
+    # Rails STI discriminator — distinct from CnfsOkf::Concept#type (an OKF
+    # frontmatter field), which the two never conflate. `model` is the concrete
+    # model the runtime drives ("opus-4.8", "sonnet-4.6", "nemotron").
+    create_table :chorus_agents do |t|
+      t.string :type              # STI discriminator (Chorus::Agent::ClaudeCode, ...)
       t.string :name, null: false
+      t.string :model             # "opus-4.8", "sonnet-4.6", "nemotron"
       t.timestamps
 
       t.index :type
-    end
-
-    create_table :chorus_agents do |t|
-      t.references :agent_adapter, null: true, foreign_key: { to_table: :chorus_agent_adapters }
-      t.string :name, null: false
-      t.timestamps
     end
 
     add_reference :chorus_workspaces, :workable, polymorphic: true, null: true
@@ -71,9 +80,11 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # Source: a managed origin (git repo, S3 prefix, NFS mount) cloned/synced to
     # a path on disk. STI on `type`; shared/queryable fields are real columns,
     # per-kind config lives in the serialized `settings` bag. Account-scoped by
-    # tenancy (physical DB per Account), so no owner column here yet — the
-    # Workspace lease/claim relationship is deferred to PHASE-B.
+    # tenancy (physical DB per Account). `owner` is a polymorphic, optional back-ref
+    # (plan 011 §6) — a Workspace owns the sources checked out into it, but a source
+    # may exist unowned.
     create_table :chorus_sources do |t|
+      t.references :owner,    polymorphic: true, null: true   # the Workspace (or other) that owns this checkout
       t.string   :type,       null: false   # STI discriminator (Chorus::Source::Git, ...)
       t.string   :resource,   null: false   # origin locator: repo URL / bucket / mount spec
       t.string   :path                      # absolute path the origin is materialized to
@@ -161,15 +172,13 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     end
 
     # --- 007 agent invocation seam -------------------------------------------
-    # AgentRole: an ORG ROLE — the HR-shaped job a participant holds ("project
-    # manager", "swe"), with a charter and skills. The org-position Role left in 004
-    # because IAM owned Role; IAM's Role has since narrowed to authorization only, so
-    # the HR role belongs here (plan 010 §1). Its charter is `has_one_okf :concept`
-    # (polymorphic, `as: :owner`, so no FK column here); its skills attach through
-    # the chorus_role_skills join. Scaled back in 010 §2 from the speculative
-    # "capability loadout" (skills + view_ports + corpus window). (Named AgentRole,
-    # not Role: a host may have IAM::Role in scope.)
-    create_table :chorus_agent_roles do |t|
+    # Role: an ORG ROLE — the HR-shaped job a participant holds ("project manager",
+    # "swe"), with a charter and skills. The org-position Role left in 004 because
+    # IAM owned Role; IAM's Role has since narrowed to authorization (AAA) only, so
+    # no collision remains and the defensive AgentRole prefix is dead weight (plan
+    # 011 §1). Its charter is `has_one_okf :concept` (polymorphic, `as: :owner`, so
+    # no FK column here); its skills attach through the chorus_role_skills join.
+    create_table :chorus_roles do |t|
       t.string :name, null: false
       t.text   :description
       t.timestamps
@@ -178,15 +187,15 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # SkillRequirement: a role's durable, catalog-naive requirement — a skill named
     # by STABLE identity (name/slug), NOT an FK into the clobber-refreshed catalog.
     # A Chorus::SkillResolver maps these names -> concrete catalog rows/git sources
-    # at equip time (§4); pinning a durable AgentRole to the volatile catalog would
-    # let a refresh break role definitions.
+    # at equip time (§4); pinning a durable Role to the volatile catalog would let a
+    # refresh break role definitions.
     create_table :chorus_skill_requirements do |t|
-      t.references :agent_role, null: false, foreign_key: { to_table: :chorus_agent_roles }
+      t.references :role, null: false, foreign_key: { to_table: :chorus_roles }
       t.string     :name, null: false   # stable skill identity ("web-design-guidelines")
       t.string     :slug                 # optional normalized key
       t.timestamps
 
-      t.index [ :agent_role_id, :name ], unique: true
+      t.index [ :role_id, :name ], unique: true
     end
 
     # Result: the durable outcome of an invocation (AR-backed, persisted on EVERY

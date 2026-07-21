@@ -1,10 +1,14 @@
 FactoryBot.define do
-  factory :chorus_agent, class: "Chorus::Agent" do
+  # Agent is an STI base on its runtime (plan 011 §2). A bare base Agent is not
+  # invocable (validates :type), so build a concrete runtime. ClaudeCode is the
+  # default; OpenCode is available for the STI/streaming-contract specs.
+  factory :chorus_agent, class: "Chorus::Agent::ClaudeCode" do
     name { "Agent #{rand(1000)}" }
-    # kind { "human" }
+    model { "opus-4.8" }
+  end
 
-    trait :with_claude_code_adapter do
-      association :agent_adapter, factory: :chorus_agent_adapter_claude_code
-    end
+  factory :chorus_agent_open_code, class: "Chorus::Agent::OpenCode" do
+    name { "OpenCode #{rand(1000)}" }
+    model { "nemotron" }
   end
 end

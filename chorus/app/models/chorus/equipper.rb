@@ -1,7 +1,7 @@
 module Chorus
   # Mounts a set of resolved skills onto ONE agent runtime, INTO the run's workspace
   # directory (§4). Mounting is runtime-PARAMETERIZED, not runtime-polymorphic (§2):
-  # each AgentAdapter subclass declares only its `skills_agent_key`, and this one
+  # each Agent runtime subclass declares only its `skills_agent_key`, and this one
   # shared PORO drives SkillCatalog#add once per skill, passing
   # `agents: [adapter.skills_agent_key]` and `path: workspace.pathname` — so the
   # install is project-scoped into the workspace (no `-g`, no `~/.claude` pollution),

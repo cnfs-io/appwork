@@ -6,7 +6,7 @@ module Chorus
   # satisfies that right now"), which Chorus::SkillResolver performs at equip time
   # (§4). Name-only on purpose — a catalog refresh must never break a Role.
   class SkillRequirement < ApplicationRecord
-    belongs_to :agent_role
+    belongs_to :role
 
     validates :name, presence: true
   end

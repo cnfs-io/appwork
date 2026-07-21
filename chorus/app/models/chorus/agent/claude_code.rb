@@ -1,14 +1,13 @@
 require "json"
 
 module Chorus
-  class AgentAdapter
+  class Agent
     # The Claude Code CLI runtime. Invocation is `claude -p <prompt>` in
     # headless/print mode with NDJSON streaming, run with the workspace as cwd
     # (§4). Drives `claude` through CnfsSupport::Shell.stream: each stdout line is
     # normalized by #parse_event and the non-nil events are yielded to the caller.
-    # Nothing about the run is persisted this phase — console output is the
-    # observability (the caller's block prints text deltas as they arrive).
-    class ClaudeCode < AgentAdapter
+    # The concrete model is a column (`model`), passed through as `--model <model>`.
+    class ClaudeCode < Agent
       # Tools the agent may use. A constant this phase — see the capability-bag TODO
       # in #build_argv for where this is headed.
       TOOLS = %w[Read Write Edit Bash].freeze
@@ -19,7 +18,7 @@ module Chorus
         # TODO(capabilities): `--include-hook-events` is intentionally NOT passed —
         # nothing consumes hook events yet, so passing it only adds noise to the
         # stream. It must not be lost, though: flags should not stay hardcoded per
-        # subclass forever. The adapter should expose settable *capabilities* (on the
+        # subclass forever. The agent should expose settable *capabilities* (on the
         # record, likely a serialized `settings` bag following the
         # Source/ExternalAccount pattern) that #build_argv derives the argv from.
         # `include_hook_events` is the first such capability; `allowed_tools` the
@@ -28,6 +27,7 @@ module Chorus
         # how each maps to a flag per adapter, is deferred.
         [
           "claude", "-p", prompt.to_s,
+          "--model", model.to_s,
           "--output-format", "stream-json",
           "--verbose",
           "--include-partial-messages",

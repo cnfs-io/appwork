@@ -27,11 +27,11 @@ module Chorus
     # role requirements -> [ResolvedSkill]. Name-only requirements become
     # (STUB_RESOURCE, name) pairs; real resolution + policy replaces this.
     #
-    # Queries SkillRequirement directly rather than through AgentRole: plan 010 §2
-    # dropped `AgentRole has_many :skill_requirements` (skills now attach via
-    # RoleSkill), but SkillRequirement stays inert and still keyed by agent_role.
+    # Queries SkillRequirement directly rather than through Role: plan 010 §2
+    # dropped `Role has_many :skill_requirements` (skills now attach via RoleSkill),
+    # but SkillRequirement stays inert and still keyed by role.
     def resolve
-      Chorus::SkillRequirement.where(agent_role: @role).map do |requirement|
+      Chorus::SkillRequirement.where(role: @role).map do |requirement|
         ResolvedSkill.new(name: requirement.name, resource: STUB_RESOURCE, skill: requirement.name)
       end
     end
