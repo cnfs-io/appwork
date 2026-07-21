@@ -2,11 +2,8 @@ require "rails_helper"
 
 # Chorus::Plan — an OKF-backed markdown document addressed to a role, under a
 # WorkOrder (plan 011 §7). `plan.role` is who should EXECUTE it, distinct from
-# `work_order.role`.
-#
-# TRANSITIONAL: work_order/role are optional and `workspace` is still carried while
-# Chorus::Planner (deleted in step 7) creates Plans by workspace; execute! makes
-# work_order/role the required spine and drops workspace.
+# `work_order.role`. It reaches its workspace via work_order.workspace — no
+# workspace FK of its own.
 RSpec.describe Chorus::Plan, type: :model do
   it "has a valid factory" do
     expect(build(:chorus_plan)).to be_valid
@@ -17,6 +14,14 @@ RSpec.describe Chorus::Plan, type: :model do
       plan = build(:chorus_plan, name: nil)
       expect(plan).not_to be_valid
       expect(plan.errors[:name]).to be_present
+    end
+
+    it "requires a work_order" do
+      expect(build(:chorus_plan, work_order: nil)).not_to be_valid
+    end
+
+    it "requires a role (whom it is addressed to)" do
+      expect(build(:chorus_plan, role: nil)).not_to be_valid
     end
   end
 
@@ -46,9 +51,11 @@ RSpec.describe Chorus::Plan, type: :model do
       expect(reflection.klass).to eq(CnfsOkf::Concept)
     end
 
-    it "reaches its workspace through the work order (§7)" do
+    it "reaches its workspace through the work order, carrying no workspace FK (§7)" do
       plan = create(:chorus_plan)
       expect(plan.work_order.workspace).to be_a(Chorus::Workspace)
+      expect(described_class.reflect_on_association(:workspace)).to be_nil
+      expect(described_class.column_names).not_to include("workspace_id")
     end
   end
 

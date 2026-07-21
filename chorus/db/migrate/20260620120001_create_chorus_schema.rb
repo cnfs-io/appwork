@@ -73,18 +73,12 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # `work_order.role` by design: each level's role is set by the level above
     # (delegation, not denormalization). The row claims OWNERSHIP of the synced
     # Concept (has_one_okf :concept); narrative content lives in the Concept, never a
-    # column here.
-    #
-    # TRANSITIONAL: `workspace_id` still lives here and is reachable directly. It is
-    # slated to drop (reachable via work_order.workspace, §7) together with the
-    # deletion of Chorus::Planner in step 7 — the Planner still creates Plans by
-    # workspace, so the column stays until execute! replaces it. Likewise work_order
-    # and role are nullable/optional now; execute! makes them the required spine.
+    # column here. The workspace is reached via work_order.workspace — no workspace FK
+    # here (it left with Chorus::Planner when execute! took over, §7).
     create_table :chorus_plans do |t|
-      t.references :work_order, null: true, foreign_key: { to_table: :chorus_work_orders }
-      t.references :role,       null: true, foreign_key: { to_table: :chorus_roles }
-      t.references :workspace,  null: true, foreign_key: { to_table: :chorus_workspaces }   # transitional; drops in step 7
-      t.references :agent,      null: true, foreign_key: { to_table: :chorus_agents }
+      t.references :work_order, null: false, foreign_key: { to_table: :chorus_work_orders }
+      t.references :role,       null: false, foreign_key: { to_table: :chorus_roles }
+      t.references :agent,      null: true,  foreign_key: { to_table: :chorus_agents }
       t.string     :name,       null: false
       t.timestamps
     end

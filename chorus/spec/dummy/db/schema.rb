@@ -65,14 +65,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_120001) do
     t.integer "agent_id"
     t.datetime "created_at", null: false
     t.string "name", null: false
-    t.integer "role_id"
+    t.integer "role_id", null: false
     t.datetime "updated_at", null: false
-    t.integer "work_order_id"
-    t.integer "workspace_id"
+    t.integer "work_order_id", null: false
     t.index ["agent_id"], name: "index_chorus_plans_on_agent_id"
     t.index ["role_id"], name: "index_chorus_plans_on_role_id"
     t.index ["work_order_id"], name: "index_chorus_plans_on_work_order_id"
-    t.index ["workspace_id"], name: "index_chorus_plans_on_workspace_id"
   end
 
   create_table "chorus_results", force: :cascade do |t|
@@ -246,7 +244,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_120001) do
   add_foreign_key "chorus_plans", "chorus_agents", column: "agent_id"
   add_foreign_key "chorus_plans", "chorus_roles", column: "role_id"
   add_foreign_key "chorus_plans", "chorus_work_orders", column: "work_order_id"
-  add_foreign_key "chorus_plans", "chorus_workspaces", column: "workspace_id"
   add_foreign_key "chorus_role_skills", "chorus_roles", column: "role_id"
   add_foreign_key "chorus_role_skills", "chorus_skills", column: "skill_id"
   add_foreign_key "chorus_skill_categorizations", "chorus_catalog_skills", column: "catalog_skill_id"

@@ -744,3 +744,108 @@ step breakdown never called it out. Nothing in the executed flow needs it — th
 runs the agent unskilled (Equipper parked), so it takes only `agent_adapter` + `workspace`.
 The Agent↔AgentRole FK direction remains the unsettled question 001 flagged; wiring it (a
 migration column + the association, or the inverse direction) is a small, separate follow-up.
+
+# 011 — WorkOrder: the domain reshape (Phase 1)
+
+Reshaped the domain around 010's working mechanism without rewriting the mechanism: the
+streaming invocation, NDJSON parsing, path dictation, and OKF sync-and-stamp all survived,
+relocated onto a better-shaped set of models read off the construction-site metaphor — a
+Workspace is a plot of land; a WorkOrder (a feature request) lands against it carrying the
+role required to execute it; an Agent is hired to fill that role and writes Plans, each
+addressed to a *different* role; every invocation produces a Result. Two rules drove nearly
+every naming call: **the role attaches to the work, not the worker** (Agent has no role FK),
+and **a role on a thing is what's needed to EXECUTE it, not who created it**.
+
+**232 examples, 0 failures; RuboCop clean; CI eager-load clean; `db:drop db:create db:migrate
+db:seed` works.** Landed in eight commits (steps 1–8), each green.
+
+## What shipped
+
+1. **Renames + the Agent collapse (step 1).** `AgentRole` → `Role` (IAM's Role narrowed to
+   AAA, so no collision remains). `AgentAdapter` collapsed *into* `Agent` as STI on the
+   runtime (`Chorus::Agent::ClaudeCode`/`OpenCode`), with `model` as a column — every agent
+   is a distinct `(runtime, model)` pairing, so the join bought nothing. `ClaudeCode`'s
+   `build_argv`/`invoke`/`parse_event` moved verbatim apart from `--model <model>`.
+2. **Source owner + Workspace serial claim (step 2).** `Source` gained a polymorphic
+   `owner`; `Workspace` gained `role`, `has_many :sources`, and `#claim!` — an atomic
+   conditional update (`WHERE current_work_order_id IS NULL`) that **refuses a second
+   claimant** (0 rows → false), because a resumed CLI conversation is not concurrency-safe.
+3. **WorkOrder (step 3).** `chorus_work_orders` — workable (polymorphic), workspace, role,
+   optional agent, its own concept (the request document), `external_session_id`, `state`.
+   `workable` **moved off Workspace onto WorkOrder** (a place has no subject, a job does);
+   `Chorus::Workable`'s inverse became `has_many :work_orders, as: :workable`.
+4. **Plan addressed to a role (step 4→7).** `plan.role` = who should EXECUTE it, distinct
+   from `work_order.role` (delegation, not denormalization). Reaches its workspace via
+   `work_order.workspace` — no workspace FK. `has_many :results, as: :resultable`.
+5. **Result rewritten (step 5).** One row *per invocation*, polymorphic `resultable`
+   (WorkOrder or Plan). The old `ActiveModel::Errors`-shaped accumulator is gone
+   (add/merge/full_messages/record_argv and the artifact_id/workspace_id/agents_live/
+   skills_live columns dropped); new columns argv/cwd/success/external_session_id/cost_usd/
+   duration_ms/num_turns/usage/tool_calls/interrupted/is_error; `messages` kept as a plain
+   json bag. A retry is a *second* Result. `Artifact belongs_to :result` (FK inverted).
+6. **Workspace viewport (step 6).** `has_one_okf :view_port` replaced 010's
+   `has_one_okf :bundle` + `materialize_bundle`/`doc_pathname` — a workspace's markdown scope
+   is now a slice of a host-seeded bundle, not a bundle it creates for itself.
+7. **`WorkOrder#execute!` (step 7).** Absorbed `Chorus::Planner` (deleted): pick the plan
+   path relative to the viewport, prompt the agent to write it (cwd = workspace dir), latch
+   `external_session_id` from the first stream event, verify the file, `Sync` the bundle,
+   claim the concept as a Plan addressed to `plan_role`, stamp `type = "plan"`, persist a
+   Result. Absent file → a recorded failed Result plus a raise. No live `claude` in the
+   suite — proven with a stubbed agent that writes a file and yields fake events.
+
+## Decisions worth flagging
+
+1. **`workable` relocation landed in step 3, not step 2.** Its new home (WorkOrder) doesn't
+   exist until step 3, and the concern/`workable_spec` pivot needs it — holding it on
+   Workspace one extra commit kept the occupiability concern from being briefly homeless.
+2. **Plan carried `workspace_id` transitionally through steps 4–6.** Dropping it (and
+   requiring `work_order`) in step 4 would have broken `Chorus::Planner`, kept alive as the
+   working reference for `execute!` (blocked on the OKF viewport change). Both dropped in
+   step 7 when the Planner died. No transitional cruft remains.
+3. **Concept paths are viewport-relative (verified, not assumed).** `concept.path` is
+   bundle-relative and carries the viewport's own path within the bundle as a prefix (e.g.
+   `planning/plans/001-user-auth.md`, not a bare `plans/...`). `execute!` computes both the
+   agent's cwd-relative path and the concept's bundle-relative key from the absolute path,
+   so it is correct for a viewport at the bundle root *or* any subpath.
+4. **OKF 007 dependency.** Step 6 blocked on `CnfsOkf::ViewPort#materialize` (the
+   mkpath-in-validation-order change); it landed as `materialize: true`, which fires before
+   `FsNode#ident` reads `stat` so `ino` gets set. The workspace viewport uses
+   `materialize: true`, never a manual `mkpath` (the failure mode OKF 007 exists to prevent).
+5. **Equipper/Invocation parked, not ported.** The Result rewrite removed the accumulator
+   they recorded into; Equipper's Result coupling was *stripped* (it now only installs skills
+   when `skills_live`), Invocation left inert (eager-loads clean). The foreman loop replaces
+   both.
+
+## Deferred (Phase 2 / Phase 3, per the plan)
+
+`Task` + `Artifact` STI (`GitCommit` with source + sha) + the commit boundary + `--resume`
+across turns + the `Executable` concern (Phase 2); Evaluation (Phase 3); triage/hiring
+(Chorus choosing role and agent); cost/budgets (what makes Agent a real entity); the
+stale-claim reaper; `work_units` host enumeration; WorkOrder discovery from the bundle;
+equipping; concurrent path selection.
+
+## How to run it
+
+    cd gems/chorus
+    rm -f spec/dummy/db/schema.rb spec/dummy/storage/*.sqlite3*
+    bin/rails db:create db:migrate db:seed
+    RAILS_ENV=test bin/rails db:test:prepare
+    bundle exec rspec        # 232 examples, 0 failures
+    bundle exec rubocop      # clean
+
+Manual smoke (a console act — needs a live, authed `claude`; no live claude in the suite):
+
+    arch  = Chorus::Role.create!(name: "rails-architect")
+    swe   = Chorus::Role.create!(name: "rails-swe")
+    agent = Chorus::Agent::ClaudeCode.create!(name: "opus-1", model: "opus-4.8")
+    ws    = Chorus::Workspace.create!(name: "smoke", role: arch)
+    bundle = CnfsOkf::Bundle.create!(path: ws.pathname.to_s)   # host seeds a bundle
+    ws.create_view_port!(bundle: bundle, path: "planning", materialize: true)
+    wo = Chorus::WorkOrder.create!(workable: some_host_model, workspace: ws, role: arch, agent:)
+    ws.claim!(wo)
+    plan = wo.execute!(slug: "user-auth", plan_role: swe)
+    plan.concept.path            # => "planning/plans/001-user-auth.md" (viewport-relative)
+    plan.concept.type            # => "plan"
+    plan.role                    # => rails-swe (distinct from wo.role)
+    wo.results.last.cost_usd
+    wo.external_session_id       # latched from the stream, unused this phase (no --resume)

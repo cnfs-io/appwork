@@ -12,15 +12,12 @@ module Chorus
   # Narrative content lives in the Concept (has_one_okf :concept), never a column
   # here — a body column would be a competing source of truth against the concept.
   #
-  # TRANSITIONAL (plan 011 §7): `work_order`/`role` are optional and `workspace` is
-  # still carried, because Chorus::Planner (deleted in step 7) still creates Plans by
-  # workspace. When execute! replaces the Planner, work_order/role become the
-  # required spine and `workspace` drops (reached via `work_order.workspace`).
+  # A Plan reaches its workspace via `work_order.workspace` — it carries no workspace
+  # FK of its own (that transitional column left with Chorus::Planner in step 7).
   class Plan < ApplicationRecord
-    belongs_to :work_order, optional: true
-    belongs_to :role, optional: true              # WHO SHOULD EXECUTE IT
+    belongs_to :work_order
+    belongs_to :role                              # WHO SHOULD EXECUTE IT
     belongs_to :agent, optional: true
-    belongs_to :workspace, optional: true         # transitional — drops in step 7
 
     has_one_okf :concept
     has_many :results, as: :resultable, dependent: :destroy

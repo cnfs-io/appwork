@@ -29,10 +29,14 @@ module Chorus
     # (plan 011 §6). Nullify on destroy: a source outlives the place it sat in.
     has_many :sources, as: :owner, dependent: :nullify
 
-    # The OKF bundle rooted at the workspace's `doc/` — where authored documents
-    # (Plans, and later Tasks/notes) live as Concepts. Materialized on demand via
-    # #materialize_bundle (plan 010 §4).
-    has_one_okf :bundle
+    # The workspace's markdown scope (plan 011 §6): a VIEWPORT into a host-seeded
+    # bundle — the bundle's root or any path inside it — rather than a bundle the
+    # workspace creates for itself (which is why 010's has_one_okf :bundle and its
+    # materialize_bundle/doc_pathname machinery are gone; this avoids one bundle per
+    # workspace). The viewport is markdown-only: work orders, plans, results live
+    # here; code changes land in the Sources. Concept paths are bundle-relative, so
+    # they carry the viewport's own path within the bundle as a prefix.
+    has_one_okf :view_port
 
     validates :name, presence: true
 
@@ -77,25 +81,6 @@ module Chorus
 
       root = Pathname.new(File.expand_path(Chorus::Config.workspace_root))
       root.join(id.to_s)
-    end
-
-    # The `doc/` subtree under this workspace — the root the OKF bundle is rooted at.
-    # Rooted at `doc/`, NOT the workspace root: the bundle syncs every `**/*.md`
-    # beneath its path, so rooting at the workspace root would eventually pull in
-    # installed skill markdown as concepts. `doc/` keeps the bundle scoped to
-    # authored documents, and makes concept paths bundle-relative (a file at
-    # `<workspace>/doc/plans/001-x.md` has concept.path == "plans/001-x.md").
-    def doc_pathname = pathname.join("doc")
-
-    # Materialize the workspace dir + `doc/`, then find-or-create the Bundle rooted
-    # at `doc/`. Idempotent — a second call returns the existing bundle. The dir
-    # MUST exist before the Bundle is created: Bundle validates `dev` presence (set
-    # from `stat`), so create against a missing directory fails validation — hence
-    # mkpath first. `create_concepts` runs Sync on create; on an empty `doc/` that
-    # is a no-op.
-    def materialize_bundle
-      doc_pathname.mkpath
-      bundle || create_bundle!(path: doc_pathname.to_s)
     end
   end
 end
