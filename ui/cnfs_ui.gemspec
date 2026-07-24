@@ -23,4 +23,7 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency "rails", ">= 8.1.3"
+  spec.add_dependency "cnfs_support"
+  spec.add_dependency "cnfs_dev"
+  spec.add_dependency "phlex-rails", "~> 2.4"
 end
