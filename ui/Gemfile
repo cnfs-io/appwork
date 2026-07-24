@@ -23,6 +23,7 @@ end
 group :development do
   gem "ruby-lsp-rspec", require: false
   gem "ruby-lsp-rails", require: false
+  gem "lookbook"
 end
 gem "cnfs_support", path: "../support"
 gem "cnfs_dev", path: "../dev"

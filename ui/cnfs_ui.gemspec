@@ -26,4 +26,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency "cnfs_support"
   spec.add_dependency "cnfs_dev"
   spec.add_dependency "phlex-rails", "~> 2.4"
+  spec.add_dependency "turbo-rails"
+  spec.add_dependency "stimulus-rails"
+  spec.add_dependency "importmap-rails"
+  spec.add_dependency "tailwindcss-rails"
+  spec.add_dependency "tailwind_merge", "~> 1.5"
 end
