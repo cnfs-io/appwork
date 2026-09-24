@@ -279,3 +279,56 @@ an actual change). See `doc/plans/006-frontmatter-macro.md` "On the horizon".
 bundle exec rspec            # 73 examples
 bin/rubocop
 ```
+
+## ViewPort materializes its directory (007-view-port-materialize)
+
+**What shipped** — a `ViewPort` can now create its own directory on disk, so a
+consumer (e.g. a `Chorus::Workspace`'s `has_one_okf :view_port` into a
+host-seeded bundle) can point at a `plans/` directory an agent is *about to*
+write into, rather than one that must already exist. **82 examples, 0 failures;
+RuboCop clean.**
+
+- **`ViewPort#materialize`** (`attr_accessor`, not a column — a per-instantiation
+  instruction, not persisted state) + `before_validation :materialize_path,
+  prepend: true, if: -> { materialize && path.present? }`. `prepend: true` is
+  load-bearing: FsNode's `before_validation :ident` reads `stat` to set `ino`; the
+  directory must exist before that runs or `ino` stays nil and the record fails
+  validation anyway. Same precedent as `Bundle`'s `prepend: true` on `expand_path`.
+  Uses `mkpath` (not `mkdir`) so intermediates are created in one call.
+- **`ViewPort#materialize!`** — public `pathname.mkpath`, for console use; the
+  attribute is the supported path since it fires in the correct order.
+- **Clearer missing-directory error** — `path_must_exist_as_directory` names the
+  fix (`pass \`materialize: true\` to create it`) instead of leaving the caller to
+  puzzle over FsNode's `ino can't be blank`. FsNode's `path_must_exist` still fires
+  alongside it; a duplicate error on `:path` is acceptable, a confusing one isn't.
+- **Bundle containment** — `path_must_be_within_bundle` (lexical `cleanpath`,
+  runs regardless of `materialize`) rejects a `path` escaping the bundle root.
+  Its predicate `within_bundle?` **also guards `materialize_path`**, because
+  `materialize_path` is a `before_validation` and runs *before* the containment
+  validation could reject the record — so `../outside` with `materialize: true`
+  creates nothing on disk. Symlink containment is deferred (lexical check only).
+- **Untouched, deliberately** — `path_must_be_directory` stays exactly as
+  written (its `return unless pathname.exist?` guard is correct; existence is
+  FsNode's job). `FsNode`, `Bundle`, `Concept`, `Sync` unchanged. `Bundle#ls`
+  still builds a transient unsaved viewport (no validations, no disk) — specced.
+
+**Two spec expectations in the plan's wishlist were inconsistent with code the
+plan said to leave untouched; specs assert the real behavior:**
+- *file at the path with `materialize: true`* — the plan predicted `mkpath`
+  raising `Errno::EEXIST`, but `materialize_path`'s own `unless pathname.exist?`
+  guard (plan §1) *skips* `mkpath` for an existing file. The file is rejected by
+  the directory validation instead (`RecordInvalid, /is not a directory/`) and
+  left untouched — same safety, different mechanism.
+- *`path: ""` (bundle root)* — FsNode's untouched `validates :path, presence:
+  true` rejects `""` as blank, so a root viewport is never *fully* valid. §5's
+  point is containment: the spec asserts the escape check does **not** fire on
+  `""`, not full validity.
+
+**Unblocks** `chorus/doc/plans/011-work-order-domain-reshape.md` §6.
+
+**How to run**
+
+```
+bundle exec rspec            # 82 examples
+bin/rubocop
+```
