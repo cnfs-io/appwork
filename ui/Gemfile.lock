@@ -342,6 +342,7 @@ GEM
       ruby-lsp (~> 0.26.0)
     ruby-next-core (1.2.1)
     ruby-progressbar (1.13.0)
+    ruby_ui (1.4.0)
     securerandom (0.4.1)
     sin_lru_redux (2.5.2)
     sqlite3 (2.9.5-arm64-darwin)
@@ -393,6 +394,7 @@ DEPENDENCIES
   rubocop-rails-omakase
   ruby-lsp-rails
   ruby-lsp-rspec
+  ruby_ui
   sqlite3
 
 CHECKSUMS
@@ -504,6 +506,7 @@ CHECKSUMS
   ruby-lsp-rspec (0.1.29) sha256=798be579723376cd56b17d32373288fb1163e4cfe2024c7d068516a1cf214ee5
   ruby-next-core (1.2.1) sha256=ddba3e986e127143299a26bde8bdbeedd4bc738a1a765e499f9634f361551f79
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
+  ruby_ui (1.4.0) sha256=14bb76467f296637ffda2ed559d717bccde599ac9021d0e5858fbaf6c8d96830
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
   sin_lru_redux (2.5.2) sha256=feed104c943afaeeecb1ad83f3f63562088b9785a816625c32b2305eccbd9963
   sqlite3 (2.9.5-arm64-darwin) sha256=d0cf444a70fc9395d513cfbcc1e6719e224aa645314e3824cb0474c721425aa2
