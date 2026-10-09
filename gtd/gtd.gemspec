@@ -23,8 +23,13 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency "rails", ">= 8.1.3"
-  spec.add_dependency "turbo-rails"
-  spec.add_dependency "stimulus-rails"
-  spec.add_dependency "importmap-rails"
-  spec.add_dependency "tailwindcss-rails"
+
+  # The ADR 0005 composition root depends on BOTH flanking layers — storage
+  # (cnfs_okf: Concept + disk write path) and presentation (cnfs_ui: Board /
+  # Column / Placement + Kanban components). Gtd::Action is the ONLY place they
+  # meet; the two gems never reference each other. The UI stack (turbo, stimulus,
+  # importmap, tailwindcss, phlex, view_component) arrives transitively through
+  # cnfs_ui — declared once there, not re-stated here (gems/CLAUDE.md).
+  spec.add_dependency "cnfs_okf"
+  spec.add_dependency "cnfs_ui"
 end

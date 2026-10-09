@@ -26,4 +26,8 @@ group :development do
 end
 gem "cnfs_support", path: "../support"
 gem "cnfs_dev", path: "../dev"
+# Both flanking layers, path-resolved. Gtd::Action (composition root) owns an OKF
+# concept AND is a cnfs_ui placement subject; this dummy is a real Chorus consumer
+# where all three layers meet (ADR 0005).
+gem "cnfs_okf", path: "../okf"
 gem "cnfs_ui", path: "../ui"
