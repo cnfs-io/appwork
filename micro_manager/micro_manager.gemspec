@@ -23,6 +23,11 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency "rails", ">= 8.1.3"
+  spec.add_dependency "cnfs_okf"
+  # Real, honest dependency: MicroManager::Project and Ticket `include
+  # Chorus::Workable`. Hosts → Chorus is the allowed direction; the dummy
+  # Gemfile's `path:` line resolves it locally.
+  spec.add_dependency "chorus"
   spec.add_dependency "turbo-rails"
   spec.add_dependency "stimulus-rails"
   spec.add_dependency "importmap-rails"
