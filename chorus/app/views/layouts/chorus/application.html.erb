@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Chorus" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body class="bg-surface-muted text-text min-h-screen">
+    <header class="bg-surface border-b border-border">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+        <%= link_to t("chorus.app_name"), root_path, class: "text-lg font-semibold text-primary" %>
+
+        <nav class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <%= link_to Chorus::Strategy.model_name.human(count: 2), strategies_path, class: "text-text-muted hover:text-text" %>
+          <%= link_to Chorus::Goal.model_name.human(count: 2), goals_path, class: "text-text-muted hover:text-text" %>
+          <%= link_to Chorus::AgentRole.model_name.human(count: 2), agent_roles_path, class: "text-text-muted hover:text-text" %>
+          <%= link_to Chorus::Agent.model_name.human(count: 2), agents_path, class: "text-text-muted hover:text-text" %>
+          <%= link_to Chorus::Workspace.model_name.human(count: 2), workspaces_path, class: "text-text-muted hover:text-text" %>
+          <%= link_to Chorus::Project.model_name.human(count: 2), projects_path, class: "text-text-muted hover:text-text" %>
+          <%= link_to Chorus::Artifact.model_name.human(count: 2), artifacts_path, class: "text-text-muted hover:text-text" %>
+          <%= link_to Chorus::Issue.model_name.human(count: 2), issues_path, class: "text-text-muted hover:text-text" %>
+        </nav>
+
+        <% if I18n.available_locales.size > 1 %>
+          <div class="flex items-center gap-2 text-sm">
+            <% I18n.available_locales.each do |locale| %>
+              <%= link_to locale.to_s.upcase, url_for(locale: locale),
+                    class: (I18n.locale == locale ? "font-semibold text-primary" : "text-text-muted hover:text-text") %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-6">
+      <% if flash.any? %>
+        <div class="mb-4 space-y-2">
+          <% flash.each do |type, message| %>
+            <div class="rounded-md border px-4 py-2 text-sm <%= type.to_s == "alert" ? "bg-danger text-danger-contrast border-danger" : "bg-surface border-border text-text" %>">
+              <%= message %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+  </body>
+</html>

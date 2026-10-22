@@ -1,0 +1,6 @@
+{"type":"system","subtype":"init","session_id":"sess-abc","tools":["Read","Write"]}
+{"type":"stream_event","session_id":"sess-abc","event":{"type":"content_block_delta","delta":{"type":"text_delta","text":"Hello, world"}}}
+{"type":"stream_event","session_id":"sess-abc","event":{"type":"content_block_delta","delta":{"type":"input_json_delta","partial_json":"{\"file"}}}
+{"type":"assistant","session_id":"sess-abc","message":{"content":[{"type":"text","text":"I'll write the file."},{"type":"tool_use","name":"Write","input":{"file_path":"doc/plans/001-x.md","content":"# Plan"}}]}}
+{"type":"assistant","session_id":"sess-abc","message":{"content":[{"type":"text","text":"just talking, no tools"}]}}
+{"type":"result","subtype":"success","session_id":"sess-abc","total_cost_usd":0.0123,"duration_ms":4567,"num_turns":3,"is_error":false,"usage":{"input_tokens":100,"output_tokens":200}}

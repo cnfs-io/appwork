@@ -1,0 +1,57 @@
+en:
+  chorus:
+    app_name: "Chorus"
+    actions:
+      new: "New"
+      new_model: "New %{model}"
+      edit: "Edit"
+      edit_model: "Edit %{model}"
+      show: "Show"
+      back: "Back"
+      destroy: "Destroy"
+      save: "Save"
+      cancel: "Cancel"
+    empty: "No %{model} yet."
+    confirm:
+      destroy: "Are you sure?"
+    unassigned: "Unassigned"
+    flash:
+      created: "%{model} was successfully created."
+      updated: "%{model} was successfully updated."
+      destroyed: "%{model} was successfully destroyed."
+
+  activerecord:
+    models:
+      chorus/agent:
+        one: "Agent"
+        other: "Agents"
+      chorus/workspace:
+        one: "Workspace"
+        other: "Workspaces"
+      chorus/artifact:
+        one: "Artifact"
+        other: "Artifacts"
+      chorus/external_account:
+        one: "External account"
+        other: "External accounts"
+    attributes:
+      chorus/agent:
+        name: "Name"
+        kind: "Kind"
+      chorus/workspace:
+        name: "Name"
+        description: "Description"
+      chorus/artifact:
+        workspace: "Workspace"
+        name: "Name"
+        kind: "Kind"
+        locator: "Locator"
+        description: "Description"
+      chorus/external_account:
+        name: "Name"
+        group: "Group"
+        account_id: "Account ID"
+        region: "Region"
+        default_role_arn: "Default role ARN"
+        project_id: "Project ID"
+        service_account_email: "Service account email"

@@ -1,0 +1,46 @@
+es:
+  chorus:
+    app_name: "Chorus"
+    actions:
+      new: "Nuevo"
+      new_model: "Nuevo %{model}"
+      edit: "Editar"
+      edit_model: "Editar %{model}"
+      show: "Ver"
+      back: "Volver"
+      destroy: "Eliminar"
+      save: "Guardar"
+      cancel: "Cancelar"
+    empty: "Aún no hay %{model}."
+    confirm:
+      destroy: "¿Estás seguro?"
+    unassigned: "Sin asignar"
+    flash:
+      created: "%{model} se creó correctamente."
+      updated: "%{model} se actualizó correctamente."
+      destroyed: "%{model} se eliminó correctamente."
+
+  activerecord:
+    models:
+      chorus/agent:
+        one: "Agente"
+        other: "Agentes"
+      chorus/workspace:
+        one: "Espacio de trabajo"
+        other: "Espacios de trabajo"
+      chorus/artifact:
+        one: "Artefacto"
+        other: "Artefactos"
+    attributes:
+      chorus/agent:
+        name: "Nombre"
+        kind: "Tipo"
+      chorus/workspace:
+        name: "Nombre"
+        description: "Descripción"
+      chorus/artifact:
+        workspace: "Espacio de trabajo"
+        name: "Nombre"
+        kind: "Tipo"
+        locator: "Localizador"
+        description: "Descripción"

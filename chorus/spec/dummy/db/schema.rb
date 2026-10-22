@@ -1,0 +1,260 @@
+# This file is auto-generated from the current state of the database. Instead
+# of editing this file, please use the migrations feature of Active Record to
+# incrementally modify your database, and then regenerate this schema definition.
+#
+# This file is the source Rails uses to define your schema when running `bin/rails
+# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
+# be faster and is potentially less error prone than running all of your
+# migrations from scratch. Old migrations may fail to apply correctly if those
+# migrations use external dependencies or application code.
+#
+# It's strongly recommended that you check this file into your version control system.
+
+ActiveRecord::Schema[8.1].define(version: 2026_07_16_120001) do
+  create_table "chorus_agents", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "model"
+    t.string "name", null: false
+    t.string "type"
+    t.datetime "updated_at", null: false
+    t.index ["type"], name: "index_chorus_agents_on_type"
+  end
+
+  create_table "chorus_artifacts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "kind"
+    t.string "locator"
+    t.string "name", null: false
+    t.integer "result_id"
+    t.datetime "updated_at", null: false
+    t.index ["result_id"], name: "index_chorus_artifacts_on_result_id"
+  end
+
+  create_table "chorus_catalog_skills", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.integer "install_count"
+    t.json "repo_topics"
+    t.string "resource", null: false
+    t.string "skill_name"
+    t.datetime "synced_at"
+    t.datetime "updated_at", null: false
+    t.index ["resource", "skill_name"], name: "index_chorus_catalog_skills_on_resource_and_skill_name", unique: true
+  end
+
+  create_table "chorus_curations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "reputation"
+    t.string "resource", null: false
+    t.string "skill_name"
+    t.datetime "updated_at", null: false
+    t.index ["resource", "skill_name"], name: "index_chorus_curations_on_resource_and_skill_name", unique: true
+  end
+
+  create_table "chorus_external_accounts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.text "settings"
+    t.string "type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["type", "name"], name: "index_chorus_external_accounts_on_type_and_name", unique: true
+  end
+
+  create_table "chorus_plans", force: :cascade do |t|
+    t.integer "agent_id"
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "role_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "work_order_id", null: false
+    t.index ["agent_id"], name: "index_chorus_plans_on_agent_id"
+    t.index ["role_id"], name: "index_chorus_plans_on_role_id"
+    t.index ["work_order_id"], name: "index_chorus_plans_on_work_order_id"
+  end
+
+  create_table "chorus_results", force: :cascade do |t|
+    t.json "argv", default: []
+    t.decimal "cost_usd", precision: 12, scale: 6
+    t.datetime "created_at", null: false
+    t.string "cwd"
+    t.integer "duration_ms"
+    t.string "external_session_id"
+    t.boolean "interrupted"
+    t.boolean "is_error"
+    t.json "messages", default: {}
+    t.integer "num_turns"
+    t.integer "resultable_id", null: false
+    t.string "resultable_type", null: false
+    t.boolean "success"
+    t.json "tool_calls"
+    t.datetime "updated_at", null: false
+    t.json "usage"
+    t.index ["resultable_type", "resultable_id"], name: "index_chorus_results_on_resultable"
+  end
+
+  create_table "chorus_role_skills", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "role_id", null: false
+    t.integer "skill_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["role_id", "skill_id"], name: "index_chorus_role_skills_on_role_id_and_skill_id", unique: true
+    t.index ["role_id"], name: "index_chorus_role_skills_on_role_id"
+    t.index ["skill_id"], name: "index_chorus_role_skills_on_skill_id"
+  end
+
+  create_table "chorus_roles", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "chorus_skill_categorizations", force: :cascade do |t|
+    t.integer "catalog_skill_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "taxonomy_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["catalog_skill_id", "taxonomy_id"], name: "idx_on_catalog_skill_id_taxonomy_id_7270b7b472", unique: true
+    t.index ["catalog_skill_id"], name: "index_chorus_skill_categorizations_on_catalog_skill_id"
+    t.index ["taxonomy_id"], name: "index_chorus_skill_categorizations_on_taxonomy_id"
+  end
+
+  create_table "chorus_skill_requirements", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "role_id", null: false
+    t.string "slug"
+    t.datetime "updated_at", null: false
+    t.index ["role_id", "name"], name: "index_chorus_skill_requirements_on_role_id_and_name", unique: true
+    t.index ["role_id"], name: "index_chorus_skill_requirements_on_role_id"
+  end
+
+  create_table "chorus_skills", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "chorus_sources", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "digest"
+    t.integer "owner_id"
+    t.string "owner_type"
+    t.string "path"
+    t.string "ref"
+    t.string "resource", null: false
+    t.text "settings"
+    t.datetime "synced_at"
+    t.string "type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["owner_type", "owner_id"], name: "index_chorus_sources_on_owner"
+    t.index ["type"], name: "index_chorus_sources_on_type"
+  end
+
+  create_table "chorus_taxonomies", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "parent_id"
+    t.string "slug", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_chorus_taxonomies_on_parent_id"
+    t.index ["slug"], name: "index_chorus_taxonomies_on_slug", unique: true
+  end
+
+  create_table "chorus_work_orders", force: :cascade do |t|
+    t.integer "agent_id"
+    t.datetime "created_at", null: false
+    t.string "external_session_id"
+    t.integer "role_id", null: false
+    t.string "state"
+    t.datetime "updated_at", null: false
+    t.integer "workable_id"
+    t.string "workable_type"
+    t.integer "workspace_id"
+    t.index ["agent_id"], name: "index_chorus_work_orders_on_agent_id"
+    t.index ["role_id"], name: "index_chorus_work_orders_on_role_id"
+    t.index ["workable_type", "workable_id"], name: "index_chorus_work_orders_on_workable"
+    t.index ["workspace_id"], name: "index_chorus_work_orders_on_workspace_id"
+  end
+
+  create_table "chorus_workspaces", force: :cascade do |t|
+    t.datetime "claimed_at"
+    t.datetime "created_at", null: false
+    t.bigint "current_work_order_id"
+    t.text "description"
+    t.string "name", null: false
+    t.integer "role_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["current_work_order_id"], name: "index_chorus_workspaces_on_current_work_order_id"
+    t.index ["role_id"], name: "index_chorus_workspaces_on_role_id"
+  end
+
+  create_table "cnfs_okf_bundles", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "dev"
+    t.integer "ino"
+    t.integer "owner_id"
+    t.string "owner_type"
+    t.string "path", null: false
+    t.datetime "updated_at", null: false
+    t.index ["owner_type", "owner_id"], name: "index_cnfs_okf_bundles_on_owner"
+  end
+
+  create_table "cnfs_okf_concepts", force: :cascade do |t|
+    t.integer "bundle_id", null: false
+    t.string "content_hash"
+    t.datetime "created_at", null: false
+    t.text "custom_frontmatter"
+    t.string "description"
+    t.integer "ino"
+    t.integer "owner_id"
+    t.string "owner_type"
+    t.string "path", null: false
+    t.string "resource"
+    t.json "tags", default: []
+    t.datetime "timestamp"
+    t.string "title"
+    t.string "type"
+    t.datetime "updated_at", null: false
+    t.index ["bundle_id", "path"], name: "index_cnfs_okf_concepts_on_bundle_id_and_path", unique: true
+    t.index ["bundle_id"], name: "index_cnfs_okf_concepts_on_bundle_id"
+    t.index ["owner_type", "owner_id"], name: "index_cnfs_okf_concepts_on_owner"
+  end
+
+  create_table "cnfs_okf_view_ports", force: :cascade do |t|
+    t.integer "bundle_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "ino"
+    t.integer "owner_id"
+    t.string "owner_type"
+    t.string "path", default: "", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bundle_id"], name: "index_cnfs_okf_view_ports_on_bundle_id"
+    t.index ["owner_type", "owner_id"], name: "index_cnfs_okf_view_ports_on_owner"
+  end
+
+  create_table "workable_dummies", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.datetime "updated_at", null: false
+  end
+
+  add_foreign_key "chorus_artifacts", "chorus_results", column: "result_id"
+  add_foreign_key "chorus_plans", "chorus_agents", column: "agent_id"
+  add_foreign_key "chorus_plans", "chorus_roles", column: "role_id"
+  add_foreign_key "chorus_plans", "chorus_work_orders", column: "work_order_id"
+  add_foreign_key "chorus_role_skills", "chorus_roles", column: "role_id"
+  add_foreign_key "chorus_role_skills", "chorus_skills", column: "skill_id"
+  add_foreign_key "chorus_skill_categorizations", "chorus_catalog_skills", column: "catalog_skill_id"
+  add_foreign_key "chorus_skill_categorizations", "chorus_taxonomies", column: "taxonomy_id"
+  add_foreign_key "chorus_skill_requirements", "chorus_roles", column: "role_id"
+  add_foreign_key "chorus_taxonomies", "chorus_taxonomies", column: "parent_id"
+  add_foreign_key "chorus_work_orders", "chorus_agents", column: "agent_id"
+  add_foreign_key "chorus_work_orders", "chorus_roles", column: "role_id"
+  add_foreign_key "chorus_work_orders", "chorus_workspaces", column: "workspace_id"
+  add_foreign_key "chorus_workspaces", "chorus_roles", column: "role_id"
+  add_foreign_key "chorus_workspaces", "chorus_work_orders", column: "current_work_order_id"
+  add_foreign_key "cnfs_okf_concepts", "cnfs_okf_bundles", column: "bundle_id"
+  add_foreign_key "cnfs_okf_view_ports", "cnfs_okf_bundles", column: "bundle_id"
+end

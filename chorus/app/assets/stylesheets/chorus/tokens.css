@@ -1,0 +1,37 @@
+/*
+ * Chorus semantic color tokens (Tailwind v4 `@theme`).
+ *
+ * These are the ONLY colors Chorus markup may reference. Views use the
+ * generated utilities — `bg-primary`, `text-text`, `border-border`,
+ * `bg-danger`, etc. — never literal palette classes (`bg-blue-600`).
+ *
+ * The `@theme` block does two things at build time:
+ *   1. registers the utilities (`bg-primary`, `text-primary-contrast`, …)
+ *   2. emits the defaults below onto `:root` as CSS custom properties.
+ *
+ * HOST OVERRIDE CONTRACT
+ * ----------------------
+ * An enclosing app re-skins the entire Chorus UI by redefining these same
+ * `--color-*` variables on `:root` in its own stylesheet, loaded AFTER this
+ * file. Because every utility resolves `var(--color-*)` at runtime, the new
+ * values cascade through all Chorus views with zero view edits. The dummy app
+ * (spec/dummy) is the worked reference — see its tailwind entrypoint.
+ *
+ * Defaults are intentionally restrained/neutral (near-grey, barely-there
+ * accent) so the engine reads as unopinionated on its own.
+ */
+@theme {
+  --color-primary: oklch(0.45 0.03 250);
+  --color-primary-contrast: oklch(0.99 0 0);
+
+  --color-surface: oklch(0.99 0 0);
+  --color-surface-muted: oklch(0.96 0.002 250);
+
+  --color-border: oklch(0.88 0.004 250);
+
+  --color-text: oklch(0.27 0.01 250);
+  --color-text-muted: oklch(0.52 0.01 250);
+
+  --color-danger: oklch(0.52 0.16 25);
+  --color-danger-contrast: oklch(0.99 0 0);
+}
