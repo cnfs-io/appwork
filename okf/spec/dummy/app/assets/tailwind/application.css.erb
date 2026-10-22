@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+<%# Source paths composed by CnfsSupport from Rails + every registered plugin
+    (CnfsSupport.plugins). Adding an engine to the plugin set makes its Tailwind
+    classes scannable automatically — no hand-counted relative traversal. %>
+<% raise "CnfsSupport.source_paths is empty — is the Rails env booted?" if CnfsSupport.source_paths.empty? %>
+<% CnfsSupport.source_paths.each do |path| %>
+@source "<%= path %>";
+<% end %>
