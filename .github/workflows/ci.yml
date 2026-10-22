@@ -12,11 +12,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - { gem: chatter,       ruby: ruby-4.0.4 }
           - { gem: chorus,        ruby: ruby-4.0.4 }
           - { gem: gtd,           ruby: ruby-4.0.5 }
           - { gem: micro_manager, ruby: ruby-4.0.5 }
           - { gem: okf,           ruby: ruby-4.0.4 }
-          - { gem: ui,            ruby: ruby-4.0.5 }
     defaults:
       run:
         working-directory: ${{ matrix.gem }}
