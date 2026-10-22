@@ -1,7 +1,12 @@
 version: 2
 updates:
 - package-ecosystem: bundler
-  directory: "/"
+  directories:
+    - "/chorus"
+    - "/gtd"
+    - "/micro_manager"
+    - "/okf"
+    - "/ui"
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
