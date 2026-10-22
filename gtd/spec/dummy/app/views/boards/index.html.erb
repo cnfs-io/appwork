@@ -1,0 +1,16 @@
+<%# The three GTD boards over the SAME actions — the spike's headline asymmetry.
+    Only the Workflow board's columns assert status; Context and Project are pure
+    views (ADR 0005). Same objects, same Placement machinery, different behavior. %>
+<div class="bg-surface text-fg p-4">
+  <h1 class="text-fg text-2xl font-bold mb-4">GTD boards</h1>
+  <ul class="flex flex-col gap-2">
+    <% @boards.each do |board| %>
+      <li>
+        <%= link_to board.name, board_path(board), class: "text-primary underline" %>
+        <span class="text-fg opacity-60">
+          <%= board.columns.any?(&:asserts?) ? "— asserts status (drives the domain)" : "— pure view" %>
+        </span>
+      </li>
+    <% end %>
+  </ul>
+</div>

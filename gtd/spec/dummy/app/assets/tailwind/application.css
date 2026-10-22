@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+
+
+
+@source "/Users/robertroach/spikes/chorus/gems/gtd/spec/dummy/app/views";
+
+@source "/Users/robertroach/spikes/chorus/gems/gtd/spec/dummy/app/helpers";
+
+@source "/Users/robertroach/spikes/chorus/gems/okf/app/views";
+
+@source "/Users/robertroach/spikes/chorus/gems/okf/app/helpers";
+
+@source "/Users/robertroach/spikes/chorus/gems/ui/app/views";
+
+@source "/Users/robertroach/spikes/chorus/gems/ui/app/helpers";
+
+@source "/Users/robertroach/spikes/chorus/gems/ui/app/components";
+
+@source "/Users/robertroach/spikes/chorus/gems/gtd/app/views";
+
+@source "/Users/robertroach/spikes/chorus/gems/gtd/app/helpers";
+
+
+
+@import "/Users/robertroach/spikes/chorus/gems/ui/app/assets/stylesheets/cnfs_ui/tokens.css";

@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+<%# Source paths composed by CnfsSupport from Rails + every registered plugin
+    (CnfsSupport.plugins — here cnfs_okf, cnfs_ui, gtd). Adding an engine to the
+    plugin set makes its Tailwind classes scannable automatically, so the Kanban
+    components authored in cnfs_ui's app/components compile styled in THIS dummy —
+    no hand-counted relative traversal. Mirrors cnfs_ui's own dummy entry, minus
+    the Lookbook previews @source (gtd has no engine spec/previews). %>
+<% raise "CnfsSupport.source_paths is empty — is the Rails env booted?" if CnfsSupport.source_paths.empty? %>
+<% CnfsSupport.source_paths.each do |path| %>
+@source "<%= path %>";
+<% end %>
+
+<%# CnfsUi semantic design tokens (@theme). Absolute path resolved from the engine
+    root — robust across dummies — so the surface/fg/edge/primary/muted classes the
+    Kanban components use resolve to real colors. %>
+@import "<%= CnfsUi::Engine.root.join("app/assets/stylesheets/cnfs_ui/tokens.css") %>";
