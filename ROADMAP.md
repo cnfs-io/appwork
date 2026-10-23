@@ -74,3 +74,10 @@
   `.keep` there.
 - The URN partition is `Partitia::Support::UrnConfig` (ADR 0007); no appwork gem mints URNs
   yet.
+
+## Later: feature flags
+
+- [ ] Feature flags are an app concern, not partitia plumbing: use [flipper](https://github.com/flippercloud/flipper)
+      (its ActiveRecord adapter; per-tenant actors through the tenant's database). Decide whether
+      an appwork gem wraps it (actors from partitia URNs, a UI in D9's components) or apps use it
+      directly
