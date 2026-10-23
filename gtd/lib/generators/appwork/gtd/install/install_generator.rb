@@ -1,0 +1,49 @@
+require "rails/generators/base"
+
+module Appwork
+  module Gtd
+    module Generators
+      # Wires a host Rails app for appwork-gtd, GTD (actions, projects, contexts on OKF concepts):
+      #
+      #   bin/rails generate appwork:gtd:install
+      #
+      # appwork-gtd has no routes to mount and no host files to write. Its migrations reach
+      # the app through partitia-support's registry (Partitia::Support.migrations_paths in
+      # config/database.yml), never by copying, so this checks that wiring and prints what
+      # the host still has to do.
+      #
+      # Idempotent: it writes nothing, so a second run changes nothing and asks nothing.
+      class InstallGenerator < Rails::Generators::Base
+        DATABASE_YML = "config/database.yml".freeze
+        REGISTRY = "Partitia::Support.migrations_paths".freeze
+
+        desc "Check database.yml reads appwork-gtd's migrations from the partitia-support " \
+             "registry, and print what the host still has to do."
+
+        def check_migrations_paths
+          path = File.join(destination_root, DATABASE_YML)
+          @registry_wired = File.exist?(path) && File.read(path).include?(REGISTRY)
+          if @registry_wired
+            say_status :ok, "#{DATABASE_YML} reads #{REGISTRY}", :blue
+          else
+            say_status :missing, "#{DATABASE_YML} does not read #{REGISTRY}", :yellow
+          end
+        end
+
+        def print_post_install
+          say ""
+          say "appwork-gtd installed. Still to do:", :green
+          unless @registry_wired
+            say "  - bin/rails generate partitia:support:install  (points database.yml at the"
+            say "    engines' migrations)"
+          end
+          say "  - bin/rails db:migrate"
+          say "  - Run appwork:okf:install too (Gtd::Action owns an OKF concept)."
+          say "  - Boards need partitia-ui's Board/Column/Placement and Kanban components, which"
+          say "    partitia-ui does not have yet (appwork ROADMAP.md)."
+          say ""
+        end
+      end
+    end
+  end
+end

@@ -58,13 +58,12 @@ RSpec.describe Appwork::Chorus::ExternalAccount::GitHub, type: :model do
   # clone URL, with the network stubbed. Efficacy (a real repo created against
   # the real GitHub API) is a host-app concern, out of Chorus's testing scope.
 
-  # A sentinel token wired through Appwork::Chorus::Credentials so the secret-hygiene
+  # A sentinel token wired through Appwork::Chorus::Config so the secret-hygiene
   # assertions can prove it never leaks into a payload or an error string.
   SENTINEL_TOKEN = "SECRET-TOKEN".freeze
 
   before do
-    allow(Appwork::Chorus::Credentials).to receive(:new)
-      .and_return(instance_double(Appwork::Chorus::Credentials, github_token: SENTINEL_TOKEN))
+    allow(Appwork::Chorus::Config).to receive(:github_token).and_return(SENTINEL_TOKEN)
   end
 
   # Build a real Net::HTTPResponse of the given class with a canned body, so the
@@ -127,6 +126,14 @@ RSpec.describe Appwork::Chorus::ExternalAccount::GitHub, type: :model do
 
       expect { account.create_repository("dupe") }
         .to raise_error(/422.*name already exists/m)
+    end
+
+    it "refuses to call GitHub when no token is set" do
+      allow(Appwork::Chorus::Config).to receive(:github_token).and_return(nil)
+      account = create(:appwork_chorus_external_account_github, name: "acme-org")
+      expect(Net::HTTP).not_to receive(:start)
+
+      expect { account.create_repository("new-gem") }.to raise_error(/github_token is not set/)
     end
   end
 

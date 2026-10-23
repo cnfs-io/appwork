@@ -4,11 +4,14 @@ require "partitia/support"
 
 module Appwork
   module Chorus
-    # Non-secret framework configuration (anyway_config), so every value resolves
-    # from config/appwork_chorus.yml -> credentials.chorus -> ENV["APPWORK_CHORUS_*"] with one
-    # precedence, the family convention. Distinct from Appwork::Chorus::Credentials, which
-    # holds SECRETS (the GitHub token) under the honest `appwork_chorus_credentials` name;
-    # this class holds non-secret DATA the deploy environment sets.
+    # Chorus' settings (anyway_config), so every value resolves from
+    # config/appwork_chorus.yml -> credentials.appwork_chorus -> ENV["APPWORK_CHORUS_*"]
+    # with one precedence, the family convention (partitia ARCHITECTURE §4: one config
+    # class per engine).
+    #
+    # One SECRET lives here: github_token (ExternalAccount::GitHub's REST calls). Set it
+    # in credentials (appwork_chorus.github_token) or APPWORK_CHORUS_GITHUB_TOKEN, never
+    # in config/appwork_chorus.yml. Unset, a GitHub call raises before any request.
     #
     # A tenant's CURATION POSTURE is configuration, not data — it does not belong on
     # any model. It lives here as two knobs:
@@ -51,7 +54,8 @@ module Appwork
       #     unconditional constant in the install argv.)
       attr_config curation_enabled: true, reputation_threshold: 50,
                   agents_live: true, skills_live: true,
-                  workspace_root: "~/.chorus/workspaces", skill_copy: true
+                  workspace_root: "~/.chorus/workspaces", skill_copy: true,
+                github_token: nil, github_api_url: "https://api.github.com"
 
       # anyway_config coerces string ENV/YAML values; keep these honestly typed.
       coerce_types curation_enabled: :boolean, reputation_threshold: :integer,
