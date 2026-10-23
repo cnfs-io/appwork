@@ -42,10 +42,10 @@ RSpec.describe Appwork::Manager::Goal, type: :model do
       expect(described_class.column_names).not_to include("status")
     end
 
-    it "can be occupied by a Chorus workspace via the polymorphic workable" do
+    it "can be the subject of a Chorus work order via the polymorphic workable" do
       goal = create(:appwork_manager_goal)
-      workspace = Appwork::Chorus::Workspace.create!(name: "Planning", workable: goal)
-      expect(goal.reload.workspace).to eq(workspace)
+      work_order = chorus_work_order_for(goal)
+      expect(goal.reload.work_orders).to contain_exactly(work_order)
     end
 
     describe "status accessor over the concept" do

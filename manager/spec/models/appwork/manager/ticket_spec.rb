@@ -36,7 +36,7 @@ RSpec.describe Appwork::Manager::Ticket, type: :model do
   # The assignee backlink is a real, colocated-DB FK to appwork_chorus_agents.
   describe "assignment to a Chorus agent" do
     it "can be assigned to a chorus agent" do
-      agent = Appwork::Chorus::Agent.create!(name: "Echo")
+      agent = Appwork::Chorus::Agent::ClaudeCode.create!(name: "Echo")
       ticket = create(:appwork_manager_ticket, agent: agent)
       expect(ticket.reload.agent).to eq(agent)
     end
@@ -67,10 +67,10 @@ RSpec.describe Appwork::Manager::Ticket, type: :model do
       expect(described_class.column_names).not_to include("status")
     end
 
-    it "can be occupied by a Chorus workspace via the polymorphic workable" do
+    it "can be the subject of a Chorus work order via the polymorphic workable" do
       ticket = create(:appwork_manager_ticket)
-      workspace = Appwork::Chorus::Workspace.create!(name: "Review", workable: ticket)
-      expect(ticket.reload.workspace).to eq(workspace)
+      work_order = chorus_work_order_for(ticket)
+      expect(ticket.reload.work_orders).to contain_exactly(work_order)
     end
 
     describe "status accessor over the concept" do

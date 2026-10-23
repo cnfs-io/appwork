@@ -34,11 +34,11 @@ RSpec.describe Appwork::Manager::Project, type: :model do
       expect(project.strategy).to eq(strategy)
     end
 
-    # The workspace inverse is now supplied by Appwork::Chorus::Workable (not hand-declared
+    # The work-order inverse is supplied by Appwork::Chorus::Workable (not hand-declared
     # on Project) — it must exist exactly once, as the polymorphic `as: :workable`.
-    it "exposes its workspace via the polymorphic workable inverse (from the concern)" do
-      reflection = described_class.reflect_on_association(:workspace)
-      expect(reflection.macro).to eq(:has_one)
+    it "exposes its work orders via the polymorphic workable inverse (from the concern)" do
+      reflection = described_class.reflect_on_association(:work_orders)
+      expect(reflection.macro).to eq(:has_many)
       expect(reflection.options[:as]).to eq(:workable)
     end
   end
@@ -77,23 +77,23 @@ RSpec.describe Appwork::Manager::Project, type: :model do
     end
   end
 
-  # A Chorus workspace occupies a project by pointing its polymorphic `workable`
-  # at it. Exercises the allowed org → chorus cross-gem seam end-to-end.
-  describe "hosting workspace (the active slot)" do
-    it "is the Chorus workspace whose workable points at it" do
+  # A Chorus work order names a project as its subject through its polymorphic
+  # `workable`. Exercises the allowed org → chorus cross-gem seam end-to-end.
+  describe "Chorus work orders (the subject seam)" do
+    it "is the subject of the work orders whose workable points at it" do
       project = create(:appwork_manager_project)
-      workspace = Appwork::Chorus::Workspace.create!(name: "Delivery", workable: project)
-      expect(project.reload.workspace).to eq(workspace)
+      work_order = chorus_work_order_for(project)
+      expect(project.reload.work_orders).to contain_exactly(work_order)
     end
 
-    it "nullifies the hosting workspace's workable when destroyed" do
+    it "nullifies its work orders' workable when destroyed, leaving them in place" do
       project = create(:appwork_manager_project)
-      workspace = Appwork::Chorus::Workspace.create!(name: "Delivery", workable: project)
+      work_order = chorus_work_order_for(project)
 
       project.destroy
 
-      expect(workspace.reload.workable_id).to be_nil
-      expect(Appwork::Chorus::Workspace.exists?(workspace.id)).to be(true)
+      expect(work_order.reload.workable_id).to be_nil
+      expect(Appwork::Chorus::WorkOrder.exists?(work_order.id)).to be(true)
     end
   end
 

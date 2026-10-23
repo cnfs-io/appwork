@@ -4,10 +4,10 @@ module Appwork
       belongs_to :goal
       has_one :strategy, through: :goal
 
-      # A Project is a Chorus workable (occupiable by a Appwork::Chorus::Workspace) that
+      # A Project is a Chorus workable (the subject of Appwork::Chorus::WorkOrders) that
       # carries an opaque status in its OKF concept's custom_frontmatter.
       # Occupiability and status are independent: Appwork::Chorus::Workable supplies the
-      # `has_one :workspace, as: :workable` inverse; `okf_frontmatter :status`
+      # `has_many :work_orders, as: :workable` inverse; `okf_frontmatter :status`
       # (an OKF facility) supplies the status accessor over the concept.
       has_one_okf :concept
       okf_frontmatter :status
