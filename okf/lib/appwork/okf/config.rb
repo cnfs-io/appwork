@@ -6,13 +6,13 @@ module Appwork
   module Okf
     # Config surface for the OKF engine. A Partitia::Support::Config subclass
     # (anyway_config), so every value resolves, in ascending priority:
-    #   1. config/partitia_appwork.yml in the consumer app
+    #   1. config/appwork_okf.yml in the consumer app
     #   2. Rails credentials under the `appwork_okf` key
     #   3. ENV: APPWORK_OKF_OWNED_CONCEPT_POLICY, APPWORK_OKF_LISTEN_LATENCY, ...
     #
     # A consumer app overrides in an initializer:
     #
-    #   # config/initializers/partitia_appwork.rb
+    #   # config/initializers/appwork_okf.rb
     #   Appwork::Okf::Config.owned_concept_policy = :quarantine
     #
     # See doc/plans/PLAN-sync-and-listener.md for the owned-concept policy design.
