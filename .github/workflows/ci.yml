@@ -5,34 +5,55 @@ on:
   push:
     branches: [ main ]
 
+env:
+  RUBY_VERSION: ruby-4.0.7
+  # partitia's engines, linked the way gem-local links them (RUBY_LOCAL_GEMS_HOME/partitia-<dir>)
+  RUBY_LOCAL_GEMS_HOME: ${{ github.workspace }}/.gems
+  # The lockfiles record gem-local's absolute path on the machine that bundled them; the
+  # path source moves here, so bundler may rewrite that line (gem versions stay locked)
+  BUNDLE_FROZEN: "false"
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { gem: chatter,       ruby: ruby-4.0.4 }
-          - { gem: chorus,        ruby: ruby-4.0.4 }
-          - { gem: gtd,           ruby: ruby-4.0.5 }
-          - { gem: micro_manager, ruby: ruby-4.0.5 }
-          - { gem: okf,           ruby: ruby-4.0.4 }
+        gem: [ chatter, chorus, gtd, manager, okf ]
     defaults:
       run:
         working-directory: ${{ matrix.gem }}
     env:
-      RUBY_VERSION: ${{ matrix.ruby }}
       RUBOCOP_CACHE_ROOT: tmp/rubocop
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Checkout partitia
+        uses: actions/checkout@v6
+        with:
+          repository: cnfs-io/partitia
+          path: .partitia
+          # A token that can read cnfs-io/partitia if it is private; else this repo's token
+          token: ${{ secrets.PARTITIA_READ_TOKEN || github.token }}
+
+      - name: Link partitia's gems (gem-local's layout)
+        working-directory: .
+        run: |
+          mkdir -p "$RUBY_LOCAL_GEMS_HOME"
+          for spec in .partitia/*/partitia-*.gemspec; do
+            ln -sfn "$GITHUB_WORKSPACE/$(dirname "$spec")" "$RUBY_LOCAL_GEMS_HOME/$(basename "$spec" .gemspec)"
+          done
+          ls -l "$RUBY_LOCAL_GEMS_HOME"
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
-          bundler-cache: true
           working-directory: ${{ matrix.gem }}
+
+      - name: Bundle
+        run: bundle install --jobs 4
 
       - name: Prepare RuboCop cache
         uses: actions/cache@v4
@@ -46,3 +67,48 @@ jobs:
 
       - name: Lint code for consistent style
         run: bin/rubocop -f github
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        gem: [ chatter, chorus, gtd, manager, okf ]
+    defaults:
+      run:
+        working-directory: ${{ matrix.gem }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Checkout partitia
+        uses: actions/checkout@v6
+        with:
+          repository: cnfs-io/partitia
+          path: .partitia
+          token: ${{ secrets.PARTITIA_READ_TOKEN || github.token }}
+
+      - name: Link partitia's gems (gem-local's layout)
+        working-directory: .
+        run: |
+          mkdir -p "$RUBY_LOCAL_GEMS_HOME"
+          for spec in .partitia/*/partitia-*.gemspec; do
+            ln -sfn "$GITHUB_WORKSPACE/$(dirname "$spec")" "$RUBY_LOCAL_GEMS_HOME/$(basename "$spec" .gemspec)"
+          done
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          working-directory: ${{ matrix.gem }}
+
+      - name: Bundle
+        run: bundle install --jobs 4
+
+      - name: Run specs
+        run: |
+          if [ -d spec ]; then
+            bundle exec rspec
+          else
+            echo "::notice::${{ matrix.gem }} has no specs yet"
+          fi

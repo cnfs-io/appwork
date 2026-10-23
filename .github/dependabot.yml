@@ -5,7 +5,7 @@ updates:
     - "/chatter"
     - "/chorus"
     - "/gtd"
-    - "/micro_manager"
+    - "/manager"
     - "/okf"
   schedule:
     interval: weekly
