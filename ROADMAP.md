@@ -77,7 +77,12 @@
 
 ## Later: feature flags
 
-- [ ] Feature flags are an app concern, not partitia plumbing: use [flipper](https://github.com/flippercloud/flipper)
-      (its ActiveRecord adapter; per-tenant actors through the tenant's database). Decide whether
-      an appwork gem wraps it (actors from partitia URNs, a UI in D9's components) or apps use it
-      directly
+- [ ] appwork engines gate their features through partitia-support's seam
+      `Partitia::Support.feature?(name, actor:)` (partitia ROADMAP D6.5), so they support
+      [flipper](https://github.com/flippercloud/flipper) without depending on it. The app wires
+      flipper; the testbed (`~/spaces/cnfs/apps/testbed`) proves it
+
+## Later: fresh-app proof
+
+- [ ] Each engine installed into a fresh app: the testbed's `kitchen-sink` recipe (partitia
+      D6.5) once the resolver handles appwork engines
