@@ -83,7 +83,8 @@ RSpec.describe Appwork::Gtd::Action do
   end
 
   # --- Hat 2: placement subject (011 / ADR 0005) ----------------------------
-  describe "as a placement subject (appears on boards via placements)" do
+  describe "as a placement subject (appears on boards via placements)",
+           skip: "partitia-ui has no Board/Column/Placement or Kanban components yet (appwork ROADMAP)" do
     it "has_many placements polymorphically, and multi-board is free" do
       action = Appwork::Gtd::Action.create!(status: "inbox")
       workflow = Partitia::Ui::Board.create!(name: "Workflow")
