@@ -84,3 +84,18 @@
 
 - [ ] Each engine installed into a fresh app: the testbed's `kitchen-sink` recipe (partitia
       D6.5) once the resolver handles appwork engines
+
+## UI (ADR 0008)
+
+appwork follows partitia's strategy (docs repo `adrs/0008-headless-engines-ui-in-sibling-gems.md`):
+logic in models, services and query objects; screens in Phlex + RubyUI, kept thin.
+
+- [ ] Engines render inside the host's layout and ship no layouts of their own; they register
+      navigation items in partitia-support's registry (sections per context; label, path,
+      icon, order, `visible_if`) and appear in partitia-ui's shell
+- [ ] Components use the semantic design tokens (CSS variables, shadcn names) the app defines;
+      each engine's installer adds its Tailwind `@source` line
+- [ ] Existing ERB views (chatter, chorus, gtd, manager, okf) become Phlex once partitia-ui's
+      setup and shell exist (partitia D9)
+- [ ] appwork's own components (gtd's Kanban boards: Board, Column, Placement) live in appwork,
+      not partitia-ui; decide whether they are one shared appwork gem or per engine
