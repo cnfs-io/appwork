@@ -55,7 +55,7 @@ bin/rails console                   # play with Organization / Okf::Bundle / Okf
 
 **What shipped** — full suite green: **23 examples, 0 failures**; RuboCop clean.
 
-- **`Appwork::Okf::Config`** (`lib/cnfs_okf/config.rb`, required from `lib/partitia_appwork.rb`)
+- **`Appwork::Okf::Config`** (`lib/appwork/okf/config.rb`, required from `lib/appwork/okf.rb`)
   — `Partitia::Support::Config` subclass. `owned_concept_policy` (default `:protect`),
   `listen_latency` (`0.5`), `listen_only` (`/\.md\z/`). `coerce_types
   owned_concept_policy: :string` + a `#owned_concept_policy` reader that
@@ -82,7 +82,7 @@ bin/rails console                   # play with Organization / Okf::Bundle / Okf
   longest-prefix routing, `rescue` inside the `listen` callback. `listen` added as
   a gemspec runtime dep, required only from `listener.rb`.
 - **Rake** `cnfs_okf:sync` / `cnfs_okf:listen` in the engine; dummy `Procfile.dev`
-  gains a `listener:` line. Dummy initializer `config/initializers/partitia_appwork.rb`
+  gains a `listener:` line. Dummy initializer `config/initializers/appwork_okf.rb`
   ships the `:quarantine` override commented out (boots on default `:protect`).
 
 **Decisions worth flagging**

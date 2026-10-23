@@ -1,15 +1,15 @@
-# Chorus
+# Chorus (appwork-chorus)
 
 Chorus is a mountable Rails engine that provides the **coordination substrate**
 for human/AI participant work: a durable `Workspace` execution surface, an
 `Artifact` store, `Agent` participants, a skill catalog, and the
 `Appwork::Chorus::Workable` contract a host domain gem includes to make its own models
-occupiable. Narrative content is backed by OKF (`cnfs_okf`) concepts through a
+occupiable. Narrative content is backed by OKF (`appwork-okf`) concepts through a
 one-directional dependency: Chorus consumes OKF; OKF never knows Chorus.
 
 Chorus does **not** own an org-chart domain. The intent spine
 (strategy → goal → project → issue) and `Role` live in host gems (e.g.
-`micro_manager`; IAM provides `Role`). A host becomes occupiable by depending on
+`appwork-manager`; IAM provides `Role`). A host becomes occupiable by depending on
 Chorus and including `Appwork::Chorus::Workable`; Chorus is **host-agnostic** — it never
 names or knows a host.
 
@@ -50,23 +50,24 @@ the host app owns those vocabularies.
 
 ## Installation
 
-Add to your application's Gemfile:
+Add the gem (it depends on `partitia-support` and `appwork-okf`):
 
 ```ruby
-gem "chorus"
-```
-
-Mount it and install/run the migrations:
-
-```ruby
-# config/routes.rb
-mount Appwork::Chorus::Engine => "/chorus"
+# Gemfile: appwork's and partitia's gems by name, from gem-local's links (gem-local list)
+local_gems = ENV.fetch("RUBY_LOCAL_GEMS_HOME") { File.join(ENV.fetch("XDG_DATA_HOME") { File.join(Dir.home, ".local/share") }, "gems") }
+gem "partitia-support", path: "#{local_gems}/partitia-support"
+gem "appwork-okf", path: "#{local_gems}/appwork-okf"
+gem "appwork-chorus", path: "#{local_gems}/appwork-chorus"
 ```
 
 ```bash
-$ bin/rails db:migrate   # the engine's migrations are picked up automatically
-$ bin/rails db:seed      # optional (demo seeds are minimal today)
+$ bin/rails generate partitia:support:install   # database.yml reads the engines' migrations
+$ bin/rails generate appwork:chorus:install     # checks that, prints what is left; re-runnable
+$ bin/rails db:migrate                          # okf's and chorus' migrations, in place
+$ bin/rails appwork:chorus:seed                 # optional example records
 ```
+
+Chorus has no routes today (the scaffold UI was retired), so there is nothing to mount.
 
 ## Theming — semantic color tokens (host re-skins, no view forks)
 
@@ -191,9 +192,9 @@ catalog.remove("vercel-react-best-practices")   # `npx skills remove`
 
 ## Configuration
 
-Non-secret configuration resolves through `Appwork::Chorus::Config` (an `anyway_config`
-subclass) from, in ascending precedence, `config/appwork_chorus.yml` →
-`credentials.chorus` → `ENV["APPWORK_CHORUS_*"]`. A tenant's **curation posture** lives
+Settings resolve through `Appwork::Chorus::Config` (`config_name :appwork_chorus`) from,
+in ascending precedence, `config/appwork_chorus.yml` → `credentials.appwork_chorus` →
+`ENV["APPWORK_CHORUS_*"]`. A tenant's **curation posture** lives
 here rather than on any model:
 
 | Key                    | Default | ENV                          | Meaning                                             |
@@ -206,10 +207,14 @@ Appwork::Chorus::Config.curation_enabled      # => true
 Appwork::Chorus::Config.reputation_threshold  # => 50
 ```
 
-Secrets (e.g. the GitHub token used by `Appwork::Chorus::ExternalAccount::GitHub`) resolve
-separately through `Appwork::Chorus::Credentials` — set them via `rails credentials:edit`
-(under `appwork_chorus_credentials`) or `ENV["APPWORK_CHORUS_GITHUB_TOKEN"]`, never a source
-literal.
+Execution switches: `agents_live`, `skills_live` (both default `true`; CI sets them
+`false`), `workspace_root` (default `~/.chorus/workspaces`), `skill_copy` (`true`), and
+`github_api_url` (`https://api.github.com`).
+
+One secret lives in the same class: `github_token`, used by
+`Appwork::Chorus::ExternalAccount::GitHub`. Set it in credentials
+(`appwork_chorus.github_token`) or `ENV["APPWORK_CHORUS_GITHUB_TOKEN"]`, never in
+`config/appwork_chorus.yml`; a GitHub call with no token raises before any request.
 
 ## Development
 

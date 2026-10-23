@@ -1,12 +1,11 @@
-# CLAUDE.md — chorus engine
+# AGENTS.md — appwork-chorus
 
-Guidance for Claude Code working **inside the Chorus gem**.
+Guidance for agents working **inside the Chorus gem** (`appwork-chorus`, `Appwork::Chorus`).
 
-Read `../CLAUDE.md` (cnfs_* family conventions) first, and above it the workspace
-`../../CLAUDE.md` (map + how-we-work). Those carry the shared lifecycle rules
-(pre-v1: edit migrations in place), the cnfs_* conventions (string `status`/`kind`,
-i18n discipline, secrets, dependency inversion), the skills, and the stack. This
-file carries only what is specific to Chorus.
+Read the repo's `../AGENTS.md` first, and partitia's `ARCHITECTURE.md` (the engine
+contract appwork's gems meet). Those carry the shared rules (pre-v1: edit migrations
+in place, naming, config, installers). This file carries only what is specific to
+Chorus.
 
 When writing or updating this gem's `README.md`, follow the **readme-authoring**
 skill (`.claude/skills/readme-authoring`) — it gates on the code being in a
@@ -29,7 +28,7 @@ of its own. Chorus owns:
 
 **Chorus does not own the org-chart spine.** The intent spine
 (strategy → goal → project → issue) and `Role` were extracted to host gems: the
-org spine lives in a host like `micro_manager`; IAM provides `Role`. A host
+org spine lives in a host like `appwork-manager`; IAM provides `Role`. A host
 becomes occupiable by depending on Chorus and including `Appwork::Chorus::Workable` (see
 the host-agnostic boundary below). Chorus holds **no `Organization` row of its
 own** — a Chorus database *is* one organization. Chorus stays non-opinionated — it
@@ -40,7 +39,7 @@ work needing both a Rails repo and a Solana repo).
 
 **Chorus consumes OKF; OKF never knows Chorus.** This one-directional
 dependency is the single most important invariant. Chorus owns its entire
-database schema with real foreign keys between `chorus_*` tables, and on top of
+database schema with real foreign keys between `appwork_chorus_*` tables, and on top of
 that it is an OKF *consumer*: `Appwork::Chorus::ApplicationRecord` includes
 `Appwork::Okf::Consumer`, so every Chorus record is OKF-consumer-capable by design.
 Models opt into actual concept-backing with `has_one_okf` where it earns its
@@ -55,8 +54,8 @@ forbidden," not "no coupling."
 
 ### The host boundary: hosts depend on Chorus; Chorus knows no host
 
-Chorus is **host-agnostic**. A host domain gem (today `micro_manager`; tomorrow
-`gtd`, or a bare Concept-backed unit) is a **Chorus consumer**: it depends on
+Chorus is **host-agnostic**. A host domain gem (today `appwork-manager`; tomorrow
+`appwork-gtd`, or a bare Concept-backed unit) is a **Chorus consumer**: it depends on
 Chorus and `include`s `Appwork::Chorus::Workable` to make its domain models occupiable —
 exactly as it `include`s `Appwork::Okf::Consumer` to become OKF-backed. The dependency
 runs strictly one way:
@@ -64,24 +63,24 @@ runs strictly one way:
 - **Host → Chorus:** allowed, real, gemspec-declared. A host may reference
   `Appwork::Chorus::Workable`, `Appwork::Chorus::Workspace`, `Appwork::Chorus::Agent`.
 - **Chorus → any host:** FORBIDDEN. Chorus must never reference, name, or know a
-  host constant (`Appwork::Manager`, `Gtd`, …). This is what the org-spine extraction
+  host constant (`Appwork::Manager`, `Appwork::Gtd`, …). This is what the org-spine extraction
   was *for* — so one Chorus can serve any host.
 
-(grep-enforceable: no host constant appears under `gems/chorus/app` or
-`gems/chorus/lib`.) This is the same shape as the OKF rule, one boundary over.
+(grep-enforceable: no host constant appears under `chorus/app` or
+`chorus/lib`.) This is the same shape as the OKF rule, one boundary over.
 
 ### The organization boundary: a database is an organization
 
 Chorus carries **no `Organization` model, table, or owning FK.** The
 organizational boundary is the **database**: under `partitia-tenanted` there is one
 physical database per `Partitia::Iam::Account`, and that per-account database *is* one
-organization. Every `chorus_*` record already lives inside exactly one org by
+organization. Every `appwork_chorus_*` record already lives inside exactly one org by
 virtue of which database it is in, so an `Organization` row would only restate
 what the connection already guarantees — and would invite cross-org rows in a
 single table, which the tenancy model exists to prevent.
 
 The consequence for the schema: **Workspace and Agent are top-level roots** — no
-`chorus_*` model `belongs_to :organization`, because there is no organization row
+`appwork_chorus_*` model `belongs_to :organization`, because there is no organization row
 to belong to. `Source` and `ExternalAccount` say the same in their own comments
 ("account-scoped by tenancy — one physical DB per Account"). Do not reintroduce an
 `Organization` model or an org-owning FK; scope is the database, not a column.
@@ -193,7 +192,7 @@ ExternalAccount   STI base (ExternalAccount::GitHub acts) — a tenant's 3rd-par
   for a tenant's third-party service accounts; same `settings`-bag pattern.
 - `app/controllers/appwork/chorus/` — `application_controller` only; the scaffold V+C
   layer was retired (plan 004), to be rebuilt on Phlex/Partitia::Ui later.
-- `db/migrate/` — edited in place pre-v1 (see `../CLAUDE.md`).
+- `db/migrate/` — edited in place pre-v1 (see `../AGENTS.md`).
 - `config/locales/en.yml` — `chorus.*` namespace. `es.yml` lives in
   `spec/dummy/config/locales/`.
 - `spec/` — RSpec + FactoryBot; model specs under `spec/models/chorus/` (request
@@ -202,7 +201,7 @@ ExternalAccount   STI base (ExternalAccount::GitHub acts) — a tenant's 3rd-par
 ## Tests
 
 Run with `bin/rails` against `spec/dummy`, or `bin/ci`. When a model changes,
-move its factory (`spec/factories/chorus_*.rb`) and specs in the same step as
+move its factory (`spec/factories/appwork_chorus_*.rb`) and specs in the same step as
 the in-place migration edit, so schema and fixtures stay together.
 
 **Test only what a harness can honestly claim.** Chorus tests that the harness is
@@ -233,17 +232,17 @@ how a later session would know the claim stopped being true.
   describes OKF depending on, importing, or naming Chorus.
 - [critical] Chorus is host-agnostic: hosts depend on Chorus and `include`
   `Appwork::Chorus::Workable` to become occupiable, but Chorus never references, names, or
-  knows a host constant (`Appwork::Manager`, `Gtd`, …). The dependency runs
+  knows a host constant (`Appwork::Manager`, `Appwork::Gtd`, …). The dependency runs
   host → Chorus only; Chorus → host is forbidden.
-  referent: grep for host constants (`Appwork::Manager`, `Gtd`, …) under
-  `gems/chorus/app` and `gems/chorus/lib` returns nothing; no `chorus_*` model or
+  referent: grep for host constants (`Appwork::Manager`, `Appwork::Gtd`, …) under
+  `chorus/app` and `chorus/lib` returns nothing; no `appwork_chorus_*` model or
   doc names a host gem.
 - [critical] Chorus carries no `Organization` (or tenant/account) model of its
   own; the per-tenant database (`partitia-tenanted`, one physical DB per
   `Partitia::Iam::Account`) is the organizational boundary. Workspace and Agent are
   top-level roots scoped by the database, not by an owning FK.
   referent: no `Organization`/`Tenant`/`Account` model or `appwork_chorus_organizations`
-  table exists in the engine; no `chorus_*` model declares `belongs_to
+  table exists in the engine; no `appwork_chorus_*` model declares `belongs_to
   :organization`; docs describe no in-schema org root.
 
 ### identity / structure
@@ -279,14 +278,14 @@ how a later session would know the claim stopped being true.
 ### hygiene
 
 - [medium] Narrative content lives in OKF concepts via `has_one_okf`, never in a
-  `body`/`content`/`markdown` column on a `chorus_*` table.
-  referent: no `chorus_*` table carries a body/content/markdown column; a model
+  `body`/`content`/`markdown` column on a `appwork_chorus_*` table.
+  referent: no `appwork_chorus_*` table carries a body/content/markdown column; a model
   needing narrative content declares `has_one_okf`.
 - [medium] `kind` is a free string (the host owns those vocabularies); `slug`
   appears only where it earns its place (`appwork_chorus_taxonomies`); Chorus carries no
   `status` column (status is a host-side concept-frontmatter concern).
   referent: schema uses string `kind` with no inclusion validation; `slug` exists
-  only on `appwork_chorus_taxonomies`; no `chorus_*` table has a `status` column.
+  only on `appwork_chorus_taxonomies`; no `appwork_chorus_*` table has a `status` column.
 
 ### coherence of docs ↔ plans
 
@@ -298,7 +297,7 @@ how a later session would know the claim stopped being true.
 - [medium] No live doc references a deleted file or superseded naming
   (`ARCHITECTURE-content-storage.md`, `PHASE-A*`/`PHASE-B`, "respine",
   "nine-model spine").
-  referent: grep of `CLAUDE.md`, `README.md`, `ARCHITECTURE-*.md`, and `doc/plans`
+  referent: grep of `AGENTS.md`, `README.md`, `ARCHITECTURE-*.md`, and `doc/plans`
   for those names returns nothing (the append-only `progress.md` history is exempt
   — it records past state by design).
 

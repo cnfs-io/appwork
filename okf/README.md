@@ -12,24 +12,28 @@ linked without `Appwork::Okf` knowing anything about your models.
 
 ## Installation
 
-Add the gem:
+Add the gem (it depends on `partitia-support`):
 
 ```ruby
-# Gemfile
-gem "cnfs_okf"
+# Gemfile: appwork's and partitia's gems by name, from gem-local's links (gem-local list)
+local_gems = ENV.fetch("RUBY_LOCAL_GEMS_HOME") { File.join(ENV.fetch("XDG_DATA_HOME") { File.join(Dir.home, ".local/share") }, "gems") }
+gem "partitia-support", path: "#{local_gems}/partitia-support"
+gem "appwork-okf", path: "#{local_gems}/appwork-okf"
 ```
 
-Install and run its migrations (creates `appwork_okf_bundles`,
-`appwork_okf_concepts`, `appwork_okf_view_ports`):
+Then wire it and migrate (creates `appwork_okf_bundles`, `appwork_okf_concepts`,
+`appwork_okf_view_ports`):
 
 ```bash
 bundle install
-bin/rails cnfs_okf:install:migrations
+bin/rails generate partitia:support:install   # database.yml reads the engines' migrations
+bin/rails generate appwork:okf:install        # checks that, prints what is left; re-runnable
 bin/rails db:migrate
 ```
 
-`Appwork::Okf` is a Rails engine; its models, rake tasks, and migrations load
-automatically once the gem is in your `Gemfile`. There are no routes to mount —
+`Appwork::Okf` is a Rails engine registered with `Partitia::Support.plugins`; its
+migrations run in place from the gem (never copied), and its models and rake tasks
+load once the gem is in your `Gemfile`. There are no routes to mount —
 the public surface is the models, `Appwork::Okf::Sync`, and the rake tasks below.
 
 ## Quick start
@@ -116,46 +120,51 @@ account.concept                   # => the owned concept
 
 ### Watch and auto-sync (development)
 
-`bin/rails cnfs_okf:sync` reconciles once; `cnfs_okf:listen` watches the bundle
+`bin/rails appwork:okf:sync` reconciles once; `appwork:okf:listen` watches the bundle
 roots and reconciles on every change. Both take an optional `BUNDLE=<id>` to
 scope to one bundle:
 
 ```bash
-bin/rails cnfs_okf:sync                 # reconcile every bundle once
-BUNDLE=42 bin/rails cnfs_okf:sync       # reconcile just bundle 42
-bin/rails cnfs_okf:listen               # watch all bundles, sync on change (blocks)
+bin/rails appwork:okf:sync                 # reconcile every bundle once
+BUNDLE=42 bin/rails appwork:okf:sync       # reconcile just bundle 42
+bin/rails appwork:okf:listen               # watch all bundles, sync on change (blocks)
 ```
 
-`cnfs_okf:listen` blocks and runs a background watcher thread — run it as a
+`appwork:okf:listen` blocks and runs a background watcher thread — run it as a
 **dedicated process** (a `Procfile.dev` entry or a systemd unit), never inside a
 web or job process.
 
 ## Configuration
 
-Settings live on `Appwork::Okf::Config` and resolve, in ascending priority, from ENV
-→ `config/partitia_appwork.yml` → Rails credentials → code. Set them in an initializer:
+Settings live on `Appwork::Okf::Config` (`config_name :appwork_okf`) and resolve from
+`config/appwork_okf.yml`, then credentials (`appwork_okf`), then `APPWORK_OKF_*`; an
+initializer can also set them:
 
 ```ruby
-# config/initializers/partitia_appwork.rb
+# config/initializers/appwork_okf.rb
 Appwork::Okf::Config.owned_concept_policy = :quarantine
 ```
 
 | Key | Default | Meaning |
 | --- | --- | --- |
 | `owned_concept_policy` | `:protect` | How a disk change to an **owned** concept is handled: `:disk_wins` (apply or delete), `:protect` (apply content, never delete), `:quarantine` (leave the DB untouched so the concept reads as `diverged?`). Unowned concepts always follow disk. |
-| `listen_latency` | `0.5` | Seconds `cnfs_okf:listen` coalesces filesystem events before reconciling. |
+| `listen_latency` | `0.5` | Seconds `appwork:okf:listen` coalesces filesystem events before reconciling. |
 | `listen_only` | `/\.md\z/` | Regexp of paths the watcher reacts to. |
 
-See the workspace `config` skill for the configuration convention (and how to
-keep secrets out of source).
+appwork-okf has no secrets.
+
+## Events
+
+Instrumented through `Partitia::Support::Instrumentable`: `sync.run` and `concept.persist`,
+emitted as `partitia_appwork.sync.run` and `partitia_appwork.concept.persist` (support tags
+every `Appwork::*` constant `partitia_appwork`; see the repo ROADMAP).
 
 ## Development
 
 Specs run against the bundled dummy app in `spec/dummy`:
 
 ```bash
-(cd spec/dummy && bin/rails db:test:prepare)   # first run only
-bundle exec rspec
+bundle exec rspec     # the dummy's test schema loads itself (maintain_test_schema!)
 bundle exec rubocop
 ```
 
