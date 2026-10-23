@@ -22,15 +22,13 @@
       4.0.7 at the top of `.github/workflows/ci.yml`; dependabot follows the renamed dirs
 - [ ] First run on GitHub (not pushed yet). If cnfs-io/partitia is private, add a
       `PARTITIA_READ_TOKEN` secret that can read it (the jobs check it out)
-- [ ] `pt ci` cannot run this repo: pcm's ruby-ci job mounts only the repo under test, so
+- [ ] `cnfs ci` cannot run this repo: pcm's ruby-ci job mounts only the repo under test, so
       partitia's engines are missing, and it bundles frozen while the lockfiles record this
       machine's gem-local path. It needs partitia (or gem-local's home and its targets)
       mounted and `RUBY_LOCAL_GEMS_HOME` set, and an unfrozen bundle for that path line (as
       the GitHub workflow does)
-- [ ] `pt engine check` is hard-wired to `partitia-<dir>.gemspec`, `lib/partitia/<dir>` and
-      `lib/generators/partitia/<dir>`. With the prefix taken from the repo (or the gemspec
-      found in the dir) it passes every check here except the CI matrix line (now fixed)
-      and warns on chatter's ERB views
+- [x] `cnfs engine check` takes the prefix from each gem's `<prefix>-<dir>.gemspec`, so it runs
+      here: every check passes; it warns on chatter's ERB views (D9)
 
 ## What is left, per gem
 
