@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe Chorus::Config do
+RSpec.describe Appwork::Chorus::Config do
   after { described_class.reset_instance! }
 
   describe "curation posture defaults" do
@@ -41,63 +41,63 @@ RSpec.describe Chorus::Config do
 
   describe "execution-environment resolution from ENV" do
     around do |example|
-      ENV["CHORUS_WORKSPACE_ROOT"] = "/var/chorus/ws"
-      ENV["CHORUS_SKILL_COPY"] = "false"
+      ENV["APPWORK_CHORUS_WORKSPACE_ROOT"] = "/var/chorus/ws"
+      ENV["APPWORK_CHORUS_SKILL_COPY"] = "false"
       described_class.reset_instance!
       example.run
     ensure
-      ENV.delete("CHORUS_WORKSPACE_ROOT")
-      ENV.delete("CHORUS_SKILL_COPY")
+      ENV.delete("APPWORK_CHORUS_WORKSPACE_ROOT")
+      ENV.delete("APPWORK_CHORUS_SKILL_COPY")
       described_class.reset_instance!
     end
 
-    it "reads CHORUS_WORKSPACE_ROOT" do
+    it "reads APPWORK_CHORUS_WORKSPACE_ROOT" do
       expect(described_class.workspace_root).to eq("/var/chorus/ws")
     end
 
-    it "coerces CHORUS_SKILL_COPY to a boolean" do
+    it "coerces APPWORK_CHORUS_SKILL_COPY to a boolean" do
       expect(described_class.skill_copy).to be(false)
     end
   end
 
   describe "resolution from ENV (the family precedence)" do
     around do |example|
-      ENV["CHORUS_CURATION_ENABLED"] = "false"
-      ENV["CHORUS_REPUTATION_THRESHOLD"] = "80"
+      ENV["APPWORK_CHORUS_CURATION_ENABLED"] = "false"
+      ENV["APPWORK_CHORUS_REPUTATION_THRESHOLD"] = "80"
       described_class.reset_instance!
       example.run
     ensure
-      ENV.delete("CHORUS_CURATION_ENABLED")
-      ENV.delete("CHORUS_REPUTATION_THRESHOLD")
+      ENV.delete("APPWORK_CHORUS_CURATION_ENABLED")
+      ENV.delete("APPWORK_CHORUS_REPUTATION_THRESHOLD")
       described_class.reset_instance!
     end
 
-    it "coerces CHORUS_CURATION_ENABLED to a boolean" do
+    it "coerces APPWORK_CHORUS_CURATION_ENABLED to a boolean" do
       expect(described_class.curation_enabled).to be(false)
     end
 
-    it "coerces CHORUS_REPUTATION_THRESHOLD to an integer" do
+    it "coerces APPWORK_CHORUS_REPUTATION_THRESHOLD to an integer" do
       expect(described_class.reputation_threshold).to eq(80)
     end
   end
 
   describe "execution-mode resolution from ENV (dry override)" do
     around do |example|
-      ENV["CHORUS_AGENTS_LIVE"] = "false"
-      ENV["CHORUS_SKILLS_LIVE"] = "false"
+      ENV["APPWORK_CHORUS_AGENTS_LIVE"] = "false"
+      ENV["APPWORK_CHORUS_SKILLS_LIVE"] = "false"
       described_class.reset_instance!
       example.run
     ensure
-      ENV.delete("CHORUS_AGENTS_LIVE")
-      ENV.delete("CHORUS_SKILLS_LIVE")
+      ENV.delete("APPWORK_CHORUS_AGENTS_LIVE")
+      ENV.delete("APPWORK_CHORUS_SKILLS_LIVE")
       described_class.reset_instance!
     end
 
-    it "coerces CHORUS_AGENTS_LIVE to a boolean" do
+    it "coerces APPWORK_CHORUS_AGENTS_LIVE to a boolean" do
       expect(described_class.agents_live).to be(false)
     end
 
-    it "coerces CHORUS_SKILLS_LIVE to a boolean" do
+    it "coerces APPWORK_CHORUS_SKILLS_LIVE to a boolean" do
       expect(described_class.skills_live).to be(false)
     end
   end

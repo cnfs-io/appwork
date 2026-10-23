@@ -1,14 +1,15 @@
-require_relative "lib/chorus/version"
+require_relative "lib/appwork/chorus/version"
 
 Gem::Specification.new do |spec|
-  spec.name        = "chorus"
-  spec.version     = Chorus::VERSION
+  spec.name        = "appwork-chorus"
+  spec.version     = Appwork::Chorus::VERSION
   spec.authors     = [ "Robert Roach" ]
   spec.email       = [ "rjayroach@gmail.com" ]
   spec.homepage    = "TODO"
-  spec.summary     = "TODO: Summary of Chorus."
-  spec.description = "TODO: Description of Chorus."
+  spec.summary     = "TODO: Summary of Appwork::Chorus."
+  spec.description = "TODO: Description of Appwork::Chorus."
   spec.license     = "MIT"
+  spec.required_ruby_version = ">= 3.2"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the "allowed_push_host"
   # to allow pushing to a single host or delete this section to allow pushing to any host.
@@ -23,9 +24,13 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency "rails", ">= 8.1.3"
-  spec.add_dependency "cnfs_dev"
+  # Config, Shell, Instrumentable, Logging, YamlSerializable and the plugin registry.
+  # partitia-dev is optional (console helpers, behind defined?(Partitia::Dev)).
+  spec.add_dependency "partitia-support"
+  # Appwork::Chorus::ApplicationRecord includes Appwork::Okf::Consumer; WorkOrder runs Okf::Sync.
+  spec.add_dependency "appwork-okf"
   # AgentProfile stores an encrypted API key via has_encrypted. Master key
-  # wiring lives in the host app (see iam.gemspec note).
+  # wiring lives in the host app (see partitia-iam's gemspec note).
   spec.add_dependency "lockbox", "~> 2.0"
   spec.add_dependency "turbo-rails"
   spec.add_dependency "stimulus-rails"

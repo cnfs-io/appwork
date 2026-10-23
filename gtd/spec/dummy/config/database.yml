@@ -8,11 +8,11 @@ default: &default
   adapter: sqlite3
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   timeout: 5000
-  # Every registered plugin's db/migrate (cnfs_okf, cnfs_ui, gtd) — so schema
+  # Every registered plugin's db/migrate (appwork-okf, partitia-ui, appwork-gtd) — so schema
   # load / test:prepare stamps all three gem migration sets. In `default:` so the
   # TEST env inherits it too (mirrors okf/ui dummies; a dev-only path leaves the
   # test DB missing the engine tables).
-  migrations_paths: <%= CnfsSupport.migrations_paths[:primary] %>
+  migrations_paths: <%= Partitia::Support.migrations_paths[:primary] %>
 
 development:
   <<: *default

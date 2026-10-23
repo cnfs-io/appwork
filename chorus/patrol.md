@@ -24,13 +24,13 @@ Ran `docs-sheriff` to reconcile chorus to reality after the 004/005/006 extracti
 
 ### reconciliation performed
 - **`CLAUDE.md` rewritten to the coordination-substrate reality.** "What Chorus is"
-  now describes the execution surface + `Chorus::Workable` + participants + skill
+  now describes the execution surface + `Appwork::Chorus::Workable` + participants + skill
   catalog + sources, not an org-chart domain. The intent-spine ERD was replaced
   with the current model map; "Load-bearing invariants", "Layout", and the "Tests"
   note were rewritten (Workspace occupies a polymorphic `workable`; Agent carries
   no Role/workspace FK; scaffold V+C retired; request specs gone).
 - **New host-agnostic boundary documented** — hosts depend on Chorus and include
-  `Chorus::Workable`; Chorus never names a host. Added as prose and a `[critical]`
+  `Appwork::Chorus::Workable`; Chorus never names a host. Added as prose and a `[critical]`
   claim.
 - **`#coherence` re-authored** (per `docs-author`): 3 boundary `[critical]`
   (OKF-direction, host-agnostic, no-Organization), 5 structural `[high]`
@@ -48,12 +48,12 @@ Ran `docs-sheriff` to reconcile chorus to reality after the 004/005/006 extracti
   work: `001`, `002`, `003`.
 
 ### flagged for the operator (NOT resolved by sheriff)
-- **Plans `002`/`003` are premised on the departed `Chorus::Issue`.** They predate
+- **Plans `002`/`003` are premised on the departed `Appwork::Chorus::Issue`.** They predate
   the extraction and describe Issue-based claim/lease/heartbeat in Chorus. Left in
   the queue but flagged in the lifecycle flux entry: they need re-scoping (host-side
   Ticket lifecycle, or a Workable-level lifecycle) before execution — an open design
   decision, not sheriff's to make.
-- **`README.md` needs a full `readme-authoring` pass once the Phlex/CnfsUi UI
+- **`README.md` needs a full `readme-authoring` pass once the Phlex/Partitia::Ui UI
   lands** — it is user-facing and its UI sections describe a layer mid-rebuild;
   sheriff only truth-fixed the lies, it did not re-author it.
 - **`micro_manager` is un-onboarded** — a real project born from plan 004 (models,
@@ -101,9 +101,9 @@ the 004/005/006 work is committed.
 - [critical] "no Organization model; Strategy, Role, Workspace, Agent are
   top-level roots" — boundary core holds, enumeration contradicted. The
   load-bearing half (no `Organization`/`Tenant`/`Account` model or
-  `chorus_organizations` table; database-is-the-org) still holds — verified, no
+  `appwork_chorus_organizations` table; database-is-the-org) still holds — verified, no
   such model on disk. But the claim names Strategy and Role as current Chorus
-  roots; both left the engine in plan 004 (Strategy → `MicroManager::Strategy`;
+  roots; both left the engine in plan 004 (Strategy → `Appwork::Manager::Strategy`;
   Role deleted, IAM to provide it). Surfaced as critical because a `[critical]`
   claim's text now misdescribes the model set. Proposed fix (confirm via sheriff):
   narrow the enumeration to the roots that remain — Workspace and Agent (plus
@@ -115,22 +115,22 @@ the 004/005/006 work is committed.
 ### drift
 
 - [high] "intent spine rooted at Strategy: Strategy → Goal → Project → Issue."
-  Referent `Project belongs_to :goal` fails — no `Chorus::Project` (nor
+  Referent `Project belongs_to :goal` fails — no `Appwork::Chorus::Project` (nor
   Strategy/Goal/Issue) on disk; the spine moved to `micro_manager` (plan 004).
   Fix: remove the intent-spine ERD from Chorus's docs; it is now `micro_manager`'s.
 - [high] "Workspace hosts one active Project via nullable `active_project_id`."
-  Referent fails — `chorus_workspaces` has no `active_project_id`; it carries
+  Referent fails — `appwork_chorus_workspaces` has no `active_project_id`; it carries
   polymorphic `workable_id`/`workable_type` (004/005). Fix: restate as "Workspace
   occupies one polymorphic `workable` via `belongs_to :workable, polymorphic:,
-  optional:` (the `Chorus::Workable` contract); no `active_project` FK."
+  optional:` (the `Appwork::Chorus::Workable` contract); no `active_project` FK."
 - [high] "Agent attaches to a Workspace only through the Issue claim
-  (`issue.project.hosting_workspace`)." Narrow referent ("`chorus_agents` has no
+  (`issue.project.hosting_workspace`)." Narrow referent ("`appwork_chorus_agents` has no
   `workspace_id`") holds, but the mechanism is gone: Issue left the gem,
   `hosting_workspace` no longer exists. Fix: restate without Issue (occupancy is
   workable-mediated, host-side), or relocate to `micro_manager`.
-- [medium] "slug appears only where it earns its place (`chorus_projects`)."
-  Referent fails — `chorus_projects` is gone; `slug` now lives (uniquely) on
-  `chorus_taxonomies`. Fix: "`slug` on `chorus_taxonomies` (normalized category key)."
+- [medium] "slug appears only where it earns its place (`appwork_chorus_projects`)."
+  Referent fails — `appwork_chorus_projects` is gone; `slug` now lives (uniquely) on
+  `appwork_chorus_taxonomies`. Fix: "`slug` on `appwork_chorus_taxonomies` (normalized category key)."
 - [medium] "Narrative content never in a body/content column on
   Strategy/Goal/Project/Issue." Referent (no such column) holds, but names four
   departed models. Fix: re-scope to Chorus-owned models, or state generally.
@@ -161,7 +161,7 @@ the 004/005/006 work is committed.
   executed); (2) Lifecycle/heartbeat (tracking `002`/`003`, not executed). Both
   legitimately open, so provisional claims not scored — but both premises now
   reference departed models: the model-layer parenthetical ("no inverse
-  `agent_profile_id` on `chorus_agents`") is stale (plan 004 added it), and the
+  `agent_profile_id` on `appwork_chorus_agents`") is stale (plan 004 added it), and the
   lifecycle entry rests on `Issue → Agent`, which left the gem. Not stale-flux
   (tracked plans aren't green); flag for rewrite when 001/002/003 are revisited.
 
@@ -200,7 +200,7 @@ The reconciliation performed (not "drift found" — this is the reset):
   green without them); `CLAUDE.md`, `README.md`, `ARCHITECTURE-testing-scope.md`,
   and plan 002 still described an Organization-rooted spine. Per an explicit
   operator decision, the removal is **settled**: the per-tenant database
-  (`cnfs_tenanted`, one DB per `Iam::Account`) is the organizational boundary, and
+  (`partitia-tenanted`, one DB per `Partitia::Iam::Account`) is the organizational boundary, and
   Strategy/Role/Workspace/Agent are top-level roots. All docs rewritten to match,
   present tense.
 - **Dead references fixed.** `ARCHITECTURE-content-storage.md` (retired) and
@@ -229,7 +229,7 @@ The reconciliation performed (not "drift found" — this is the reset):
 
 ### notes
 - **Not a code bug — flux, documented.** `AgentProfile has_many :agents` currently
-  has no inverse FK (`chorus_agents` carries `agent_id`, not `agent_profile_id`),
+  has no inverse FK (`appwork_chorus_agents` carries `agent_id`, not `agent_profile_id`),
   so that association does not resolve. This is the *explicit open question* plan
   001 turns on ("Agent↔AgentProfile FK direction"), no spec exercises it, and the
   suite is green — so it is tracked flux, not an incidental bug. If plan 001

@@ -3,7 +3,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
   # The host's job: resolve the acting participant. Chatter's engine controllers
-  # inherit from this controller (via Chatter.parent_controller) and pick this up.
+  # inherit from this controller (via Appwork::Chatter.parent_controller) and pick this up.
   # We store a GlobalID so the same seam works for any participant type.
   def current_participant
     gid = session[:current_participant_gid]

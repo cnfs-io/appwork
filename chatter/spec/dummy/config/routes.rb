@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  mount Chatter::Engine => "/chatter"
+  mount Appwork::Chatter::Engine => "/chatter"
 
   # Fake-auth switcher: POST a participant's GlobalID to "become" them.
   post "session", to: "session#update", as: :session

@@ -1,19 +1,19 @@
 require "rails_helper"
 
-RSpec.describe MicroManager::Goal, type: :model do
+RSpec.describe Appwork::Manager::Goal, type: :model do
   it "has a valid factory" do
-    expect(build(:micro_manager_goal)).to be_valid
+    expect(build(:appwork_manager_goal)).to be_valid
   end
 
   describe "validations" do
     it "requires a name" do
-      goal = build(:micro_manager_goal, name: nil)
+      goal = build(:appwork_manager_goal, name: nil)
       expect(goal).not_to be_valid
       expect(goal.errors[:name]).to be_present
     end
 
     it "requires a strategy" do
-      expect(build(:micro_manager_goal, strategy: nil)).not_to be_valid
+      expect(build(:appwork_manager_goal, strategy: nil)).not_to be_valid
     end
   end
 
@@ -24,18 +24,18 @@ RSpec.describe MicroManager::Goal, type: :model do
 
   describe "dependent destruction" do
     it "destroys its projects when destroyed" do
-      goal = create(:micro_manager_goal)
-      project = create(:micro_manager_project, goal: goal)
+      goal = create(:appwork_manager_goal)
+      project = create(:appwork_manager_project, goal: goal)
 
       goal.destroy
 
-      expect(MicroManager::Project.exists?(project.id)).to be(false)
+      expect(Appwork::Manager::Project.exists?(project.id)).to be(false)
     end
   end
 
-  describe "Chorus::Workable + okf_frontmatter status" do
+  describe "Appwork::Chorus::Workable + okf_frontmatter status" do
     it "is a Chorus workable" do
-      expect(described_class.include?(Chorus::Workable)).to be(true)
+      expect(described_class.include?(Appwork::Chorus::Workable)).to be(true)
     end
 
     it "has no status column (status lives in the concept)" do
@@ -43,22 +43,22 @@ RSpec.describe MicroManager::Goal, type: :model do
     end
 
     it "can be occupied by a Chorus workspace via the polymorphic workable" do
-      goal = create(:micro_manager_goal)
-      workspace = Chorus::Workspace.create!(name: "Planning", workable: goal)
+      goal = create(:appwork_manager_goal)
+      workspace = Appwork::Chorus::Workspace.create!(name: "Planning", workable: goal)
       expect(goal.reload.workspace).to eq(workspace)
     end
 
     describe "status accessor over the concept" do
       it "reads nil when the concept has no status key" do
         in_concept_root do
-          goal = give_concept(create(:micro_manager_goal))
+          goal = give_concept(create(:appwork_manager_goal))
           expect(goal.status).to be_nil
         end
       end
 
       it "writes, merges other keys, and persists to disk" do
         in_concept_root do
-          goal = give_concept(create(:micro_manager_goal), frontmatter: "title: X\nowner: rob\n")
+          goal = give_concept(create(:appwork_manager_goal), frontmatter: "title: X\nowner: rob\n")
           goal.status = "active"
           expect(goal.concept.custom_frontmatter).to eq("owner" => "rob", "status" => "active")
           goal.concept.save!

@@ -1,5 +1,5 @@
 class Person < ApplicationRecord
-  include Chatter::Participant
+  include Appwork::Chatter::Participant
 
   validates :name, presence: true
 

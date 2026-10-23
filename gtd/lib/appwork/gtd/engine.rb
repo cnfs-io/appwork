@@ -1,27 +1,29 @@
-require "cnfs_support"
+require "partitia/support"
 # The two flanking layers. Requiring both here makes Gtd the composition root
-# (ADR 0005): CnfsOkf::Consumer + has_one_okf come from okf, the Placement /
-# Board / Column machinery + Kanban components from cnfs_ui. cnfs_ui already
+# (ADR 0005): Appwork::Okf::Consumer + has_one_okf come from okf, the Placement /
+# Board / Column machinery + Kanban components from partitia-ui. partitia-ui already
 # requires the UI stack (turbo/stimulus/importmap/tailwindcss/phlex), so we don't
 # re-require it here.
-require "cnfs_okf"
-require "cnfs_ui"
+require "appwork/okf"
+require "partitia/ui"
 
-module Gtd
-  class Engine < ::Rails::Engine
-    isolate_namespace Gtd
-    CnfsSupport.plugins << self
+module Appwork
+  module Gtd
+    class Engine < ::Rails::Engine
+      isolate_namespace Appwork::Gtd
+      Partitia::Support.plugins << self
 
-    config.generators do |g|
-      g.template_engine :tailwindcss
-    end
+      config.generators do |g|
+        g.template_engine :tailwindcss
+      end
 
-    # Load console shortcuts/commands when cnfs_dev is present.
-    # Only loads in a console session (never web/job processes).
-    console do
-      CnfsDev.console do |c|
-        c.namespace(module_parent, "g")
-      end if defined?(CnfsDev)
+      # Load console shortcuts/commands when partitia-dev is present.
+      # Only loads in a console session (never web/job processes).
+      console do
+        Partitia::Dev.console do |c|
+          c.namespace(module_parent, "g")
+        end if defined?(Partitia::Dev)
+      end
     end
   end
 end

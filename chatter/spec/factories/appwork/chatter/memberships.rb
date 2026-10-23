@@ -1,6 +1,6 @@
 FactoryBot.define do
-  factory :chatter_membership, class: "Chatter::Membership" do
-    association :conversation, factory: :chatter_conversation
+  factory :appwork_chatter_membership, class: "Appwork::Chatter::Membership" do
+    association :conversation, factory: :appwork_chatter_conversation
     association :participant, factory: :person
     role { :member }
   end

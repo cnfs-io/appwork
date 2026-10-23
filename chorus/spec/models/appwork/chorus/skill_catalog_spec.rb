@@ -1,15 +1,15 @@
 require "rails_helper"
 
-RSpec.describe Chorus::SkillCatalog, type: :model do
+RSpec.describe Appwork::Chorus::SkillCatalog, type: :model do
   subject(:catalog) { described_class.new }
 
   def fixture(name)
-    File.read(File.expand_path("../../fixtures/skills/#{name}", __dir__))
+    File.read(File.expand_path("../../../fixtures/skills/#{name}", __dir__))
   end
 
-  # A stand-in CnfsSupport::Shell::Result — the single #npx seam now returns one.
+  # A stand-in Partitia::Support::Shell::Result — the single #npx seam now returns one.
   def shell(stdout = "", exitstatus: 0, stderr: "")
-    CnfsSupport::Shell::Result.new(
+    Partitia::Support::Shell::Result.new(
       command: %w[npx skills], stdout: stdout, stderr: stderr, exitstatus: exitstatus, shellout: nil
     )
   end
@@ -20,7 +20,7 @@ RSpec.describe Chorus::SkillCatalog, type: :model do
     describe "#add" do
       # --copy is config; pin it OFF in most cases to isolate the flag under test,
       # then prove the toggle explicitly below. -y is UNCONDITIONAL.
-      before { allow(Chorus::Config).to receive(:skill_copy).and_return(false) }
+      before { allow(Appwork::Chorus::Config).to receive(:skill_copy).and_return(false) }
 
       it "installs project-scoped by default — no -g — and always passes -y" do
         allow(catalog).to receive(:npx)
@@ -54,8 +54,8 @@ RSpec.describe Chorus::SkillCatalog, type: :model do
         expect(catalog).to have_received(:npx).with("add", "acme/repo", "-y", chdir: "/tmp/ws")
       end
 
-      it "passes --copy when Chorus::Config.skill_copy is true" do
-        allow(Chorus::Config).to receive(:skill_copy).and_return(true)
+      it "passes --copy when Appwork::Chorus::Config.skill_copy is true" do
+        allow(Appwork::Chorus::Config).to receive(:skill_copy).and_return(true)
         allow(catalog).to receive(:npx)
         catalog.add("acme/repo")
         expect(catalog).to have_received(:npx).with("add", "acme/repo", "-y", "--copy", chdir: nil)
@@ -192,17 +192,17 @@ RSpec.describe Chorus::SkillCatalog, type: :model do
 
     it "upserts CatalogSkill rows on the natural key and stamps synced_at" do
       records = catalog.ingest(entries)
-      expect(Chorus::CatalogSkill.count).to eq(2)
+      expect(Appwork::Chorus::CatalogSkill.count).to eq(2)
       expect(records.map(&:synced_at)).to all(be_present)
-      expect(Chorus::CatalogSkill.find_by(resource: "acme/repo", skill_name: "a").description).to eq("first")
+      expect(Appwork::Chorus::CatalogSkill.find_by(resource: "acme/repo", skill_name: "a").description).to eq("first")
     end
 
     it "updates rather than duplicates on a second ingest of the same skill" do
       catalog.ingest(entries)
       catalog.ingest([ { resource: "acme/repo", skill_name: "a", description: "updated", install_count: 99 } ])
 
-      expect(Chorus::CatalogSkill.count).to eq(2)
-      row = Chorus::CatalogSkill.find_by(resource: "acme/repo", skill_name: "a")
+      expect(Appwork::Chorus::CatalogSkill.count).to eq(2)
+      row = Appwork::Chorus::CatalogSkill.find_by(resource: "acme/repo", skill_name: "a")
       expect(row.description).to eq("updated")
       expect(row.install_count).to eq(99)
     end
@@ -212,14 +212,14 @@ RSpec.describe Chorus::SkillCatalog, type: :model do
       # A `find`-sourced entry carries no description.
       catalog.ingest([ { resource: "acme/repo", skill_name: "a", description: nil, install_count: 12 } ])
 
-      row = Chorus::CatalogSkill.find_by(resource: "acme/repo", skill_name: "a")
+      row = Appwork::Chorus::CatalogSkill.find_by(resource: "acme/repo", skill_name: "a")
       expect(row.description).to eq("keep me")
       expect(row.install_count).to eq(12)
     end
 
     it "ingests a whole-repo entry (nil skill_name)" do
       catalog.ingest([ { resource: "acme/repo", skill_name: nil, description: "repo", install_count: 5 } ])
-      expect(Chorus::CatalogSkill.find_by(resource: "acme/repo", skill_name: nil)).to be_present
+      expect(Appwork::Chorus::CatalogSkill.find_by(resource: "acme/repo", skill_name: nil)).to be_present
     end
   end
 
@@ -228,7 +228,7 @@ RSpec.describe Chorus::SkillCatalog, type: :model do
       allow(catalog).to receive(:npx).and_return(shell(fixture("find_react.txt")))
       catalog.ingest(catalog.search("react"))
 
-      row = Chorus::CatalogSkill.find_by(resource: "vercel-labs/agent-skills",
+      row = Appwork::Chorus::CatalogSkill.find_by(resource: "vercel-labs/agent-skills",
                                          skill_name: "vercel-react-best-practices")
       expect(row.install_count).to eq(541_800)
       expect(row.synced_at).to be_present
@@ -236,15 +236,15 @@ RSpec.describe Chorus::SkillCatalog, type: :model do
   end
 
   describe "the shell boundary is non-raising (error spine, not a console dump)" do
-    # The seam now returns a normalized CnfsSupport::Shell::Result and never raises
+    # The seam now returns a normalized Partitia::Support::Shell::Result and never raises
     # for an operational failure — the caller decides. We stub the adapter (no real
     # npx, no network) and assert the failure surfaces as a result, not an exception.
     it "returns a failure result carrying stderr when the exit status is non-zero" do
-      failure = CnfsSupport::Shell::Result.new(
+      failure = Partitia::Support::Shell::Result.new(
         command: %w[npx skills find x], stdout: "", stderr: "boom: something went wrong",
         exitstatus: 3, shellout: nil
       )
-      allow(CnfsSupport::Shell).to receive(:run).and_return(failure)
+      allow(Partitia::Support::Shell).to receive(:run).and_return(failure)
 
       result = catalog.send(:npx, "find", "x")
 
@@ -255,7 +255,7 @@ RSpec.describe Chorus::SkillCatalog, type: :model do
   end
 
   # Verify the CNFS instrumentation contract at the notification layer — every
-  # shell exec emits under the stable `cnfs_chorus.skill_catalog.*` prefix, and
+  # shell exec emits under the stable `partitia_appwork.skill_catalog.*` prefix, and
   # never leaks a token/blob into the payload.
   describe "instrumentation" do
     def capture_events(pattern)
@@ -265,15 +265,15 @@ RSpec.describe Chorus::SkillCatalog, type: :model do
       events
     end
 
-    it "emits cnfs_chorus.skill_catalog.npx_exec carrying the command" do
-      allow(Chorus::Config).to receive(:skill_copy).and_return(false)
-      allow(CnfsSupport::Shell).to receive(:run).and_return(shell)
-      events = capture_events("cnfs_chorus.skill_catalog.npx_exec") do
+    it "emits partitia_appwork.skill_catalog.npx_exec carrying the command" do
+      allow(Appwork::Chorus::Config).to receive(:skill_copy).and_return(false)
+      allow(Partitia::Support::Shell).to receive(:run).and_return(shell)
+      events = capture_events("partitia_appwork.skill_catalog.npx_exec") do
         catalog.add("acme/repo")
       end
       expect(events.size).to eq(1)
       name, payload = events.first
-      expect(name).to eq("cnfs_chorus.skill_catalog.npx_exec")
+      expect(name).to eq("partitia_appwork.skill_catalog.npx_exec")
       expect(payload[:cmd]).to eq("npx skills add acme/repo -y")
     end
   end

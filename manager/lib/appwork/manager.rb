@@ -1,6 +1,8 @@
-require "micro_manager/version"
-require "micro_manager/engine"
+require "appwork/manager/version"
+require "appwork/manager/engine"
 
-module MicroManager
-  # Your code goes here...
+module Appwork
+  module Manager
+    # Your code goes here...
+  end
 end

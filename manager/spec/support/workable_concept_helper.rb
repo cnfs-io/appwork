@@ -9,7 +9,7 @@ require "tmpdir"
 #
 # Usage:
 #   in_concept_root do
-#     record = give_concept(create(:micro_manager_project))
+#     record = give_concept(create(:appwork_manager_project))
 #     record.status = "done"
 #     record.concept.save!
 #   end
@@ -26,7 +26,7 @@ module WorkableConceptHelper
     path = File.join(dir, rel)
     FileUtils.mkdir_p(File.dirname(path))
     File.write(path, "---\n#{frontmatter}---\n#{body}")
-    bundle = CnfsOkf::Bundle.create!(path: dir)
+    bundle = Appwork::Okf::Bundle.create!(path: dir)
     record.update!(concept: bundle.concepts.find_by!(path: rel))
     record
   end

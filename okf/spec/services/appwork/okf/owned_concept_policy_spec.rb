@@ -10,7 +10,7 @@ require "logger"
 # and adds the write-path-under-ownership cases that are the reason
 # FsConcept#content= exists: a UI edit must NOT re-enter the sync loop as an
 # update. See doc/plans/PLAN-cnfs-support-walker-and-cleanup.md Tier B4.
-RSpec.describe "CnfsOkf owned-concept policy" do
+RSpec.describe "Appwork::Okf owned-concept policy" do
   def write_md(dir, rel, frontmatter: nil, body: "hello\n")
     path = File.join(dir, rel)
     FileUtils.mkdir_p(File.dirname(path))
@@ -22,22 +22,22 @@ RSpec.describe "CnfsOkf owned-concept policy" do
   # Flip owned_concept_policy for the block via ENV, resetting the memoized
   # singleton on both sides so policy never leaks across examples.
   def with_policy(policy)
-    ENV["CNFS_OKF_OWNED_CONCEPT_POLICY"] = policy.to_s
-    CnfsOkf::Config.reset_instance!
+    ENV["APPWORK_OKF_OWNED_CONCEPT_POLICY"] = policy.to_s
+    Appwork::Okf::Config.reset_instance!
     yield
   ensure
-    ENV.delete("CNFS_OKF_OWNED_CONCEPT_POLICY")
-    CnfsOkf::Config.reset_instance!
+    ENV.delete("APPWORK_OKF_OWNED_CONCEPT_POLICY")
+    Appwork::Okf::Config.reset_instance!
   end
 
   # Capture log output for the duration of the block via a StringIO backend.
   def captured_logs
     io = StringIO.new
-    CnfsSupport::Logging.backend = ::Logger.new(io)
+    Partitia::Support::Logging.backend = ::Logger.new(io)
     yield
     io.string
   ensure
-    CnfsSupport::Logging.reset!
+    Partitia::Support::Logging.reset!
   end
 
   around do |example|
@@ -51,7 +51,7 @@ RSpec.describe "CnfsOkf owned-concept policy" do
   def bundle_with(*files)
     dir = File.join(@root, "bundle")
     files.each { |rel, opts| write_md(dir, rel, **(opts || {})) }
-    CnfsOkf::Bundle.create!(path: dir)
+    Appwork::Okf::Bundle.create!(path: dir)
   end
 
   # A Strategy that CLAIMS an existing concept (ownership points at a file; it
@@ -75,7 +75,7 @@ RSpec.describe "CnfsOkf owned-concept policy" do
       strategy_owning(concept)
       write_md(bundle.path, "s.md", frontmatter: "title: Changed\n")
 
-      result = with_policy(:disk_wins) { CnfsOkf::Sync.call(bundle: bundle) }
+      result = with_policy(:disk_wins) { Appwork::Okf::Sync.call(bundle: bundle) }
 
       expect(result.updated).to eq(1)
       expect(concept.reload.title).to eq("Changed")
@@ -86,7 +86,7 @@ RSpec.describe "CnfsOkf owned-concept policy" do
       strategy = strategy_owning(concept)
       File.delete(File.join(bundle.path, "s.md"))
 
-      result = with_policy(:disk_wins) { CnfsOkf::Sync.call(bundle: bundle) }
+      result = with_policy(:disk_wins) { Appwork::Okf::Sync.call(bundle: bundle) }
 
       expect(result.destroyed).to eq(1)
       expect(strategy.reload.concept).to be_nil
@@ -100,7 +100,7 @@ RSpec.describe "CnfsOkf owned-concept policy" do
       File.delete(File.join(bundle.path, "s.md"))
 
       logs = captured_logs do
-        result = with_policy(:protect) { CnfsOkf::Sync.call(bundle: bundle) }
+        result = with_policy(:protect) { Appwork::Okf::Sync.call(bundle: bundle) }
         expect(result.skipped).to eq(1)
         expect(result.destroyed).to eq(0)
       end
@@ -115,7 +115,7 @@ RSpec.describe "CnfsOkf owned-concept policy" do
       strategy_owning(concept)
       write_md(bundle.path, "s.md", frontmatter: "title: Changed\n")
 
-      result = with_policy(:protect) { CnfsOkf::Sync.call(bundle: bundle) }
+      result = with_policy(:protect) { Appwork::Okf::Sync.call(bundle: bundle) }
 
       expect(result.updated).to eq(1)
       expect(concept.reload.title).to eq("Changed")
@@ -128,7 +128,7 @@ RSpec.describe "CnfsOkf owned-concept policy" do
       strategy_owning(concept)
       write_md(bundle.path, "s.md", frontmatter: "title: CLOBBERED\n")
 
-      result = with_policy(:quarantine) { CnfsOkf::Sync.call(bundle: bundle) }
+      result = with_policy(:quarantine) { Appwork::Okf::Sync.call(bundle: bundle) }
 
       expect(result.quarantined).to eq(1)
       expect(result.updated).to eq(0)
@@ -143,7 +143,7 @@ RSpec.describe "CnfsOkf owned-concept policy" do
         bundle, concept = concept_at("s.md", frontmatter: "title: Original\n")
         write_md(bundle.path, "s.md", frontmatter: "title: Changed\n")
 
-        result = with_policy(policy) { CnfsOkf::Sync.call(bundle: bundle) }
+        result = with_policy(policy) { Appwork::Okf::Sync.call(bundle: bundle) }
 
         expect(result.updated).to eq(1)
         expect(concept.reload.title).to eq("Changed")
@@ -166,7 +166,7 @@ RSpec.describe "CnfsOkf owned-concept policy" do
       expect(concept.pathname.read).to end_with("edited in the UI\n")
       expect(concept.content_hash).to eq(Digest::MD5.hexdigest(concept.pathname.read))
 
-      result = CnfsOkf::Sync.call(bundle: bundle)
+      result = Appwork::Okf::Sync.call(bundle: bundle)
 
       # THE key assertion: the hash short-circuit terminates the DB->disk->DB
       # loop. If this says updated=1 the listener would churn the filesystem.

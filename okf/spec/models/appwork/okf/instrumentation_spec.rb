@@ -3,8 +3,8 @@ require "tmpdir"
 
 # These specs assert the instrumentation added to the FsBundle / FsConcept
 # concerns fires at the ActiveSupport::Notifications layer (the same layer
-# cnfs_telemetry subscribes to), independent of any OpenTelemetry SDK.
-RSpec.describe "CnfsOkf filesystem instrumentation" do
+# partitia-telemetry subscribes to), independent of any OpenTelemetry SDK.
+RSpec.describe "Appwork::Okf filesystem instrumentation" do
   # Capture every event published under `name` while the block runs.
   def capture_events(name)
     events = []
@@ -28,11 +28,11 @@ RSpec.describe "CnfsOkf filesystem instrumentation" do
     end
   end
 
-  describe "cnfs_okf.sync.run" do
+  describe "partitia_appwork.sync.run" do
     it "fires with reconciliation counts when the bundle path changes" do
       src = File.join(@root, "src")
       write_md(src, "alpha.md")
-      bundle = CnfsOkf::Bundle.create!(path: src)
+      bundle = Appwork::Okf::Bundle.create!(path: src)
       expect(bundle.concepts.pluck(:path)).to contain_exactly("alpha.md")
 
       # A brand-new directory (different inodes) forces a full reconciliation:
@@ -40,7 +40,7 @@ RSpec.describe "CnfsOkf filesystem instrumentation" do
       dest = File.join(@root, "dest")
       write_md(dest, "beta.md")
 
-      events = capture_events("cnfs_okf.sync.run") do
+      events = capture_events("partitia_appwork.sync.run") do
         bundle.update!(path: dest)
       end
 
@@ -54,14 +54,14 @@ RSpec.describe "CnfsOkf filesystem instrumentation" do
     end
   end
 
-  describe "cnfs_okf.concept.persist" do
+  describe "partitia_appwork.concept.persist" do
     it "fires when a frontmatter attribute changes and writes to disk" do
       src = File.join(@root, "bundle")
       write_md(src, "note.md", frontmatter: "title: Original\n")
-      bundle = CnfsOkf::Bundle.create!(path: src)
+      bundle = Appwork::Okf::Bundle.create!(path: src)
       concept = bundle.concepts.find_by!(path: "note.md")
 
-      events = capture_events("cnfs_okf.concept.persist") do
+      events = capture_events("partitia_appwork.concept.persist") do
         concept.update!(title: "Changed")
       end
 
@@ -77,7 +77,7 @@ end
 
 RSpec.describe "no stray debugging breakpoints" do
   it "has no binding.pry left in app code" do
-    root = CnfsOkf::Engine.root.join("app")
+    root = Appwork::Okf::Engine.root.join("app")
     offenders = Dir.glob(root.join("**/*.rb")).select { |f| File.read(f).include?("binding.pry") }
     expect(offenders).to be_empty, "binding.pry found in: #{offenders.join(', ')}"
   end

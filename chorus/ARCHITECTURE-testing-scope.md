@@ -7,7 +7,7 @@ can only honestly test some things about itself.
 ## Chorus is a coordination harness
 
 Chorus provides the coordination substrate an org leverages — a Workspace
-execution surface, the `Chorus::Workable` occupiability contract, agents, and a
+execution surface, the `Appwork::Chorus::Workable` occupiability contract, agents, and a
 skill catalog — that a host's domain (its strategies, goals, projects, tickets)
 plugs into. It deliberately does **not** define what the org does or what "done"
 means, and (since the org-spine extraction) it does not even own the org domain.
@@ -17,7 +17,7 @@ test.
 ## Two claims; only one is Chorus's to make
 
 **Claim 1 — the harness is internally sound.** Models compose, associations hold,
-a Workspace occupies one polymorphic *workable* serially, the `Chorus::Workable`
+a Workspace occupies one polymorphic *workable* serially, the `Appwork::Chorus::Workable`
 contract resolves (a workable exposes its occupying Workspace), Artifacts attach
 to a Workspace. This is structural integrity, fully testable inside Chorus against
 synthetic data (a synthetic workable), with no notion of what any real org does.

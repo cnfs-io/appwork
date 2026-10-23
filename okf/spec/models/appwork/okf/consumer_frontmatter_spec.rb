@@ -3,7 +3,7 @@
 require "rails_helper"
 require "tmpdir"
 
-# The okf_frontmatter accessor macro (CnfsOkf::Consumer). Generates a
+# The okf_frontmatter accessor macro (Appwork::Okf::Consumer). Generates a
 # read/write accessor pair over the owned concept's serialized
 # custom_frontmatter Hash, replacing the hand-written priority/priority= that
 # Strategy used to carry. Accessor-only: no column, no projection, nothing
@@ -13,7 +13,7 @@ require "tmpdir"
 # `&.`-guarded (concept-less -> nil), write is NOT (concept-less -> raises).
 # Both halves are pinned below — the write case especially, because it is the
 # one someone will later "fix" into silent nil-handling and break the contract.
-RSpec.describe "CnfsOkf::Consumer#okf_frontmatter" do
+RSpec.describe "Appwork::Okf::Consumer#okf_frontmatter" do
   def write_md(dir, rel, frontmatter: nil, body: "hello\n")
     path = File.join(dir, rel)
     FileUtils.mkdir_p(File.dirname(path))
@@ -34,7 +34,7 @@ RSpec.describe "CnfsOkf::Consumer#okf_frontmatter" do
   def strategy_owning_concept(rel, **opts)
     dir = File.join(@root, "bundle")
     write_md(dir, rel, **opts)
-    bundle   = CnfsOkf::Bundle.create!(path: dir)
+    bundle   = Appwork::Okf::Bundle.create!(path: dir)
     concept  = bundle.concepts.find_by!(path: rel)
     account  = Account.create!(title: "Acme")
     strategy = account.strategies.create!(title: "Q3 Expansion")

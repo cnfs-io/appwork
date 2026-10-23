@@ -5,7 +5,7 @@ require "tmpdir"
 
 # ViewPort had zero direct coverage. Exercises the LIKE-based concept scoping,
 # the directory validation, and #tree against real files in a tmpdir.
-RSpec.describe CnfsOkf::ViewPort do
+RSpec.describe Appwork::Okf::ViewPort do
   def write_md(dir, rel, body: "hello\n")
     path = File.join(dir, rel)
     FileUtils.mkdir_p(File.dirname(path))
@@ -23,7 +23,7 @@ RSpec.describe CnfsOkf::ViewPort do
   def bundle_with(*files)
     dir = File.join(@root, "bundle")
     files.each { |rel| write_md(dir, rel) }
-    CnfsOkf::Bundle.create!(path: dir)
+    Appwork::Okf::Bundle.create!(path: dir)
   end
 
   describe "#concepts" do

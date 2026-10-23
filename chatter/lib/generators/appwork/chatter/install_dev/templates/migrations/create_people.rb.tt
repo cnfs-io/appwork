@@ -1,4 +1,4 @@
-# ⚠️  DEV/TEST SCAFFOLD — written by `rails g chatter:install:dev`.
+# ⚠️  DEV/TEST SCAFFOLD — written by `bin/rails g appwork:chatter:install_dev`.
 class CreatePeople < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
   def change
     create_table :people do |t|

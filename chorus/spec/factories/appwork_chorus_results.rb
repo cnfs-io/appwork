@@ -1,5 +1,5 @@
 FactoryBot.define do
-  factory :chorus_result, class: "Chorus::Result" do
-    association :resultable, factory: :chorus_work_order
+  factory :appwork_chorus_result, class: "Appwork::Chorus::Result" do
+    association :resultable, factory: :appwork_chorus_work_order
   end
 end

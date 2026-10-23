@@ -1,4 +1,4 @@
-class CreateChorusSchema < ActiveRecord::Migration[8.1]
+class CreateAppworkChorusSchema < ActiveRecord::Migration[8.1]
   def change
     # Workspace occupies a polymorphic `workable` (added after create so the
     # column set reads together). Org models (Strategy/Goal/Project/Issue) and
@@ -9,18 +9,18 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # by atomic conditional update), `claimed_at` its stamp. `workable` no longer
     # lives here — a workspace is a place and places have no subject; the workable
     # moved to WorkOrder (plan 011 §4).
-    create_table :chorus_workspaces do |t|
-      t.references :role, null: false, foreign_key: { to_table: :chorus_roles }
+    create_table :appwork_chorus_workspaces do |t|
+      t.references :role, null: false, foreign_key: { to_table: :appwork_chorus_roles }
       t.string :name, null: false
       t.text :description
-      t.bigint :current_work_order_id      # the serial-occupancy claim (FK added with chorus_work_orders)
+      t.bigint :current_work_order_id      # the serial-occupancy claim (FK added with appwork_chorus_work_orders)
       t.datetime :claimed_at               # when the current claim was taken
       t.timestamps
 
       t.index :current_work_order_id
     end
 
-    create_table :chorus_skills do |t|
+    create_table :appwork_chorus_skills do |t|
       t.string :name, null: false
       t.timestamps
     end
@@ -29,9 +29,9 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # HABTM, because attributes are likely (`required`, `position`, ordering) and
     # adding them later to a HABTM table means a migration AND a new model. Carries
     # no attributes yet beyond the two FKs; a role's skills are unique on the pair.
-    create_table :chorus_role_skills do |t|
-      t.references :role,  null: false, foreign_key: { to_table: :chorus_roles }
-      t.references :skill, null: false, foreign_key: { to_table: :chorus_skills }
+    create_table :appwork_chorus_role_skills do |t|
+      t.references :role,  null: false, foreign_key: { to_table: :appwork_chorus_roles }
+      t.references :skill, null: false, foreign_key: { to_table: :appwork_chorus_skills }
       t.timestamps
 
       t.index [ :role_id, :skill_id ], unique: true
@@ -40,13 +40,13 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # Agent is an STI base on its RUNTIME (plan 011 §2): the former AgentAdapter
     # collapsed into Agent because with `model` on the row every agent is a distinct
     # (runtime, model) pairing with nothing left to share. Per-runtime subclasses
-    # (Chorus::Agent::ClaudeCode, Chorus::Agent::OpenCode) carry the invocation
+    # (Appwork::Chorus::Agent::ClaudeCode, Appwork::Chorus::Agent::OpenCode) carry the invocation
     # behavior a Concept cannot express (binary/argv/stream parsing). `type` is the
-    # Rails STI discriminator — distinct from CnfsOkf::Concept#type (an OKF
+    # Rails STI discriminator — distinct from Appwork::Okf::Concept#type (an OKF
     # frontmatter field), which the two never conflate. `model` is the concrete
     # model the runtime drives ("opus-4.8", "sonnet-4.6", "nemotron").
-    create_table :chorus_agents do |t|
-      t.string :type              # STI discriminator (Chorus::Agent::ClaudeCode, ...)
+    create_table :appwork_chorus_agents do |t|
+      t.string :type              # STI discriminator (Appwork::Chorus::Agent::ClaudeCode, ...)
       t.string :name, null: false
       t.string :model             # "opus-4.8", "sonnet-4.6", "nemotron"
       t.timestamps
@@ -59,8 +59,8 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # Otherwise untouched this phase: no STI, no GitCommit subclass, no source FK
     # (Phase 2). `result_id` is nullable so an artifact can predate/outlive its run
     # record.
-    create_table :chorus_artifacts do |t|
-      t.references :result, null: true, foreign_key: { to_table: :chorus_results }
+    create_table :appwork_chorus_artifacts do |t|
+      t.references :result, null: true, foreign_key: { to_table: :appwork_chorus_results }
       t.string :name, null: false
       t.string :kind
       t.string :locator
@@ -74,11 +74,11 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # (delegation, not denormalization). The row claims OWNERSHIP of the synced
     # Concept (has_one_okf :concept); narrative content lives in the Concept, never a
     # column here. The workspace is reached via work_order.workspace — no workspace FK
-    # here (it left with Chorus::Planner when execute! took over, §7).
-    create_table :chorus_plans do |t|
-      t.references :work_order, null: false, foreign_key: { to_table: :chorus_work_orders }
-      t.references :role,       null: false, foreign_key: { to_table: :chorus_roles }
-      t.references :agent,      null: true,  foreign_key: { to_table: :chorus_agents }
+    # here (it left with Appwork::Chorus::Planner when execute! took over, §7).
+    create_table :appwork_chorus_plans do |t|
+      t.references :work_order, null: false, foreign_key: { to_table: :appwork_chorus_work_orders }
+      t.references :role,       null: false, foreign_key: { to_table: :appwork_chorus_roles }
+      t.references :agent,      null: true,  foreign_key: { to_table: :appwork_chorus_agents }
       t.string     :name,       null: false
       t.timestamps
     end
@@ -89,9 +89,9 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # tenancy (physical DB per Account). `owner` is a polymorphic, optional back-ref
     # (plan 011 §6) — a Workspace owns the sources checked out into it, but a source
     # may exist unowned.
-    create_table :chorus_sources do |t|
+    create_table :appwork_chorus_sources do |t|
       t.references :owner,    polymorphic: true, null: true   # the Workspace (or other) that owns this checkout
-      t.string   :type,       null: false   # STI discriminator (Chorus::Source::Git, ...)
+      t.string   :type,       null: false   # STI discriminator (Appwork::Chorus::Source::Git, ...)
       t.string   :resource,   null: false   # origin locator: repo URL / bucket / mount spec
       t.string   :path                      # absolute path the origin is materialized to
       t.string   :ref                       # last-synced watermark: commit SHA / etag / mtime
@@ -108,8 +108,8 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # identifier (e.g. the GitHub org login); per-vendor config lives in the
     # serialized `settings` bag. Account-scoped by tenancy (physical DB per Account),
     # so no owner column. Only the GitHub kind acts today (creates repos).
-    create_table :chorus_external_accounts do |t|
-      t.string :type,     null: false   # STI discriminator (Chorus::ExternalAccount::GitHub, ...)
+    create_table :appwork_chorus_external_accounts do |t|
+      t.string :type,     null: false   # STI discriminator (Appwork::Chorus::ExternalAccount::GitHub, ...)
       t.string :name,     null: false   # account identifier: github org login / aws account label / ...
       t.text   :settings                # YAML-serialized per-vendor config bag
       t.timestamps
@@ -123,7 +123,7 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # populated by the npx wrapper. The natural key is [resource, skill_name]
     # (skill_name nullable to represent a whole-repo entry). Refresh clobbers —
     # nothing tenant-authored lives here.
-    create_table :chorus_catalog_skills do |t|
+    create_table :appwork_chorus_catalog_skills do |t|
       t.string   :resource,     null: false  # `owner/repo` upstream identifier
       t.string   :skill_name                 # skill within the repo; nil = whole-repo entry
       t.text     :description                # upstream description (the searchable field)
@@ -141,7 +141,7 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # (bottom of scale, NOT a hard block); 1..100 = graded quality. Joins CatalogSkill
     # on the natural key [resource, skill_name] — different source, different cadence,
     # so either side may exist without the other.
-    create_table :chorus_curations do |t|
+    create_table :appwork_chorus_curations do |t|
       t.string  :resource,   null: false   # `owner/repo` (join key, mirrors CatalogSkill)
       t.string  :skill_name                # join key; nil = whole-repo verdict
       t.integer :reputation                # chorus.org's graded score, 0..100
@@ -155,7 +155,7 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # OKF Concepts, reconciled against the stable `slug`. `parent_id` allows a
     # shallow area -> sub-category hierarchy; no hierarchy logic is built beyond
     # the self-association. Durable: categories persist across scans.
-    create_table :chorus_taxonomies do |t|
+    create_table :appwork_chorus_taxonomies do |t|
       t.string  :name,   null: false   # human label ("marketing", "ruby-on-rails")
       t.string  :slug,   null: false   # normalized identifier; the key a Concept-scan reconciles against
       t.integer :parent_id             # self-referential; nil = top-level area
@@ -164,14 +164,14 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
       t.index :slug, unique: true
       t.index :parent_id
     end
-    add_foreign_key :chorus_taxonomies, :chorus_taxonomies, column: :parent_id
+    add_foreign_key :appwork_chorus_taxonomies, :appwork_chorus_taxonomies, column: :parent_id
 
     # SkillCategorization: the bare CatalogSkill <-> Taxonomy join. v1 is two FKs
     # and a unique pair index — NO provenance column (who assigned the tag is a
     # policy question, deferred; see `# 004 deferred:` in the models).
-    create_table :chorus_skill_categorizations do |t|
-      t.references :catalog_skill, null: false, foreign_key: { to_table: :chorus_catalog_skills }
-      t.references :taxonomy,      null: false, foreign_key: { to_table: :chorus_taxonomies }
+    create_table :appwork_chorus_skill_categorizations do |t|
+      t.references :catalog_skill, null: false, foreign_key: { to_table: :appwork_chorus_catalog_skills }
+      t.references :taxonomy,      null: false, foreign_key: { to_table: :appwork_chorus_taxonomies }
       t.timestamps
 
       t.index [ :catalog_skill_id, :taxonomy_id ], unique: true
@@ -183,8 +183,8 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # IAM owned Role; IAM's Role has since narrowed to authorization (AAA) only, so
     # no collision remains and the defensive AgentRole prefix is dead weight (plan
     # 011 §1). Its charter is `has_one_okf :concept` (polymorphic, `as: :owner`, so
-    # no FK column here); its skills attach through the chorus_role_skills join.
-    create_table :chorus_roles do |t|
+    # no FK column here); its skills attach through the appwork_chorus_role_skills join.
+    create_table :appwork_chorus_roles do |t|
       t.string :name, null: false
       t.text   :description
       t.timestamps
@@ -192,11 +192,11 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
 
     # SkillRequirement: a role's durable, catalog-naive requirement — a skill named
     # by STABLE identity (name/slug), NOT an FK into the clobber-refreshed catalog.
-    # A Chorus::SkillResolver maps these names -> concrete catalog rows/git sources
+    # A Appwork::Chorus::SkillResolver maps these names -> concrete catalog rows/git sources
     # at equip time (§4); pinning a durable Role to the volatile catalog would let a
     # refresh break role definitions.
-    create_table :chorus_skill_requirements do |t|
-      t.references :role, null: false, foreign_key: { to_table: :chorus_roles }
+    create_table :appwork_chorus_skill_requirements do |t|
+      t.references :role, null: false, foreign_key: { to_table: :appwork_chorus_roles }
       t.string     :name, null: false   # stable skill identity ("web-design-guidelines")
       t.string     :slug                 # optional normalized key
       t.timestamps
@@ -215,19 +215,19 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # decides (which workspace, which role, which agent) arrives fully specified
     # (§5). workable/workspace are nullable at the DB so the owning place/subject can
     # nullify on teardown, but required at the model — a valid order names both.
-    create_table :chorus_work_orders do |t|
+    create_table :appwork_chorus_work_orders do |t|
       t.references :workable,  polymorphic: true, null: true   # the occupied subject (nullify on teardown)
-      t.references :workspace, null: true,  foreign_key: { to_table: :chorus_workspaces }
-      t.references :role,      null: false, foreign_key: { to_table: :chorus_roles }
-      t.references :agent,     null: true,  foreign_key: { to_table: :chorus_agents }
+      t.references :workspace, null: true,  foreign_key: { to_table: :appwork_chorus_workspaces }
+      t.references :role,      null: false, foreign_key: { to_table: :appwork_chorus_roles }
+      t.references :agent,     null: true,  foreign_key: { to_table: :appwork_chorus_agents }
       t.string     :external_session_id     # latched from the first stream event; unused this phase
       t.string     :state                   # free-string lifecycle marker
       t.timestamps
     end
 
     # The Workspace serial-occupancy claim points at the active WorkOrder (§6). Added
-    # here, once chorus_work_orders exists, since the column was created up top.
-    add_foreign_key :chorus_workspaces, :chorus_work_orders, column: :current_work_order_id
+    # here, once appwork_chorus_work_orders exists, since the column was created up top.
+    add_foreign_key :appwork_chorus_workspaces, :appwork_chorus_work_orders, column: :current_work_order_id
 
     # Result: ONE row per invocation (plan 011 §8) — a narrow record of what a single
     # run did and what it cost, polymorphic over its resultable (a WorkOrder or Plan
@@ -237,7 +237,7 @@ class CreateChorusSchema < ActiveRecord::Migration[8.1]
     # succeed?" is a question about `resultable.results` collectively — which is what
     # gives attempt history and retry a home. `messages` survives only as a plain
     # json diagnostics bag.
-    create_table :chorus_results do |t|
+    create_table :appwork_chorus_results do |t|
       t.references :resultable, polymorphic: true, null: false   # WorkOrder or Plan (Task in Phase 2)
       t.json     :argv,     default: []   # the argv this invocation ran
       t.string   :cwd                     # the working directory it ran in

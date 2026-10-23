@@ -1,13 +1,13 @@
 require "rails_helper"
 
-RSpec.describe "Chatter::Conversations", type: :request do
+RSpec.describe "Appwork::Chatter::Conversations", type: :request do
   let(:alice) { create(:person, name: "Alice") }
   let(:bob) { create(:person, name: "Bob") }
 
   describe "GET /chatter/conversations/:id" do
     it "lets a member view the conversation" do
-      conversation = Chatter::Conversation.find_or_create_direct(alice, bob)
-      create(:chatter_message, conversation: conversation, sender: alice, content: "Hello Bob")
+      conversation = Appwork::Chatter::Conversation.find_or_create_direct(alice, bob)
+      create(:appwork_chatter_message, conversation: conversation, sender: alice, content: "Hello Bob")
       sign_in alice
 
       get "/chatter/conversations/#{conversation.id}"
@@ -17,7 +17,7 @@ RSpec.describe "Chatter::Conversations", type: :request do
     end
 
     it "forbids a non-member from viewing the conversation" do
-      conversation = Chatter::Conversation.find_or_create_direct(alice, bob)
+      conversation = Appwork::Chatter::Conversation.find_or_create_direct(alice, bob)
       carol = create(:person, name: "Carol")
       sign_in carol
 
@@ -33,9 +33,9 @@ RSpec.describe "Chatter::Conversations", type: :request do
 
       expect {
         post "/chatter/conversations", params: { kind: "direct", participant_gid: bob.to_gid.to_s }
-      }.to change(Chatter::Conversation, :count).by(1)
+      }.to change(Appwork::Chatter::Conversation, :count).by(1)
 
-      conversation = Chatter::Conversation.last
+      conversation = Appwork::Chatter::Conversation.last
       expect(conversation).to be_direct
       expect(conversation.participants).to contain_exactly(alice, bob)
       expect(response).to redirect_to("/chatter/conversations/#{conversation.id}")
@@ -49,7 +49,7 @@ RSpec.describe "Chatter::Conversations", type: :request do
         kind: "group", name: "Project", member_gids: [ bob.to_gid.to_s, carol.to_gid.to_s ]
       }
 
-      conversation = Chatter::Conversation.last
+      conversation = Appwork::Chatter::Conversation.last
       expect(conversation).to be_group
       expect(conversation.name).to eq("Project")
       expect(conversation.participants).to contain_exactly(alice, bob, carol)

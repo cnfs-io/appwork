@@ -1,4 +1,4 @@
-# ⚠️  DEV/TEST SCAFFOLD — written by `rails g chatter:install:dev`.
+# ⚠️  DEV/TEST SCAFFOLD — written by `bin/rails g appwork:chatter:install_dev`.
 # A landing page rendered in the host layout (which carries the switcher), so you
 # can pick an identity BEFORE entering /chatter. chatter's ConversationsController
 # refuses (403) until current_participant is set, and the switcher lives in the

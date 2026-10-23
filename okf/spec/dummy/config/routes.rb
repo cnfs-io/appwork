@@ -1,3 +1,3 @@
 Rails.application.routes.draw do
-  mount CnfsOkf::Engine => "/cnfs_okf"
+  mount Appwork::Okf::Engine => "/okf"
 end

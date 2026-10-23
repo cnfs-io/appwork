@@ -1,4 +1,6 @@
-module CnfsOkf
-  class ApplicationController < ActionController::Base
+module Appwork
+  module Okf
+    class ApplicationController < ActionController::Base
+    end
   end
 end

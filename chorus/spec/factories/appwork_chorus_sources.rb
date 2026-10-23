@@ -1,7 +1,7 @@
 FactoryBot.define do
   # Base Source is abstract in practice (validates :type present); build concrete
   # kinds via the subclass factories below.
-  factory :chorus_source_git, class: "Chorus::Source::Git" do
+  factory :appwork_chorus_source_git, class: "Appwork::Chorus::Source::Git" do
     resource { "git@github.com:acme/repo-#{rand(1000)}.git" }
     path { "/tmp/chorus/sources/repo-#{rand(1000)}" }
 

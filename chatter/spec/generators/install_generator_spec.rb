@@ -1,8 +1,8 @@
 require "rails_helper"
 require "tmpdir"
-require "generators/chatter/install/install_generator"
+require "generators/appwork/chatter/install/install_generator"
 
-RSpec.describe Chatter::Generators::InstallGenerator do
+RSpec.describe Appwork::Chatter::Generators::InstallGenerator do
   around do |example|
     Dir.mktmpdir { |dir| @dir = dir; example.run }
   end
@@ -22,13 +22,13 @@ RSpec.describe Chatter::Generators::InstallGenerator do
 
   it "mounts the engine in the host routes" do
     run_generator
-    expect(read("config/routes.rb")).to include(%(mount Chatter::Engine => "/chatter"))
+    expect(read("config/routes.rb")).to include(%(mount Appwork::Chatter::Engine => "/chatter"))
   end
 
   it "is safe to re-run — no duplicate mount line" do
     run_generator
     run_generator
     routes = read("config/routes.rb")
-    expect(routes.scan(%(mount Chatter::Engine)).size).to eq(1)
+    expect(routes.scan(%(mount Appwork::Chatter::Engine)).size).to eq(1)
   end
 end

@@ -1,10 +1,10 @@
 require "rails_helper"
 
-# Chorus::RoleSkill — the Role <-> Skill join (plan 010 §3). Attribute-free for now;
+# Appwork::Chorus::RoleSkill — the Role <-> Skill join (plan 010 §3). Attribute-free for now;
 # a role's skills are unique on the pair (DB-enforced).
-RSpec.describe Chorus::RoleSkill, type: :model do
+RSpec.describe Appwork::Chorus::RoleSkill, type: :model do
   it "has a valid factory" do
-    expect(build(:chorus_role_skill)).to be_valid
+    expect(build(:appwork_chorus_role_skill)).to be_valid
   end
 
   describe "associations" do
@@ -18,17 +18,17 @@ RSpec.describe Chorus::RoleSkill, type: :model do
   end
 
   it "reads back from the Skill side (roles through role_skills)" do
-    skill = create(:chorus_skill)
-    role  = create(:chorus_role)
-    create(:chorus_role_skill, role: role, skill: skill)
+    skill = create(:appwork_chorus_skill)
+    role  = create(:appwork_chorus_role)
+    create(:appwork_chorus_role_skill, role: role, skill: skill)
     expect(skill.reload.roles).to contain_exactly(role)
   end
 
   it "is unique per [role, skill]" do
-    role  = create(:chorus_role)
-    skill = create(:chorus_skill)
-    create(:chorus_role_skill, role: role, skill: skill)
-    dup = build(:chorus_role_skill, role: role, skill: skill)
+    role  = create(:appwork_chorus_role)
+    skill = create(:appwork_chorus_skill)
+    create(:appwork_chorus_role_skill, role: role, skill: skill)
+    dup = build(:appwork_chorus_role_skill, role: role, skill: skill)
     expect { dup.save!(validate: false) }.to raise_error(ActiveRecord::RecordNotUnique)
   end
 end

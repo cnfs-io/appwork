@@ -1,6 +1,8 @@
-require "gtd/version"
-require "gtd/engine"
+require "appwork/gtd/version"
+require "appwork/gtd/engine"
 
-module Gtd
-  # Your code goes here...
+module Appwork
+  module Gtd
+    # Your code goes here...
+  end
 end

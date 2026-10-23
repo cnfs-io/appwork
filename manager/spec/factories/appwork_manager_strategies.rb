@@ -3,7 +3,7 @@ FactoryBot.define do
   # whose accessor writes the OKF concept's custom_frontmatter (there is no status
   # column, and the accessor would raise against a nil concept). Status is set in
   # specs via a claimed concept, not the factory.
-  factory :micro_manager_strategy, class: "MicroManager::Strategy" do
+  factory :appwork_manager_strategy, class: "Appwork::Manager::Strategy" do
     name { "Strategy #{rand(1000)}" }
   end
 end

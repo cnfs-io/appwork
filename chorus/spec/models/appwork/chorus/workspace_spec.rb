@@ -1,9 +1,9 @@
 require "rails_helper"
 require "tmpdir"
 
-RSpec.describe Chorus::Workspace, type: :model do
+RSpec.describe Appwork::Chorus::Workspace, type: :model do
   it "has a valid factory" do
-    expect(build(:chorus_workspace)).to be_valid
+    expect(build(:appwork_chorus_workspace)).to be_valid
   end
 
   # # 009 the Workspace IS a directory on disk — the run's cwd, the skills home, and
@@ -11,10 +11,10 @@ RSpec.describe Chorus::Workspace, type: :model do
   # by id (deterministic), and never deleted.
   describe "#pathname / #materialize (the execution directory)" do
     let(:root) { Dir.mktmpdir("chorus-ws-spec") }
-    before { allow(Chorus::Config).to receive(:workspace_root).and_return(root) }
+    before { allow(Appwork::Chorus::Config).to receive(:workspace_root).and_return(root) }
     after  { FileUtils.remove_entry(root) if File.exist?(root) }
 
-    let(:workspace) { create(:chorus_workspace) }
+    let(:workspace) { create(:appwork_chorus_workspace) }
 
     it "derives a deterministic path under the configured root, keyed by id" do
       expect(workspace.directory).to eq(Pathname.new(root).join(workspace.id.to_s))
@@ -39,12 +39,12 @@ RSpec.describe Chorus::Workspace, type: :model do
     end
 
     it "expands ~ in the configured root" do
-      allow(Chorus::Config).to receive(:workspace_root).and_return("~/.chorus/ws-spec")
+      allow(Appwork::Chorus::Config).to receive(:workspace_root).and_return("~/.chorus/ws-spec")
       expect(workspace.directory.to_s).to start_with(File.expand_path("~/.chorus/ws-spec"))
     end
 
     it "raises for an unpersisted workspace (a programmer error, not operational)" do
-      expect { build(:chorus_workspace).directory }.to raise_error(/must be persisted/)
+      expect { build(:appwork_chorus_workspace).directory }.to raise_error(/must be persisted/)
     end
   end
 
@@ -56,7 +56,7 @@ RSpec.describe Chorus::Workspace, type: :model do
       reflection = described_class.reflect_on_association(:view_port)
       expect(reflection.macro).to eq(:has_one)
       expect(reflection.options[:as]).to eq(:owner)
-      expect(reflection.klass).to eq(CnfsOkf::ViewPort)
+      expect(reflection.klass).to eq(Appwork::Okf::ViewPort)
     end
 
     it "no longer creates its own bundle (machinery removed)" do
@@ -67,7 +67,7 @@ RSpec.describe Chorus::Workspace, type: :model do
 
   describe "validations" do
     it "requires a name" do
-      workspace = build(:chorus_workspace, name: nil)
+      workspace = build(:appwork_chorus_workspace, name: nil)
       expect(workspace).not_to be_valid
       expect(workspace.errors[:name]).to be_present
     end
@@ -106,9 +106,9 @@ RSpec.describe Chorus::Workspace, type: :model do
   # conditional update. The negative case is the point — a second claimant must be
   # refused, not silently overwrite the first.
   describe "#claim!" do
-    let(:workspace) { create(:chorus_workspace) }
-    let(:first)  { create(:chorus_work_order, workspace: workspace) }
-    let(:second) { create(:chorus_work_order, workspace: workspace) }
+    let(:workspace) { create(:appwork_chorus_workspace) }
+    let(:first)  { create(:appwork_chorus_work_order, workspace: workspace) }
+    let(:second) { create(:appwork_chorus_work_order, workspace: workspace) }
 
     it "succeeds on an unclaimed workspace, stamping the claim" do
       expect(workspace.claim!(first)).to be(true)
@@ -126,12 +126,12 @@ RSpec.describe Chorus::Workspace, type: :model do
 
   describe "dependent destruction" do
     it "nullifies its work orders when destroyed (they outlive the place)" do
-      workspace = create(:chorus_workspace)
-      work_order = create(:chorus_work_order, workspace: workspace)
+      workspace = create(:appwork_chorus_workspace)
+      work_order = create(:appwork_chorus_work_order, workspace: workspace)
 
       workspace.destroy
 
-      expect(Chorus::WorkOrder.exists?(work_order.id)).to be(true)
+      expect(Appwork::Chorus::WorkOrder.exists?(work_order.id)).to be(true)
       expect(work_order.reload.workspace_id).to be_nil
     end
   end

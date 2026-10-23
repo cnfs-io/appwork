@@ -1,4 +1,4 @@
-# ⚠️  DEV/TEST SCAFFOLD appended by `rails g chatter:install:dev`.
+# ⚠️  DEV/TEST SCAFFOLD appended by `bin/rails g appwork:chatter:install_dev`.
 # A handful of human participants and one non-human agent, so you can open two
 # tabs, "become" different participants, and watch real-time delivery.
 %w[Ada Babbage Carol Dijkstra].each do |name|

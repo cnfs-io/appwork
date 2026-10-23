@@ -1,2 +1,2 @@
-MicroManager::Engine.routes.draw do
+Appwork::Manager::Engine.routes.draw do
 end

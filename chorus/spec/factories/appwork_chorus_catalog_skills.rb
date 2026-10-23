@@ -1,7 +1,7 @@
 FactoryBot.define do
   # A mirrored upstream skill. Randomized natural key satisfies the unique
   # [resource, skill_name] index.
-  factory :chorus_catalog_skill, class: "Chorus::CatalogSkill" do
+  factory :appwork_chorus_catalog_skill, class: "Appwork::Chorus::CatalogSkill" do
     resource { "acme/agent-skills-#{rand(10_000)}" }
     skill_name { "skill-#{rand(10_000)}" }
     description { "A mirrored upstream skill." }

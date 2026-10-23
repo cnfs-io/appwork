@@ -1,6 +1,6 @@
 class ApplicationRecord < ActiveRecord::Base
-  include CnfsSupport::Logging
-  include CnfsOkf::Consumer
+  include Partitia::Support::Logging
+  include Appwork::Okf::Consumer
 
   primary_abstract_class
 end

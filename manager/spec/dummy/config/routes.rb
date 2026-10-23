@@ -1,3 +1,3 @@
 Rails.application.routes.draw do
-  mount MicroManager::Engine => "/micro_manager"
+  mount Appwork::Manager::Engine => "/manager"
 end

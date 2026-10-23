@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
-<%# Source paths composed by CnfsSupport from Rails + every registered plugin
-    (CnfsSupport.plugins — here cnfs_okf, cnfs_ui, gtd). Adding an engine to the
+<%# Source paths composed by Partitia::Support from Rails + every registered plugin
+    (Partitia::Support.plugins — here appwork-okf, partitia-ui, appwork-gtd). Adding an engine to the
     plugin set makes its Tailwind classes scannable automatically, so the Kanban
-    components authored in cnfs_ui's app/components compile styled in THIS dummy —
-    no hand-counted relative traversal. Mirrors cnfs_ui's own dummy entry, minus
+    components authored in partitia-ui's app/components compile styled in THIS dummy —
+    no hand-counted relative traversal. Mirrors partitia-ui's own dummy entry, minus
     the Lookbook previews @source (gtd has no engine spec/previews). %>
-<% raise "CnfsSupport.source_paths is empty — is the Rails env booted?" if CnfsSupport.source_paths.empty? %>
-<% CnfsSupport.source_paths.each do |path| %>
+<% raise "Partitia::Support.source_paths is empty — is the Rails env booted?" if Partitia::Support.source_paths.empty? %>
+<% Partitia::Support.source_paths.each do |path| %>
 @source "<%= path %>";
 <% end %>
 
-<%# CnfsUi semantic design tokens (@theme). Absolute path resolved from the engine
+<%# Partitia::Ui semantic design tokens (@theme). Absolute path resolved from the engine
     root — robust across dummies — so the surface/fg/edge/primary/muted classes the
     Kanban components use resolve to real colors. %>
-@import "<%= CnfsUi::Engine.root.join("app/assets/stylesheets/cnfs_ui/tokens.css") %>";
+@import "<%= Partitia::Ui::Engine.root.join("app/assets/stylesheets/partitia/ui/tokens.css") %>";

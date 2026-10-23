@@ -1,14 +1,15 @@
-require_relative "lib/chatter/version"
+require_relative "lib/appwork/chatter/version"
 
 Gem::Specification.new do |spec|
-  spec.name        = "chatter"
-  spec.version     = Chatter::VERSION
+  spec.name        = "appwork-chatter"
+  spec.version     = Appwork::Chatter::VERSION
   spec.authors     = [ "Robert Roach" ]
   spec.email       = [ "rjayroach@gmail.com" ]
   spec.homepage    = "TODO"
-  spec.summary     = "TODO: Summary of Chatter."
-  spec.description = "TODO: Description of Chatter."
+  spec.summary     = "TODO: Summary of Appwork::Chatter."
+  spec.description = "TODO: Description of Appwork::Chatter."
   spec.license     = "MIT"
+  spec.required_ruby_version = ">= 3.2"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the "allowed_push_host"
   # to allow pushing to a single host or delete this section to allow pushing to any host.
@@ -23,6 +24,8 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency "rails", ">= 8.1.3"
+  # The plugin registry (migrations, Tailwind sources).
+  spec.add_dependency "partitia-support"
   spec.add_dependency "turbo-rails"
   spec.add_dependency "stimulus-rails"
   spec.add_dependency "importmap-rails"

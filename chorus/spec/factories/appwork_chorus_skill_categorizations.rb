@@ -1,6 +1,6 @@
 FactoryBot.define do
-  factory :chorus_skill_categorization, class: "Chorus::SkillCategorization" do
-    association :catalog_skill, factory: :chorus_catalog_skill
-    association :taxonomy, factory: :chorus_taxonomy
+  factory :appwork_chorus_skill_categorization, class: "Appwork::Chorus::SkillCategorization" do
+    association :catalog_skill, factory: :appwork_chorus_catalog_skill
+    association :taxonomy, factory: :appwork_chorus_taxonomy
   end
 end

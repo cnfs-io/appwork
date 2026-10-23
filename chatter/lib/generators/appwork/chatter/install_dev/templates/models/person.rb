@@ -1,9 +1,9 @@
-# ⚠️  DEV/TEST SCAFFOLD — written by `rails g chatter:install:dev`.
+# ⚠️  DEV/TEST SCAFFOLD — written by `bin/rails g appwork:chatter:install_dev`.
 # A host-side participant model so chatter has something to talk as. In a real
 # host these are your existing domain models (User, etc.) that include
-# Chatter::Participant — you would NOT generate this. Safe to delete when done.
+# Appwork::Chatter::Participant — you would NOT generate this. Safe to delete when done.
 class Person < ApplicationRecord
-  include Chatter::Participant
+  include Appwork::Chatter::Participant
 
   validates :name, presence: true
 

@@ -20,7 +20,7 @@ Bundler.require(*Rails.groups)
 
 module Dummy
   class Application < Rails::Application
-    # config.paths["db/migrate"] << CnfsOkf.migrations_path
+    # config.paths["db/migrate"] << Appwork::Okf.migrations_path
     config.load_defaults Rails::VERSION::STRING.to_f
     config.x.migrations_in_place = true
 

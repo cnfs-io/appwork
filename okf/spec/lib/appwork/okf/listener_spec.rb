@@ -1,14 +1,14 @@
 require "rails_helper"
-require "cnfs_okf/listener"
+require "appwork/okf/listener"
 require "tmpdir"
 
 # Deliberately THIN. The listener's only logic is routing — which bundle owns a
 # path, and which paths changed. We do NOT spin up a real Listen thread or wait
 # on filesystem events (that road is flaky). If a richer test feels necessary,
 # that is a signal logic has leaked into the listener that belongs in Sync.
-RSpec.describe CnfsOkf::Listener do
+RSpec.describe Appwork::Okf::Listener do
   def bundle_at(path)
-    instance_double(CnfsOkf::Bundle, pathname: Pathname.new(path))
+    instance_double(Appwork::Okf::Bundle, pathname: Pathname.new(path))
   end
 
   describe "#resolve" do
@@ -47,13 +47,13 @@ RSpec.describe CnfsOkf::Listener do
       bundle_b = bundle_at("/b")
       listener = described_class.new(bundles: [ bundle_a, bundle_b ])
 
-      allow(CnfsOkf::Sync).to receive(:call)
+      allow(Appwork::Okf::Sync).to receive(:call)
 
       listener.send(:route, [ "/a/one.md", "/a/two.md", "/b/three.md" ])
 
-      expect(CnfsOkf::Sync).to have_received(:call)
+      expect(Appwork::Okf::Sync).to have_received(:call)
         .with(bundle: bundle_a, paths: [ "one.md", "two.md" ]).once
-      expect(CnfsOkf::Sync).to have_received(:call)
+      expect(Appwork::Okf::Sync).to have_received(:call)
         .with(bundle: bundle_b, paths: [ "three.md" ]).once
     end
 
@@ -62,18 +62,18 @@ RSpec.describe CnfsOkf::Listener do
       inner    = bundle_at("/a/bundle/inner")
       listener = described_class.new(bundles: [ outer, inner ])
 
-      allow(CnfsOkf::Sync).to receive(:call)
+      allow(Appwork::Okf::Sync).to receive(:call)
 
       listener.send(:route, [ "/a/bundle/inner/y.md" ])
 
-      expect(CnfsOkf::Sync).to have_received(:call)
+      expect(Appwork::Okf::Sync).to have_received(:call)
         .with(bundle: inner, paths: [ "y.md" ]).once
-      expect(CnfsOkf::Sync).not_to have_received(:call).with(bundle: outer, paths: anything)
+      expect(Appwork::Okf::Sync).not_to have_received(:call).with(bundle: outer, paths: anything)
     end
 
     it "logs and keeps watching when a Sync raises (never lets the callback die)" do
       listener = described_class.new(bundles: [ bundle_at("/a") ])
-      allow(CnfsOkf::Sync).to receive(:call).and_raise("boom")
+      allow(Appwork::Okf::Sync).to receive(:call).and_raise("boom")
 
       expect { listener.send(:route, [ "/a/x.md" ]) }.not_to raise_error
     end

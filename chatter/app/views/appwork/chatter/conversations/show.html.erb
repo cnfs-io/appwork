@@ -11,14 +11,14 @@
   </header>
 
   <%# Subscribe to the conversation record's stream — must match the streamable in
-      Chatter::Message's broadcasts_to. The DOM target below matches its `target:`. %>
+      Appwork::Chatter::Message's broadcasts_to. The DOM target below matches its `target:`. %>
   <%= turbo_stream_from @conversation %>
 
   <div id="conversation_<%= @conversation.id %>_messages"
-       data-controller="chatter--messages"
+       data-controller="appwork--chatter--messages"
        class="h-96 overflow-y-auto space-y-2 p-4 rounded border bg-white">
     <%= render @messages %>
   </div>
 
-  <%= render "chatter/messages/form", conversation: @conversation, message: @message %>
+  <%= render "appwork/chatter/messages/form", conversation: @conversation, message: @message %>
 </div>

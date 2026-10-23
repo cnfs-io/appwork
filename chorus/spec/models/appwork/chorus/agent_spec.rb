@@ -1,29 +1,29 @@
 require "rails_helper"
 
-# Chorus::Agent — an STI base on its RUNTIME (plan 011 §2). The former AgentAdapter
+# Appwork::Chorus::Agent — an STI base on its RUNTIME (plan 011 §2). The former AgentAdapter
 # collapsed in: every agent is a distinct (runtime, model) pairing carrying its own
 # `model`, so the join bought nothing. Runtime is the STI discriminator; the concrete
 # subclasses (ClaudeCode, OpenCode) carry the invocation behavior a Concept cannot.
-RSpec.describe Chorus::Agent, type: :model do
+RSpec.describe Appwork::Chorus::Agent, type: :model do
   describe "the STI base" do
     it "has a valid concrete factory" do
-      expect(build(:chorus_agent)).to be_valid
+      expect(build(:appwork_chorus_agent)).to be_valid
     end
 
     it "cannot be persisted without a concrete type" do
-      base = Chorus::Agent.new(name: "bare")
+      base = Appwork::Chorus::Agent.new(name: "bare")
       expect(base).not_to be_valid
       expect(base.errors[:type]).to be_present
     end
 
     it "requires a name" do
-      agent = build(:chorus_agent, name: nil)
+      agent = build(:appwork_chorus_agent, name: nil)
       expect(agent).not_to be_valid
       expect(agent.errors[:name]).to be_present
     end
 
     it "leaves the four-method contract unimplemented on the base" do
-      base = Chorus::Agent.new
+      base = Appwork::Chorus::Agent.new
       expect { base.build_argv(prompt: "p") }.to raise_error(NotImplementedError)
       expect { base.invoke(prompt: "p", workspace: nil) }.to raise_error(NotImplementedError)
       expect { base.parse_event("{}") }.to raise_error(NotImplementedError)
@@ -35,8 +35,8 @@ RSpec.describe Chorus::Agent, type: :model do
     end
 
     it "resolves the concrete class from the type column" do
-      agent = create(:chorus_agent)
-      expect(Chorus::Agent.find(agent.id)).to be_a(Chorus::Agent::ClaudeCode)
+      agent = create(:appwork_chorus_agent)
+      expect(Appwork::Chorus::Agent.find(agent.id)).to be_a(Appwork::Chorus::Agent::ClaudeCode)
     end
 
     # The role attaches to the WORK, not the worker (plan 011 §1): Agent carries no
@@ -56,8 +56,8 @@ RSpec.describe Chorus::Agent, type: :model do
     end
   end
 
-  describe Chorus::Agent::ClaudeCode do
-    subject(:agent) { create(:chorus_agent, model: "opus-4.8") }
+  describe Appwork::Chorus::Agent::ClaudeCode do
+    subject(:agent) { create(:appwork_chorus_agent, model: "opus-4.8") }
 
     it "declares its skills_agent_key" do
       expect(agent.skills_agent_key).to eq("claude-code")
@@ -76,7 +76,7 @@ RSpec.describe Chorus::Agent, type: :model do
       end
 
       it "reflects the agent's own model" do
-        sonnet = create(:chorus_agent, model: "sonnet-4.6")
+        sonnet = create(:appwork_chorus_agent, model: "sonnet-4.6")
         expect(sonnet.build_argv(prompt: "x")).to include("--model", "sonnet-4.6")
       end
 
@@ -91,7 +91,7 @@ RSpec.describe Chorus::Agent, type: :model do
 
     describe "#parse_event (against captured NDJSON fixture lines)" do
       let(:lines) do
-        path = File.expand_path("../../fixtures/claude_code/stream.ndjson", __dir__)
+        path = File.expand_path("../../../fixtures/claude_code/stream.ndjson", __dir__)
         File.readlines(path, chomp: true)
       end
 
@@ -140,8 +140,8 @@ RSpec.describe Chorus::Agent, type: :model do
     end
   end
 
-  describe Chorus::Agent::OpenCode do
-    subject(:agent) { create(:chorus_agent_open_code) }
+  describe Appwork::Chorus::Agent::OpenCode do
+    subject(:agent) { create(:appwork_chorus_agent_open_code) }
 
     it "declares its skills_agent_key" do
       expect(agent.skills_agent_key).to eq("opencode")

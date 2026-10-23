@@ -1,14 +1,14 @@
-# CnfsOkf
+# Appwork::Okf
 
 A filesystem-backed content engine for [OKF](https://okf.org)-style Markdown.
 A **bundle** is a directory of `.md` files; each file becomes a **concept** row
-whose YAML frontmatter is projected onto columns. `CnfsOkf` keeps that database
+whose YAML frontmatter is projected onto columns. `Appwork::Okf` keeps that database
 projection reconciled with what's on disk — the files are the source of truth,
 the rows are a queryable index over them.
 
 Any of your own models can **own** a concept (or a whole bundle) through a
 polymorphic association, so your domain records and the on-disk content stay
-linked without `CnfsOkf` knowing anything about your models.
+linked without `Appwork::Okf` knowing anything about your models.
 
 ## Installation
 
@@ -19,8 +19,8 @@ Add the gem:
 gem "cnfs_okf"
 ```
 
-Install and run its migrations (creates `cnfs_okf_bundles`,
-`cnfs_okf_concepts`, `cnfs_okf_view_ports`):
+Install and run its migrations (creates `appwork_okf_bundles`,
+`appwork_okf_concepts`, `appwork_okf_view_ports`):
 
 ```bash
 bundle install
@@ -28,9 +28,9 @@ bin/rails cnfs_okf:install:migrations
 bin/rails db:migrate
 ```
 
-`CnfsOkf` is a Rails engine; its models, rake tasks, and migrations load
+`Appwork::Okf` is a Rails engine; its models, rake tasks, and migrations load
 automatically once the gem is in your `Gemfile`. There are no routes to mount —
-the public surface is the models, `CnfsOkf::Sync`, and the rake tasks below.
+the public surface is the models, `Appwork::Okf::Sync`, and the rake tasks below.
 
 ## Quick start
 
@@ -45,7 +45,7 @@ immediately — every `.md` under the root becomes a concept:
 #   ---
 #   Hello.
 
-bundle = CnfsOkf::Bundle.create!(path: "/content/notes")
+bundle = Appwork::Okf::Bundle.create!(path: "/content/notes")
 
 bundle.concepts.count                       # => 1
 concept = bundle.concepts.find_by!(path: "welcome.md")
@@ -62,13 +62,13 @@ Frontmatter keys that match a column (`type`, `title`, `description`,
 
 ### Reconcile a bundle against disk
 
-`CnfsOkf::Sync` is the single entry point for reconciliation. It is idempotent —
+`Appwork::Okf::Sync` is the single entry point for reconciliation. It is idempotent —
 a second call with no on-disk changes does nothing — so running it more often
 than necessary is only a cost in time, never in correctness.
 
 ```ruby
-CnfsOkf::Sync.call(bundle: bundle)                        # whole bundle
-CnfsOkf::Sync.call(bundle: bundle, paths: ["welcome.md"]) # just these files
+Appwork::Okf::Sync.call(bundle: bundle)                        # whole bundle
+Appwork::Okf::Sync.call(bundle: bundle, paths: ["welcome.md"]) # just these files
 ```
 
 Editing a concept's frontmatter attribute writes back to the file:
@@ -97,15 +97,15 @@ bundle.mv("/content/archive/notes")   # => true on success, false (logged) on fa
 
 ### Own content from your models
 
-Include `CnfsOkf::Consumer` and declare the association. Ownership drives the
+Include `Appwork::Okf::Consumer` and declare the association. Ownership drives the
 `owned_concept_policy` (see Configuration) — a concept with an owner is treated
 as more than a disk mirror.
 
 ```ruby
 class Account < ApplicationRecord
-  include CnfsOkf::Consumer
+  include Appwork::Okf::Consumer
 
-  has_one_okf  :concept    # one owned CnfsOkf::Concept
+  has_one_okf  :concept    # one owned Appwork::Okf::Concept
   has_one_okf  :bundle     # ...or a whole bundle
   # has_many_okf :concepts # ...or many
 end
@@ -132,12 +132,12 @@ web or job process.
 
 ## Configuration
 
-Settings live on `CnfsOkf::Config` and resolve, in ascending priority, from ENV
-→ `config/cnfs_okf.yml` → Rails credentials → code. Set them in an initializer:
+Settings live on `Appwork::Okf::Config` and resolve, in ascending priority, from ENV
+→ `config/partitia_appwork.yml` → Rails credentials → code. Set them in an initializer:
 
 ```ruby
-# config/initializers/cnfs_okf.rb
-CnfsOkf::Config.owned_concept_policy = :quarantine
+# config/initializers/partitia_appwork.rb
+Appwork::Okf::Config.owned_concept_policy = :quarantine
 ```
 
 | Key | Default | Meaning |

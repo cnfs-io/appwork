@@ -1,5 +1,5 @@
 FactoryBot.define do
-  factory :chorus_skill, class: "Chorus::Skill" do
+  factory :appwork_chorus_skill, class: "Appwork::Chorus::Skill" do
     name { "skill-#{rand(1000)}" }
   end
 end

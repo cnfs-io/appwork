@@ -6,7 +6,7 @@ require "tmpdir"
 # Direct specs for Bundle + the FsBundle concern (#mv, the ino_match?
 # short-circuit, and the read helpers) — paths that sync_spec/instrumentation_spec
 # only exercise indirectly. Real files in a tmpdir, matching house style.
-RSpec.describe CnfsOkf::Bundle do
+RSpec.describe Appwork::Okf::Bundle do
   def write_md(dir, rel, frontmatter: nil, body: "hello\n")
     path = File.join(dir, rel)
     FileUtils.mkdir_p(File.dirname(path))
@@ -26,7 +26,7 @@ RSpec.describe CnfsOkf::Bundle do
   def bundle_with(*files)
     dir = File.join(@root, "bundle")
     files.each { |rel| write_md(dir, rel) }
-    CnfsOkf::Bundle.create!(path: dir)
+    Appwork::Okf::Bundle.create!(path: dir)
   end
 
   describe "#mv" do
@@ -46,7 +46,7 @@ RSpec.describe CnfsOkf::Bundle do
 
       # The in-place rename keeps every inode, so ino_match? should short-circuit
       # before Sync is ever called.
-      expect(CnfsOkf::Sync).not_to receive(:call)
+      expect(Appwork::Okf::Sync).not_to receive(:call)
       bundle.mv(File.join(@root, "moved"))
 
       expect(bundle.reload.concepts.pluck(:id).sort).to eq(ids)

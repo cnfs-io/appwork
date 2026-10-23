@@ -1,16 +1,16 @@
 require "rails_helper"
 
-# Chorus::Role — the requirement a piece of work carries (plan 011 §1): a charter
+# Appwork::Chorus::Role — the requirement a piece of work carries (plan 011 §1): a charter
 # (has_one_okf :concept) and skills through the RoleSkill join. The former AgentRole,
 # renamed now that IAM's Role narrowed to authorization and no collision remains.
-RSpec.describe Chorus::Role, type: :model do
+RSpec.describe Appwork::Chorus::Role, type: :model do
   it "has a valid factory" do
-    expect(build(:chorus_role)).to be_valid
+    expect(build(:appwork_chorus_role)).to be_valid
   end
 
   describe "validations" do
     it "requires a name" do
-      role = build(:chorus_role, name: nil)
+      role = build(:appwork_chorus_role, name: nil)
       expect(role).not_to be_valid
       expect(role.errors[:name]).to be_present
     end
@@ -21,7 +21,7 @@ RSpec.describe Chorus::Role, type: :model do
       reflection = described_class.reflect_on_association(:concept)
       expect(reflection.macro).to eq(:has_one)
       expect(reflection.options[:as]).to eq(:owner)
-      expect(reflection.klass).to eq(CnfsOkf::Concept)
+      expect(reflection.klass).to eq(Appwork::Okf::Concept)
     end
 
     # Scaled back in 010 §2: view_ports was speculative structure with no consumer.
@@ -38,19 +38,19 @@ RSpec.describe Chorus::Role, type: :model do
     end
 
     it "equips a skill and reads it back" do
-      role  = create(:chorus_role)
-      skill = create(:chorus_skill)
+      role  = create(:appwork_chorus_role)
+      skill = create(:appwork_chorus_skill)
       role.skills << skill
       expect(role.reload.skills).to contain_exactly(skill)
     end
 
     it "destroys its role_skills with it (join rows, not the skills)" do
-      role  = create(:chorus_role)
-      skill = create(:chorus_skill)
+      role  = create(:appwork_chorus_role)
+      skill = create(:appwork_chorus_skill)
       role.skills << skill
 
-      expect { role.destroy }.to change(Chorus::RoleSkill, :count).by(-1)
-      expect(Chorus::Skill.exists?(skill.id)).to be(true)
+      expect { role.destroy }.to change(Appwork::Chorus::RoleSkill, :count).by(-1)
+      expect(Appwork::Chorus::Skill.exists?(skill.id)).to be(true)
     end
 
     # No longer reaches SkillRequirement (010 §2 dropped the association; that join

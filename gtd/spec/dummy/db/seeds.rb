@@ -5,7 +5,7 @@ require "fileutils"
 # Committed fixtures are the source of truth; the seed copies them into a
 # gitignored working dir so a run can mutate files (a body edit rewrites the .md)
 # without dirtying git. Destructive + idempotent: it resets everything each run.
-# Mirrors okf's and cnfs_ui's spec/dummy/db/seeds.rb.
+# Mirrors okf's and partitia-ui's spec/dummy/db/seeds.rb.
 FIXTURES = Rails.root.join("../fixtures/bundles")   # spec/fixtures/bundles
 WORKDIR  = Rails.root.join("storage/bundles")       # gitignored, mutable
 
@@ -17,21 +17,21 @@ FileUtils.cp_r("#{FIXTURES}/.", WORKDIR)
 
 # --- Tier 2: the OKF content bundle -----------------------------------------
 # after_create -> Sync builds a Concept row from every .md file on disk. Each
-# Gtd::Action/Project then CLAIMS its concept (ownership points at a file; it does
+# Appwork::Gtd::Action/Project then CLAIMS its concept (ownership points at a file; it does
 # not create one), so title/body flow from disk through the composition root.
-bundle = CnfsOkf::Bundle.create!(path: WORKDIR.join("gtd").to_s)
+bundle = Appwork::Okf::Bundle.create!(path: WORKDIR.join("gtd").to_s)
 
 def concept_for(bundle, path)
   bundle.concepts.find_by!(path: path)
 end
 
 # --- Domain objects ----------------------------------------------------------
-Gtd::Action.destroy_all
-Gtd::Project.destroy_all
-Gtd::Context.destroy_all
+Appwork::Gtd::Action.destroy_all
+Appwork::Gtd::Project.destroy_all
+Appwork::Gtd::Context.destroy_all
 
 # Contexts (@home / @work / @calls) — plain grouping labels, not concept-owning.
-contexts = %w[@home @work @calls].index_with { |name| Gtd::Context.create!(name: name) }
+contexts = %w[@home @work @calls].index_with { |name| Appwork::Gtd::Context.create!(name: name) }
 
 # Projects — concept-owning; their title/notes live on disk. Keyed by the column
 # label the project board will use.
@@ -40,7 +40,7 @@ projects = {
   "Q3 Planning"      => "projects/q3-planning.md",
   "Errands"          => "projects/errands.md"
 }.to_h do |name, md|
-  project = Gtd::Project.create!(name: name)
+  project = Appwork::Gtd::Project.create!(name: name)
   project.update!(concept: concept_for(bundle, md))
   [ name, project ]
 end
@@ -59,7 +59,7 @@ ACTIONS = [
 ].freeze
 
 actions = ACTIONS.map do |md, status, context_name, project_name|
-  action = Gtd::Action.create!(
+  action = Appwork::Gtd::Action.create!(
     status: status,
     context: contexts.fetch(context_name),
     project: projects.fetch(project_name)
@@ -72,13 +72,13 @@ end
 # Same actions, three boards, three independent placements per action (ADR 0005 —
 # multi-board is free). Only the WORKFLOW board's columns assert; the other two
 # are pure views (ADR 0005 / the design note in plan 012).
-CnfsUi::Board.destroy_all
+Partitia::Ui::Board.destroy_all
 
 # WORKFLOW — columns ARE the `status` enum (ADR 0006). Each column declares
 # `status:<value>`; dragging a card into it relays satisfy_assertion -> the
 # action's status column changes. This is the ONLY asserting board.
-workflow = CnfsUi::Board.create!(name: "Workflow")
-workflow_columns = Gtd::Action::STATUSES.to_h do |status|
+workflow = Partitia::Ui::Board.create!(name: "Workflow")
+workflow_columns = Appwork::Gtd::Action::STATUSES.to_h do |status|
   column = workflow.columns.create!(
     name: status.capitalize,
     assertion_attribute: "status",
@@ -90,22 +90,22 @@ actions.each { |a| workflow_columns.fetch(a.status).placements.create!(subject: 
 
 # CONTEXT — plain columns, NO assertion. Dragging reorders/moves the placement
 # only; it never mutates the action (ADR 0005 — the context board is a pure view).
-context_board = CnfsUi::Board.create!(name: "Context")
+context_board = Partitia::Ui::Board.create!(name: "Context")
 context_columns = contexts.keys.to_h do |name|
   [ name, context_board.columns.create!(name: name) ]
 end
 actions.each { |a| context_columns.fetch(a.context.name).placements.create!(subject: a) }
 
 # PROJECT — one plain column per project, NO assertion. View only.
-project_board = CnfsUi::Board.create!(name: "Project")
+project_board = Partitia::Ui::Board.create!(name: "Project")
 project_columns = projects.keys.to_h do |name|
   [ name, project_board.columns.create!(name: name) ]
 end
 actions.each { |a| project_columns.fetch(a.project.name).placements.create!(subject: a) }
 
-puts "Seeded: #{CnfsOkf::Bundle.count} bundle, #{CnfsOkf::Concept.count} concepts, " \
-     "#{Gtd::Action.count} actions, #{Gtd::Project.count} projects, " \
-     "#{Gtd::Context.count} contexts; boards: " \
+puts "Seeded: #{Appwork::Okf::Bundle.count} bundle, #{Appwork::Okf::Concept.count} concepts, " \
+     "#{Appwork::Gtd::Action.count} actions, #{Appwork::Gtd::Project.count} projects, " \
+     "#{Appwork::Gtd::Context.count} contexts; boards: " \
      "Workflow(##{workflow.id}, asserts status), " \
      "Context(##{context_board.id}, plain), Project(##{project_board.id}, plain); " \
-     "#{CnfsUi::Placement.count} placements (3 per action)"
+     "#{Partitia::Ui::Placement.count} placements (3 per action)"

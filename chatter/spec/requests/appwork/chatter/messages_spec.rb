@@ -1,11 +1,11 @@
 require "rails_helper"
 
-RSpec.describe "Chatter::Messages", type: :request do
+RSpec.describe "Appwork::Chatter::Messages", type: :request do
   include ActiveJob::TestHelper
 
   let(:alice) { create(:person, name: "Alice") }
   let(:bob) { create(:person, name: "Bob") }
-  let(:conversation) { Chatter::Conversation.find_or_create_direct(alice, bob) }
+  let(:conversation) { Appwork::Chatter::Conversation.find_or_create_direct(alice, bob) }
 
   describe "POST /chatter/conversations/:conversation_id/messages" do
     it "persists a message sent by a member" do
@@ -28,7 +28,7 @@ RSpec.describe "Chatter::Messages", type: :request do
       expect {
         post "/chatter/conversations/#{conversation.id}/messages",
           params: { message: { content: "intruding" } }
-      }.not_to change(Chatter::Message, :count)
+      }.not_to change(Appwork::Chatter::Message, :count)
 
       expect(response).to have_http_status(:forbidden)
     end

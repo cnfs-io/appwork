@@ -8,10 +8,10 @@ default: &default
   adapter: sqlite3
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   timeout: 5000
-  # Include engine-contributed migration paths (e.g. cnfs_okf's db/migrate) so
+  # Include engine-contributed migration paths (e.g. appwork-okf's db/migrate) so
   # schema load / test:prepare stamps every gem migration version, matching the
   # migration set the specs boot against from the gem root.
-  migrations_paths: <%= CnfsSupport.migrations_paths[:primary] %>
+  migrations_paths: <%= Partitia::Support.migrations_paths[:primary] %>
 
 development:
   <<: *default

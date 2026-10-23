@@ -1,4 +1,6 @@
-module Chatter
-  module ApplicationHelper
+module Appwork
+  module Chatter
+    module ApplicationHelper
+    end
   end
 end

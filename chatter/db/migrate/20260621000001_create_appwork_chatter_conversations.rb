@@ -1,6 +1,6 @@
-class CreateChatterConversations < ActiveRecord::Migration[8.1]
+class CreateAppworkChatterConversations < ActiveRecord::Migration[8.1]
   def change
-    create_table :chatter_conversations do |t|
+    create_table :appwork_chatter_conversations do |t|
       t.integer :kind, null: false, default: 0
       t.string :name
 

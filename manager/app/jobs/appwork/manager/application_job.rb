@@ -1,4 +1,6 @@
-module MicroManager
-  class ApplicationJob < ActiveJob::Base
+module Appwork
+  module Manager
+    class ApplicationJob < ActiveJob::Base
+    end
   end
 end

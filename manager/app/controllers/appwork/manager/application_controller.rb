@@ -1,4 +1,6 @@
-module MicroManager
-  class ApplicationController < ActionController::Base
+module Appwork
+  module Manager
+    class ApplicationController < ActionController::Base
+    end
   end
 end

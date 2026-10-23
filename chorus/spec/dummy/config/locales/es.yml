@@ -1,5 +1,5 @@
 es:
-  chorus:
+  appwork_chorus:
     app_name: "Chorus"
     actions:
       new: "Nuevo"
@@ -22,23 +22,23 @@ es:
 
   activerecord:
     models:
-      chorus/agent:
+      appwork/chorus/agent:
         one: "Agente"
         other: "Agentes"
-      chorus/workspace:
+      appwork/chorus/workspace:
         one: "Espacio de trabajo"
         other: "Espacios de trabajo"
-      chorus/artifact:
+      appwork/chorus/artifact:
         one: "Artefacto"
         other: "Artefactos"
     attributes:
-      chorus/agent:
+      appwork/chorus/agent:
         name: "Nombre"
         kind: "Tipo"
-      chorus/workspace:
+      appwork/chorus/workspace:
         name: "Nombre"
         description: "Descripción"
-      chorus/artifact:
+      appwork/chorus/artifact:
         workspace: "Espacio de trabajo"
         name: "Nombre"
         kind: "Tipo"

@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in okf.gemspec.
+# Specify your gem's dependencies in appwork-okf.gemspec.
 gemspec
 
 gem "puma"
@@ -26,6 +26,9 @@ end
 gem "amazing_print"
 # gem "pry-rails"
 
-gem "cnfs_support", path: "../support"
-gem "cnfs_dev", path: "../dev"
-gem "cnfs_telemetry", path: "../telemetry"
+# Partitia's engines, by gem name from gem-local's links (gem-local list); appwork's own
+# gems from their sibling dirs
+partitia_gems = ENV.fetch("RUBY_LOCAL_GEMS_HOME") { File.join(ENV.fetch("XDG_DATA_HOME") { File.join(Dir.home, ".local/share") }, "gems") }
+gem "partitia-support", path: "#{partitia_gems}/partitia-support"
+gem "partitia-dev", path: "#{partitia_gems}/partitia-dev"
+gem "partitia-telemetry", path: "#{partitia_gems}/partitia-telemetry"

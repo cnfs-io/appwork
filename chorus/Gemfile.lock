@@ -1,7 +1,32 @@
 PATH
-  remote: ../dev
+  remote: ../okf
   specs:
-    cnfs_dev (0.1.0)
+    appwork-okf (0.1.0)
+      importmap-rails
+      listen
+      partitia-support
+      rails (>= 8.1.3)
+      stimulus-rails
+      tailwindcss-rails
+      turbo-rails
+
+PATH
+  remote: .
+  specs:
+    appwork-chorus (0.1.0)
+      appwork-okf
+      importmap-rails
+      lockbox (~> 2.0)
+      partitia-support
+      rails (>= 8.1.3)
+      stimulus-rails
+      tailwindcss-rails
+      turbo-rails
+
+PATH
+  remote: /Users/roberto/.local/share/gems/partitia-dev
+  specs:
+    partitia-dev (0.1.0)
       amazing_print (~> 2.0)
       pry (>= 0.16)
       pry-byebug (~> 3.12)
@@ -9,43 +34,21 @@ PATH
       rails (>= 8.1.3)
 
 PATH
-  remote: ../okf
+  remote: /Users/roberto/.local/share/gems/partitia-support
   specs:
-    cnfs_okf (0.1.0)
-      importmap-rails
-      listen
-      rails (>= 8.1.3)
-      stimulus-rails
-      tailwindcss-rails
-      turbo-rails
-
-PATH
-  remote: ../support
-  specs:
-    cnfs_support (0.1.0)
+    partitia-support (0.1.0)
       activesupport (>= 8.1.3)
       anyway_config (~> 2.7)
       mixlib-shellout (>= 3.3)
 
 PATH
-  remote: ../telemetry
+  remote: /Users/roberto/.local/share/gems/partitia-telemetry
   specs:
-    cnfs_telemetry (0.1.0)
+    partitia-telemetry (0.1.0)
       activesupport (>= 8.1.3)
       opentelemetry-api (~> 1.1)
       opentelemetry-semantic_conventions (~> 1.37)
-
-PATH
-  remote: .
-  specs:
-    chorus (0.1.0)
-      cnfs_dev
-      importmap-rails
-      lockbox (~> 2.0)
-      rails (>= 8.1.3)
-      stimulus-rails
-      tailwindcss-rails
-      turbo-rails
+      partitia-support
 
 GEM
   remote: https://rubygems.org/
@@ -413,12 +416,12 @@ PLATFORMS
 
 DEPENDENCIES
   amazing_print
-  chorus!
-  cnfs_dev!
-  cnfs_okf!
-  cnfs_support!
-  cnfs_telemetry!
+  appwork-chorus!
+  appwork-okf!
   factory_bot_rails
+  partitia-dev!
+  partitia-support!
+  partitia-telemetry!
   propshaft
   pry
   pry-rails
@@ -444,6 +447,8 @@ CHECKSUMS
   activesupport (8.1.3) sha256=21a5e0dfbd4c3ddd9e1317ec6a4d782fa226e7867dc70b0743acda81a1dca20e
   amazing_print (2.0.0) sha256=2e36aba46ac78d37ed27ca0e2056afe3583183bb5c64f157c246b267355e5d6a
   anyway_config (2.8.0) sha256=f6797a7231f81202dcd3d0c07284e836e45713e761d320180348b13a5c7c9306
+  appwork-chorus (0.1.0)
+  appwork-okf (0.1.0)
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   bigdecimal (4.1.2) sha256=53d217666027eab4280346fba98e7d5b66baaae1b9c3c1c0ffe89d48188a3fbd
@@ -451,11 +456,6 @@ CHECKSUMS
   bundler (4.0.15) sha256=a4ceb882fe94a0e0ac63cd0813932bbfd631a14e5ac0b7975189b19a4d28d9e7
   byebug (13.0.0) sha256=d2263efe751941ca520fa29744b71972d39cbc41839496706f5d9b22e92ae05d
   chef-utils (19.3.15) sha256=1c537a9c85b55b6d897de8e8af6b66b017a6dfae2b5e7b25e0bf320637e0b86a
-  chorus (0.1.0)
-  cnfs_dev (0.1.0)
-  cnfs_okf (0.1.0)
-  cnfs_support (0.1.0)
-  cnfs_telemetry (0.1.0)
   coderay (1.1.3) sha256=dc530018a4684512f8f38143cd2a096c9f02a1fc2459edcfe534787a7fc77d4b
   concurrent-ruby (1.3.7) sha256=4412caec3a5ea2e5fdc52076724c071a81f2c0593d83b2ac8cbb8ca63b3151b0
   connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
@@ -510,6 +510,9 @@ CHECKSUMS
   opentelemetry-semantic_conventions (1.43.0) sha256=d96eb7da3bc89335786ea676b448701f566cf241a7ca56ae1e814b83816922af
   parallel (2.1.0) sha256=b35258865c2e31134c5ecb708beaaf6772adf9d5efae28e93e99260877b09356
   parser (3.3.11.1) sha256=d17ace7aabe3e72c3cc94043714be27cc6f852f104d81aa284c2281aecc65d54
+  partitia-dev (0.1.0)
+  partitia-support (0.1.0)
+  partitia-telemetry (0.1.0)
   pp (0.6.4) sha256=dfcb0fce700c41456265922884f9fe195d7fbb0674a3578e6c0f69588e82b570
   prettyprint (0.2.0) sha256=2bc9e15581a94742064a3cc8b0fb9d45aae3d03a1baa6ef80922627a0766f193
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85

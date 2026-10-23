@@ -1,7 +1,7 @@
 <%# A later ActionText upgrade swaps this text field for a rich-text editor. %>
 <%= form_with model: [ conversation, message ],
       class: "flex gap-2",
-      data: { controller: "chatter--reset", action: "turbo:submit-end->chatter--reset#reset" } do |f| %>
+      data: { controller: "appwork--chatter--reset", action: "turbo:submit-end->appwork--chatter--reset#reset" } do |f| %>
   <%= f.text_field :content,
         placeholder: "Type a message…",
         autocomplete: "off",

@@ -8,6 +8,8 @@ default: &default
   adapter: sqlite3
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   timeout: 5000
+  # Every registered engine's db/migrate (partitia-support's registry), in every environment
+  migrations_paths: <%= Partitia::Support.migrations_paths[:primary] %>
 
 development:
   <<: *default

@@ -1,4 +1,4 @@
-# MicroManager
+# Appwork::Manager
 Short description and motivation.
 
 ## Usage

@@ -18,7 +18,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_170201) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "cnfs_okf_bundles", force: :cascade do |t|
+  create_table "appwork_okf_bundles", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "dev"
     t.integer "ino"
@@ -26,10 +26,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_170201) do
     t.string "owner_type"
     t.string "path", null: false
     t.datetime "updated_at", null: false
-    t.index ["owner_type", "owner_id"], name: "index_cnfs_okf_bundles_on_owner"
+    t.index ["owner_type", "owner_id"], name: "index_appwork_okf_bundles_on_owner"
   end
 
-  create_table "cnfs_okf_concepts", force: :cascade do |t|
+  create_table "appwork_okf_concepts", force: :cascade do |t|
     t.integer "bundle_id", null: false
     t.string "content_hash"
     t.datetime "created_at", null: false
@@ -45,12 +45,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_170201) do
     t.string "title"
     t.string "type"
     t.datetime "updated_at", null: false
-    t.index ["bundle_id", "path"], name: "index_cnfs_okf_concepts_on_bundle_id_and_path", unique: true
-    t.index ["bundle_id"], name: "index_cnfs_okf_concepts_on_bundle_id"
-    t.index ["owner_type", "owner_id"], name: "index_cnfs_okf_concepts_on_owner"
+    t.index ["bundle_id", "path"], name: "index_appwork_okf_concepts_on_bundle_id_and_path", unique: true
+    t.index ["bundle_id"], name: "index_appwork_okf_concepts_on_bundle_id"
+    t.index ["owner_type", "owner_id"], name: "index_appwork_okf_concepts_on_owner"
   end
 
-  create_table "cnfs_okf_view_ports", force: :cascade do |t|
+  create_table "appwork_okf_view_ports", force: :cascade do |t|
     t.integer "bundle_id", null: false
     t.datetime "created_at", null: false
     t.integer "ino"
@@ -58,8 +58,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_170201) do
     t.string "owner_type"
     t.string "path", default: "", null: false
     t.datetime "updated_at", null: false
-    t.index ["bundle_id"], name: "index_cnfs_okf_view_ports_on_bundle_id"
-    t.index ["owner_type", "owner_id"], name: "index_cnfs_okf_view_ports_on_owner"
+    t.index ["bundle_id"], name: "index_appwork_okf_view_ports_on_bundle_id"
+    t.index ["owner_type", "owner_id"], name: "index_appwork_okf_view_ports_on_owner"
   end
 
   create_table "goals", force: :cascade do |t|
@@ -80,8 +80,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_170201) do
     t.index ["account_id"], name: "index_strategies_on_account_id"
   end
 
-  add_foreign_key "cnfs_okf_concepts", "cnfs_okf_bundles", column: "bundle_id"
-  add_foreign_key "cnfs_okf_view_ports", "cnfs_okf_bundles", column: "bundle_id"
+  add_foreign_key "appwork_okf_concepts", "appwork_okf_bundles", column: "bundle_id"
+  add_foreign_key "appwork_okf_view_ports", "appwork_okf_bundles", column: "bundle_id"
   add_foreign_key "goals", "strategies"
   add_foreign_key "strategies", "accounts"
 end

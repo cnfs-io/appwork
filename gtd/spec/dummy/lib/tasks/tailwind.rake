@@ -1,6 +1,6 @@
 # tailwindcss-rails hardcodes its entry file to app/assets/tailwind/application.css
 # and hands it straight to the Tailwind CLI — it does NOT run ERB over it. So to
-# drive @source lines from CnfsSupport.source_paths (and the tokens @import) we
+# drive @source lines from Partitia::Support.source_paths (and the tokens @import) we
 # render the .erb entry into application.css ourselves, immediately before the
 # build/watch CLI reads it.
 #

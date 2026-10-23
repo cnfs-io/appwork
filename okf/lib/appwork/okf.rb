@@ -1,6 +1,8 @@
-require "cnfs_okf/version"
-require "cnfs_okf/config"
-require "cnfs_okf/engine"
+require "appwork/okf/version"
+require "appwork/okf/config"
+require "appwork/okf/engine"
 
-module CnfsOkf
+module Appwork
+  module Okf
+  end
 end

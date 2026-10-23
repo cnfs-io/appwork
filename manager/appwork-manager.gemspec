@@ -1,14 +1,15 @@
-require_relative "lib/micro_manager/version"
+require_relative "lib/appwork/manager/version"
 
 Gem::Specification.new do |spec|
-  spec.name        = "micro_manager"
-  spec.version     = MicroManager::VERSION
+  spec.name        = "appwork-manager"
+  spec.version     = Appwork::Manager::VERSION
   spec.authors     = [ "Robert Roach" ]
   spec.email       = [ "rjayroach@gmail.com" ]
   spec.homepage    = "TODO"
-  spec.summary     = "TODO: Summary of MicroManager."
-  spec.description = "TODO: Description of MicroManager."
+  spec.summary     = "TODO: Summary of Appwork::Manager."
+  spec.description = "TODO: Description of Appwork::Manager."
   spec.license     = "MIT"
+  spec.required_ruby_version = ">= 3.2"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the "allowed_push_host"
   # to allow pushing to a single host or delete this section to allow pushing to any host.
@@ -23,11 +24,12 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency "rails", ">= 8.1.3"
-  spec.add_dependency "cnfs_okf"
-  # Real, honest dependency: MicroManager::Project and Ticket `include
-  # Chorus::Workable`. Hosts → Chorus is the allowed direction; the dummy
+  spec.add_dependency "partitia-support"
+  spec.add_dependency "appwork-okf"
+  # Real, honest dependency: Appwork::Manager::Project and Ticket `include
+  # Appwork::Chorus::Workable`. Hosts → Chorus is the allowed direction; the dummy
   # Gemfile's `path:` line resolves it locally.
-  spec.add_dependency "chorus"
+  spec.add_dependency "appwork-chorus"
   spec.add_dependency "turbo-rails"
   spec.add_dependency "stimulus-rails"
   spec.add_dependency "importmap-rails"

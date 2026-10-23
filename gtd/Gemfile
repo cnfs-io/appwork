@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in gtd.gemspec.
+# Specify your gem's dependencies in appwork-gtd.gemspec.
 gemspec
 
 gem "puma"
@@ -24,10 +24,11 @@ group :development do
   gem "ruby-lsp-rspec", require: false
   gem "ruby-lsp-rails", require: false
 end
-gem "cnfs_support", path: "../support"
-gem "cnfs_dev", path: "../dev"
-# Both flanking layers, path-resolved. Gtd::Action (composition root) owns an OKF
-# concept AND is a cnfs_ui placement subject; this dummy is a real Chorus consumer
-# where all three layers meet (ADR 0005).
-gem "cnfs_okf", path: "../okf"
-gem "cnfs_ui", path: "../ui"
+
+# Partitia's engines, by gem name from gem-local's links (gem-local list); appwork's own
+# gems from their sibling dirs
+partitia_gems = ENV.fetch("RUBY_LOCAL_GEMS_HOME") { File.join(ENV.fetch("XDG_DATA_HOME") { File.join(Dir.home, ".local/share") }, "gems") }
+gem "partitia-support", path: "#{partitia_gems}/partitia-support"
+gem "partitia-dev", path: "#{partitia_gems}/partitia-dev"
+gem "partitia-ui", path: "#{partitia_gems}/partitia-ui"
+gem "appwork-okf", path: "../okf"

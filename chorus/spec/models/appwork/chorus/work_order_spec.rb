@@ -1,28 +1,28 @@
 require "rails_helper"
 
-# Chorus::WorkOrder — a job against a site (plan 011 §4): a workable (its subject), a
+# Appwork::Chorus::WorkOrder — a job against a site (plan 011 §4): a workable (its subject), a
 # workspace (the place), a role (the requirement to execute it), and optionally the
 # agent hired to fill it. It IS a document — has_one_okf :concept, no text column.
-RSpec.describe Chorus::WorkOrder, type: :model do
+RSpec.describe Appwork::Chorus::WorkOrder, type: :model do
   it "has a valid factory" do
-    expect(build(:chorus_work_order)).to be_valid
+    expect(build(:appwork_chorus_work_order)).to be_valid
   end
 
   describe "validations (host-specified, fully or invalid — §5)" do
     it "requires a workable" do
-      expect(build(:chorus_work_order, workable: nil)).not_to be_valid
+      expect(build(:appwork_chorus_work_order, workable: nil)).not_to be_valid
     end
 
     it "requires a workspace" do
-      expect(build(:chorus_work_order, workspace: nil)).not_to be_valid
+      expect(build(:appwork_chorus_work_order, workspace: nil)).not_to be_valid
     end
 
     it "requires a role" do
-      expect(build(:chorus_work_order, role: nil)).not_to be_valid
+      expect(build(:appwork_chorus_work_order, role: nil)).not_to be_valid
     end
 
     it "does not require an agent (hiring may come later)" do
-      expect(build(:chorus_work_order, agent: nil)).to be_valid
+      expect(build(:appwork_chorus_work_order, agent: nil)).to be_valid
     end
   end
 
@@ -43,7 +43,7 @@ RSpec.describe Chorus::WorkOrder, type: :model do
       reflection = described_class.reflect_on_association(:concept)
       expect(reflection.macro).to eq(:has_one)
       expect(reflection.options[:as]).to eq(:owner)
-      expect(reflection.klass).to eq(CnfsOkf::Concept)
+      expect(reflection.klass).to eq(Appwork::Okf::Concept)
     end
 
     it "has many plans and many results (as resultable)" do

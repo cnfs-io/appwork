@@ -1,17 +1,18 @@
-require_relative "lib/cnfs_okf/version"
+require_relative "lib/appwork/okf/version"
 
 Gem::Specification.new do |spec|
-  spec.name        = "cnfs_okf"
-  spec.version     = CnfsOkf::VERSION
+  spec.name        = "appwork-okf"
+  spec.version     = Appwork::Okf::VERSION
   spec.authors     = [ "Robert Roach" ]
   spec.email       = [ "rjayroach@gmail.com" ]
   spec.homepage    = "https://okf.org"
   spec.summary     = "Filesystem-backed OKF content engine for Rails."
-  spec.description = "CnfsOkf projects directories of OKF-style Markdown (bundles of " \
+  spec.description = "Appwork::Okf projects directories of OKF-style Markdown (bundles of " \
                     "frontmatter concepts) into ActiveRecord and keeps the projection " \
                     "reconciled with disk. Consumer models own concepts via a polymorphic " \
                     "association."
   spec.license     = "MIT"
+  spec.required_ruby_version = ">= 3.2"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the "allowed_push_host"
   # to allow pushing to a single host or delete this section to allow pushing to any host.
@@ -24,6 +25,7 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency "rails", ">= 8.1.3"
+  spec.add_dependency "partitia-support"
   spec.add_dependency "listen"
   spec.add_dependency "turbo-rails"
   spec.add_dependency "stimulus-rails"

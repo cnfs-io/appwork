@@ -1,5 +1,5 @@
 FactoryBot.define do
-  factory :chatter_conversation, class: "Chatter::Conversation" do
+  factory :appwork_chatter_conversation, class: "Appwork::Chatter::Conversation" do
     kind { :group }
     sequence(:name) { |n| "Group #{n}" }
 

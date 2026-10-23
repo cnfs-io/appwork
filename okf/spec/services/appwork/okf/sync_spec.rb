@@ -1,9 +1,9 @@
 require "rails_helper"
 require "tmpdir"
 
-# Integration specs for CnfsOkf::Sync against real files in a tmpdir — no
+# Integration specs for Appwork::Okf::Sync against real files in a tmpdir — no
 # filesystem mocking, matching the instrumentation_spec convention.
-RSpec.describe CnfsOkf::Sync do
+RSpec.describe Appwork::Okf::Sync do
   def write_md(dir, rel, frontmatter: nil, body: "hello\n")
     path = File.join(dir, rel)
     FileUtils.mkdir_p(File.dirname(path))
@@ -15,12 +15,12 @@ RSpec.describe CnfsOkf::Sync do
   # Flip owned_concept_policy for the duration of the block via ENV, resetting the
   # memoized singleton on both sides so policy never leaks across examples.
   def with_policy(policy)
-    ENV["CNFS_OKF_OWNED_CONCEPT_POLICY"] = policy.to_s
-    CnfsOkf::Config.reset_instance!
+    ENV["APPWORK_OKF_OWNED_CONCEPT_POLICY"] = policy.to_s
+    Appwork::Okf::Config.reset_instance!
     yield
   ensure
-    ENV.delete("CNFS_OKF_OWNED_CONCEPT_POLICY")
-    CnfsOkf::Config.reset_instance!
+    ENV.delete("APPWORK_OKF_OWNED_CONCEPT_POLICY")
+    Appwork::Okf::Config.reset_instance!
   end
 
   around do |example|
@@ -34,7 +34,7 @@ RSpec.describe CnfsOkf::Sync do
   def bundle_with(*files)
     dir = File.join(@root, "bundle")
     files.each { |rel, opts| write_md(dir, rel, **(opts || {})) }
-    CnfsOkf::Bundle.create!(path: dir)
+    Appwork::Okf::Bundle.create!(path: dir)
   end
 
   describe "create" do
@@ -173,7 +173,7 @@ RSpec.describe CnfsOkf::Sync do
   describe "policy validation" do
     it "raises when owned_concept_policy is invalid" do
       with_policy(:bogus) do
-        expect { CnfsOkf::Config.owned_concept_policy }
+        expect { Appwork::Okf::Config.owned_concept_policy }
           .to raise_error(Anyway::Config::ValidationError, /owned_concept_policy must be one of/)
       end
     end

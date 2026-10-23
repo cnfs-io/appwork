@@ -1,3 +1,3 @@
 Rails.application.routes.draw do
-  mount Chorus::Engine => "/chorus"
+  mount Appwork::Chorus::Engine => "/chorus"
 end

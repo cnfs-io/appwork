@@ -1,4 +1,6 @@
-module Gtd
-  module ApplicationHelper
+module Appwork
+  module Gtd
+    module ApplicationHelper
+    end
   end
 end

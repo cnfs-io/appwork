@@ -7,7 +7,7 @@ require "tmpdir"
 # Companion to concept_spec (derived reads) and sync_spec (disk->DB). These are
 # the load-bearing assertions: get the staged-body precedence or the
 # @pending_content reset wrong and you get intermittent content loss.
-RSpec.describe "CnfsOkf::Concept body write path" do
+RSpec.describe "Appwork::Okf::Concept body write path" do
   def write_md(dir, rel, frontmatter: nil, body: "hello\n")
     path = File.join(dir, rel)
     FileUtils.mkdir_p(File.dirname(path))
@@ -27,7 +27,7 @@ RSpec.describe "CnfsOkf::Concept body write path" do
   def concept_for(rel, **opts)
     dir = File.join(@root, "bundle")
     write_md(dir, rel, **opts)
-    @bundle = CnfsOkf::Bundle.create!(path: dir)
+    @bundle = Appwork::Okf::Bundle.create!(path: dir)
     @bundle.concepts.find_by!(path: rel)
   end
 
@@ -75,7 +75,7 @@ RSpec.describe "CnfsOkf::Concept body write path" do
       concept.content = "new body"
       concept.title = "Changed"
 
-      events = capture_events("cnfs_okf.concept.persist") { concept.save! }
+      events = capture_events("partitia_appwork.concept.persist") { concept.save! }
 
       expect(events.size).to eq(1)
       raw = concept.pathname.read
@@ -112,10 +112,10 @@ RSpec.describe "CnfsOkf::Concept body write path" do
       concept.save!
     end
 
-    it "fires cnfs_okf.concept.persist on a body-only edit" do
+    it "fires partitia_appwork.concept.persist on a body-only edit" do
       concept = concept_for("note.md", frontmatter: "title: Original\n")
 
-      events = capture_events("cnfs_okf.concept.persist") do
+      events = capture_events("partitia_appwork.concept.persist") do
         concept.content = "body only"
         concept.save!
       end
@@ -176,7 +176,7 @@ RSpec.describe "CnfsOkf::Concept body write path" do
       concept.content = "edited via write path"
       concept.save!
 
-      result = CnfsOkf::Sync.call(bundle: @bundle)
+      result = Appwork::Okf::Sync.call(bundle: @bundle)
 
       expect(result.unchanged).to eq(1)
       expect(result.updated).to eq(0)

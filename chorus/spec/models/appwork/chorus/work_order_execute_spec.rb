@@ -1,7 +1,7 @@
 require "rails_helper"
 require "tmpdir"
 
-# Chorus::WorkOrder#execute! (plan 011 §10, absorbing 010's Planner). Proven end to
+# Appwork::Chorus::WorkOrder#execute! (plan 011 §10, absorbing 010's Planner). Proven end to
 # end with a STUBBED agent that "writes" a file (to the path Chorus embedded in the
 # prompt) and yields fake events. No live `claude` in the suite — this is
 # coordination-only testing: path selection, sync, ownership, the type stamp, and the
@@ -10,21 +10,21 @@ require "tmpdir"
 # The host seeds a bundle at the workspace directory and points the workspace's
 # viewport at a subpath ("planning") — so concept paths carry that prefix and the
 # test genuinely exercises the viewport-relative anchor (not a bare "plans/...").
-RSpec.describe Chorus::WorkOrder, "#execute!", type: :model do
+RSpec.describe Appwork::Chorus::WorkOrder, "#execute!", type: :model do
   let(:root) { Dir.mktmpdir("chorus-execute") }
-  before { allow(Chorus::Config).to receive(:workspace_root).and_return(root) }
+  before { allow(Appwork::Chorus::Config).to receive(:workspace_root).and_return(root) }
   after  { FileUtils.remove_entry(root) if File.exist?(root) }
 
-  let(:workspace) { create(:chorus_workspace) }
-  let(:bundle)    { CnfsOkf::Bundle.create!(path: workspace.pathname.to_s) }
+  let(:workspace) { create(:appwork_chorus_workspace) }
+  let(:bundle)    { Appwork::Okf::Bundle.create!(path: workspace.pathname.to_s) }
   let!(:viewport) { workspace.create_view_port!(bundle: bundle, path: "planning", materialize: true) }
 
-  let(:architect) { create(:chorus_role, name: "rails-architect") }
-  let(:swe)       { create(:chorus_role, name: "rails-swe") }
-  let(:agent)     { create(:chorus_agent) }
+  let(:architect) { create(:appwork_chorus_role, name: "rails-architect") }
+  let(:swe)       { create(:appwork_chorus_role, name: "rails-swe") }
+  let(:agent)     { create(:appwork_chorus_agent) }
 
   subject(:work_order) do
-    create(:chorus_work_order, workspace: workspace, role: architect, agent: agent)
+    create(:appwork_chorus_work_order, workspace: workspace, role: architect, agent: agent)
   end
 
   # A fake agent: reads the path Chorus told it to write (embedded in the prompt),
@@ -41,7 +41,7 @@ RSpec.describe Chorus::WorkOrder, "#execute!", type: :model do
       block&.call({ type: :result, session_id: "sess-x", cost_usd: 0.0123,
                     duration_ms: 4567, num_turns: 3, usage: { "output_tokens" => 200 },
                     is_error: false })
-      CnfsSupport::Shell::Result.new(command: %w[claude], stdout: "", stderr: "", exitstatus: 0, shellout: nil)
+      Partitia::Support::Shell::Result.new(command: %w[claude], stdout: "", stderr: "", exitstatus: 0, shellout: nil)
     end
   end
 
@@ -120,7 +120,7 @@ RSpec.describe Chorus::WorkOrder, "#execute!", type: :model do
     it "records a failed Result and raises" do
       allow(agent).to receive(:invoke) do |**_kw, &block|
         block&.call({ type: :text, text: "I refuse" })
-        CnfsSupport::Shell::Result.new(command: %w[claude], stdout: "", stderr: "", exitstatus: 0, shellout: nil)
+        Partitia::Support::Shell::Result.new(command: %w[claude], stdout: "", stderr: "", exitstatus: 0, shellout: nil)
       end
 
       expect { work_order.execute!(slug: "user-auth", plan_role: swe) }

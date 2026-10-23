@@ -1,4 +1,6 @@
-module CnfsOkf
-  module ApplicationHelper
+module Appwork
+  module Okf
+    module ApplicationHelper
+    end
   end
 end

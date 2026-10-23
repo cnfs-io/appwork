@@ -25,5 +25,5 @@ strategy = account.strategies.create!(title: "Q3 Expansion")
 bundle   = account.bundles.find { |b| b.path.end_with?("acme") }
 strategy.update!(concept: bundle.concepts.find_by!(path: "strategies/q3-expansion.md"))
 
-puts "Seeded: #{account.bundles.count} bundles, #{CnfsOkf::Concept.count} concepts, " \
+puts "Seeded: #{account.bundles.count} bundles, #{Appwork::Okf::Concept.count} concepts, " \
      "#{Strategy.count} strategy owning a concept"

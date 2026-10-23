@@ -1,5 +1,7 @@
-module Chatter
-  class ApplicationRecord < ActiveRecord::Base
-    self.abstract_class = true
+module Appwork
+  module Chatter
+    class ApplicationRecord < ActiveRecord::Base
+      self.abstract_class = true
+    end
   end
 end

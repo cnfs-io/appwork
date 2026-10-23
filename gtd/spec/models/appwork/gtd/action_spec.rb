@@ -3,12 +3,12 @@
 require "rails_helper"
 require "tmpdir"
 
-# Tier 1 gate (Plan 012): prove Gtd::Action wears all THREE hats before any board
+# Tier 1 gate (Plan 012): prove Appwork::Gtd::Action wears all THREE hats before any board
 # exists. This is the composition root (ADR 0005) — content owner (010), placement
 # subject (011), assertion honorer (0006) — unit-tested in isolation.
 #
 # The content half uses real files in a tmpdir, matching okf/note house style.
-RSpec.describe Gtd::Action do
+RSpec.describe Appwork::Gtd::Action do
   def write_md(dir, rel, title:, body:)
     path = File.join(dir, rel)
     FileUtils.mkdir_p(File.dirname(path))
@@ -27,8 +27,8 @@ RSpec.describe Gtd::Action do
   def action_for(title:, body:, rel: "actions/call-bank.md")
     dir = File.join(@root, "gtd")
     write_md(dir, rel, title:, body:)
-    bundle = CnfsOkf::Bundle.create!(path: dir)
-    Gtd::Action.create!(status: "inbox").tap do |action|
+    bundle = Appwork::Okf::Bundle.create!(path: dir)
+    Appwork::Gtd::Action.create!(status: "inbox").tap do |action|
       action.update!(concept: bundle.concepts.find_by!(path: rel))
     end
   end
@@ -85,9 +85,9 @@ RSpec.describe Gtd::Action do
   # --- Hat 2: placement subject (011 / ADR 0005) ----------------------------
   describe "as a placement subject (appears on boards via placements)" do
     it "has_many placements polymorphically, and multi-board is free" do
-      action = Gtd::Action.create!(status: "inbox")
-      workflow = CnfsUi::Board.create!(name: "Workflow")
-      context  = CnfsUi::Board.create!(name: "Context")
+      action = Appwork::Gtd::Action.create!(status: "inbox")
+      workflow = Partitia::Ui::Board.create!(name: "Workflow")
+      context  = Partitia::Ui::Board.create!(name: "Context")
       next_col = workflow.columns.create!(name: "Next")
       home_col = context.columns.create!(name: "@home")
 
@@ -97,16 +97,16 @@ RSpec.describe Gtd::Action do
       # One Action -> two placements, independent rows on independent boards
       # (ADR 0005: the same subject appears on N boards for free).
       expect(action.placements).to contain_exactly(p1, p2)
-      expect(p1.subject_type).to eq("Gtd::Action")
+      expect(p1.subject_type).to eq("Appwork::Gtd::Action")
       expect(p1.column).not_to eq(p2.column)
     end
 
     it "destroys its placements when the action is destroyed" do
-      action = Gtd::Action.create!(status: "inbox")
-      col = CnfsUi::Board.create!(name: "B").columns.create!(name: "C")
+      action = Appwork::Gtd::Action.create!(status: "inbox")
+      col = Partitia::Ui::Board.create!(name: "B").columns.create!(name: "C")
       col.placements.create!(subject: action)
 
-      expect { action.destroy }.to change(CnfsUi::Placement, :count).by(-1)
+      expect { action.destroy }.to change(Partitia::Ui::Placement, :count).by(-1)
     end
   end
 
@@ -116,7 +116,7 @@ RSpec.describe Gtd::Action do
   # attribute is a SAFE NO-OP, never a blind column write.
   describe "#satisfy_assertion (guarded)" do
     it "honors an asserted :status by writing the status column" do
-      action = Gtd::Action.create!(status: "inbox")
+      action = Appwork::Gtd::Action.create!(status: "inbox")
 
       action.satisfy_assertion(attribute: :status, value: "done")
 
@@ -124,7 +124,7 @@ RSpec.describe Gtd::Action do
     end
 
     it "treats an unexpected asserted attribute as a safe no-op" do
-      action = Gtd::Action.create!(status: "inbox")
+      action = Appwork::Gtd::Action.create!(status: "inbox")
 
       expect {
         action.satisfy_assertion(attribute: :context, value: "anything")

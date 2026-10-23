@@ -5,7 +5,7 @@ require "tmpdir"
 
 # Direct specs for the derived Concept logic (#diverged?, frontmatter mapping)
 # that sync_spec leans on but never asserts in isolation.
-RSpec.describe CnfsOkf::Concept do
+RSpec.describe Appwork::Okf::Concept do
   def write_md(dir, rel, frontmatter: nil, body: "hello\n")
     path = File.join(dir, rel)
     FileUtils.mkdir_p(File.dirname(path))
@@ -25,7 +25,7 @@ RSpec.describe CnfsOkf::Concept do
   def concept_for(rel, **opts)
     dir = File.join(@root, "bundle")
     write_md(dir, rel, **opts)
-    CnfsOkf::Bundle.create!(path: dir).concepts.find_by!(path: rel)
+    Appwork::Okf::Bundle.create!(path: dir).concepts.find_by!(path: rel)
   end
 
   describe "#diverged?" do

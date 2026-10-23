@@ -55,18 +55,18 @@ bin/rails console                   # play with Organization / Okf::Bundle / Okf
 
 **What shipped** — full suite green: **23 examples, 0 failures**; RuboCop clean.
 
-- **`CnfsOkf::Config`** (`lib/cnfs_okf/config.rb`, required from `lib/cnfs_okf.rb`)
-  — `CnfsSupport::Config` subclass. `owned_concept_policy` (default `:protect`),
+- **`Appwork::Okf::Config`** (`lib/cnfs_okf/config.rb`, required from `lib/partitia_appwork.rb`)
+  — `Partitia::Support::Config` subclass. `owned_concept_policy` (default `:protect`),
   `listen_latency` (`0.5`), `listen_only` (`/\.md\z/`). `coerce_types
   owned_concept_policy: :string` + a `#owned_concept_policy` reader that
   `.to_sym`s normalizes the ENV-String and initializer-Symbol paths to one Symbol;
   `on_load` validates against `OWNED_CONCEPT_POLICIES` and raises
   `Anyway::Config::ValidationError` otherwise. Verified boots on all four paths
   (default / Symbol assign / ENV String / invalid → raise).
-- **`CnfsOkf::Sync`** (`app/services/cnfs_okf/sync.rb`) — THE reconciliation entry
+- **`Appwork::Okf::Sync`** (`app/services/cnfs_okf/sync.rb`) — THE reconciliation entry
   point, `Sync.call(bundle:, paths: nil)`. Idempotent; create/update/destroy
   matrix; MD5 short-circuit reads the file once via memoized `raw_content`; policy
-  branch per the plan table; returns a `Result` Struct; emits `cnfs_okf.sync.run`.
+  branch per the plan table; returns a `Result` Struct; emits `partitia_appwork.sync.run`.
   Knows nothing about `listen`.
 - **`Concept#diverged?`** — derived (`content_hash != MD5(file)`), no new column.
 - **`FsConcept#without_persist`** seam + `frontmatter_changed?` honours
@@ -74,15 +74,15 @@ bin/rails console                   # play with Organization / Okf::Bundle / Okf
   (spec asserts byte-for-byte no-write-back).
 - **`FsBundle#sync_concepts`** now delegates to Sync; `ino_match?` retained as a
   guard (no args, computes both sets itself); `Bundle#create_concepts` also routes
-  through Sync — one code path builds concepts. `cnfs_okf.bundle.sync` /
-  `cnfs_okf.bundle.create` events collapsed into `cnfs_okf.sync.run`;
+  through Sync — one code path builds concepts. `partitia_appwork.bundle.sync` /
+  `partitia_appwork.bundle.create` events collapsed into `partitia_appwork.sync.run`;
   `instrumentation_spec` updated (event name + `created`/`destroyed`/`skipped`
   payload keys).
-- **`CnfsOkf::Listener`** (`lib/cnfs_okf/listener.rb`) — one process, N bundles,
+- **`Appwork::Okf::Listener`** (`lib/cnfs_okf/listener.rb`) — one process, N bundles,
   longest-prefix routing, `rescue` inside the `listen` callback. `listen` added as
   a gemspec runtime dep, required only from `listener.rb`.
 - **Rake** `cnfs_okf:sync` / `cnfs_okf:listen` in the engine; dummy `Procfile.dev`
-  gains a `listener:` line. Dummy initializer `config/initializers/cnfs_okf.rb`
+  gains a `listener:` line. Dummy initializer `config/initializers/partitia_appwork.rb`
   ships the `:quarantine` override commented out (boots on default `:protect`).
 
 **Decisions worth flagging**
@@ -98,8 +98,8 @@ bin/rails console                   # play with Organization / Okf::Bundle / Okf
   `/tmp` → `/private/tmp`); without canonicalizing the roots the same way,
   longest-prefix routing never matched and events were silently dropped. This was
   the one thing the Neovim end-to-end test caught that unit tests could not.
-- `create_concepts` dropped its own `cnfs_okf.bundle.create` event; Sync's
-  `cnfs_okf.sync.run` covers the create.
+- `create_concepts` dropped its own `partitia_appwork.bundle.create` event; Sync's
+  `partitia_appwork.sync.run` covers the create.
 - One pre-existing RuboCop whitespace offense in the untouched `view_port.rb` was
   autocorrected (cosmetic only) to keep the tree clean; ViewPort logic untouched.
 
@@ -119,7 +119,7 @@ column for quarantine state. `ViewPort` untouched.
 bundle exec rspec                          # 23 examples
 BUNDLE=<id> bin/rails cnfs_okf:sync         # reconcile one (or all) bundles
 bin/rails cnfs_okf:listen                   # watch + sync (dedicated process)
-# flip policy: CNFS_OKF_OWNED_CONCEPT_POLICY=quarantine, or uncomment the dummy initializer
+# flip policy: APPWORK_OKF_OWNED_CONCEPT_POLICY=quarantine, or uncomment the dummy initializer
 ```
 
 ## Harden listener/sync coverage, single-bundle ergonomics, dummy trim, README
@@ -194,7 +194,7 @@ bundle exec rubocop app spec lib
   **unchanged, not updated** (the feedback-loop short-circuit); a `priority=`
   edit round-trips custom frontmatter to YAML with the body untouched.
 - Tailwind entry moved to `application.css.erb` driven by
-  `CnfsSupport.source_paths` (Part A). See the Tailwind ERB note below.
+  `Partitia::Support.source_paths` (Part A). See the Tailwind ERB note below.
 
 **Decisions worth flagging**
 
@@ -203,7 +203,7 @@ bundle exec rubocop app spec lib
   CLI. Added `spec/dummy/lib/tasks/tailwind_erb.rake` (`tailwindcss:render_entry`)
   that renders `application.css.erb` → `application.css` before build/watch, and
   gitignored the rendered `application.css` (absolute, machine-specific paths).
-  Kept dummy-local by decision (UI gem is on hold); promote to cnfs_ui when it
+  Kept dummy-local by decision (UI gem is on hold); promote to partitia-ui when it
   lands.
 - `db:clobber` in the plan is not a real task here; used
   `db:drop db:create db:migrate`.
@@ -225,7 +225,7 @@ bin/rubocop
 **What shipped** — full suite green: **73 examples, 0 failures** (+7 from 66);
 RuboCop clean (68 files, 0 offenses).
 
-- **`CnfsOkf::Consumer.okf_frontmatter(*names)`** — class macro alongside
+- **`Appwork::Okf::Consumer.okf_frontmatter(*names)`** — class macro alongside
   `has_one_okf` / `has_many_okf`. For each name it defines a delegating
   read/write accessor pair over the owned `:concept`'s serialized
   `custom_frontmatter` Hash (string keys). Extracts, verbatim, the pair
@@ -251,12 +251,12 @@ RuboCop clean (68 files, 0 offenses).
   `account.strategies.create!` that claims no concept, NOT the seed path (which
   has a Strategy claim an existing concept). Auto-claiming would make the
   nil/raise branches untestable.
-- **`CnfsOkf::Concept` untouched.** The macro is entirely consumer-side; the
+- **`Appwork::Okf::Concept` untouched.** The macro is entirely consumer-side; the
   existing OKF/Concept specs stayed green, confirming Concept behavior is
   unchanged.
 
 **Scope held** — accessor pair only. No `okf_projected_fields`, no
-`column_names` introspection, no `cnfs_okf.sync.run` subscriber, no
+`column_names` introspection, no `partitia_appwork.sync.run` subscriber, no
 precedence/write-loop guard, no migration change, no notifications/callbacks.
 
 **On the horizon (deferred — recorded, not built).** Queryable projection of a
@@ -267,7 +267,7 @@ a consumer writes a query that needs it, and it carries all the complexity
 walk over owned concepts) while the macro carries none. The macro leaves the
 door fully open: projection can land later without changing the accessor surface
 consumers already use. Three questions to settle *then*, none now — **trigger**
-(subscribe to `cnfs_okf.sync.run` and follow `concept.owner` back, vs. a
+(subscribe to `partitia_appwork.sync.run` and follow `concept.owner` back, vs. a
 macro-wired per-concept reload callback), **precedence** (recommend disk-wins;
 a runtime-authoritative value shouldn't be modeled as a projected column), and
 **write-loop/cost** (project without a concept persist; save the owner only on
@@ -283,7 +283,7 @@ bin/rubocop
 ## ViewPort materializes its directory (007-view-port-materialize)
 
 **What shipped** — a `ViewPort` can now create its own directory on disk, so a
-consumer (e.g. a `Chorus::Workspace`'s `has_one_okf :view_port` into a
+consumer (e.g. a `Appwork::Chorus::Workspace`'s `has_one_okf :view_port` into a
 host-seeded bundle) can point at a `plans/` directory an agent is *about to*
 write into, rather than one that must already exist. **82 examples, 0 failures;
 RuboCop clean.**

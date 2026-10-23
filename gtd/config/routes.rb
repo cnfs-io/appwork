@@ -1,2 +1,2 @@
-Gtd::Engine.routes.draw do
+Appwork::Gtd::Engine.routes.draw do
 end

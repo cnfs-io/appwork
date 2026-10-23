@@ -1,14 +1,15 @@
-require_relative "lib/gtd/version"
+require_relative "lib/appwork/gtd/version"
 
 Gem::Specification.new do |spec|
-  spec.name        = "gtd"
-  spec.version     = Gtd::VERSION
+  spec.name        = "appwork-gtd"
+  spec.version     = Appwork::Gtd::VERSION
   spec.authors     = [ "Robert Roach" ]
   spec.email       = [ "rjayroach@gmail.com" ]
   spec.homepage    = "TODO"
-  spec.summary     = "TODO: Summary of Gtd."
-  spec.description = "TODO: Description of Gtd."
+  spec.summary     = "TODO: Summary of Appwork::Gtd."
+  spec.description = "TODO: Description of Appwork::Gtd."
   spec.license     = "MIT"
+  spec.required_ruby_version = ">= 3.2"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the "allowed_push_host"
   # to allow pushing to a single host or delete this section to allow pushing to any host.
@@ -24,12 +25,14 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "rails", ">= 8.1.3"
 
+  spec.add_dependency "partitia-support"
   # The ADR 0005 composition root depends on BOTH flanking layers — storage
-  # (cnfs_okf: Concept + disk write path) and presentation (cnfs_ui: Board /
-  # Column / Placement + Kanban components). Gtd::Action is the ONLY place they
-  # meet; the two gems never reference each other. The UI stack (turbo, stimulus,
-  # importmap, tailwindcss, phlex, view_component) arrives transitively through
-  # cnfs_ui — declared once there, not re-stated here (gems/CLAUDE.md).
-  spec.add_dependency "cnfs_okf"
-  spec.add_dependency "cnfs_ui"
+  # (appwork-okf: Concept + disk write path) and presentation (partitia-ui: Board /
+  # Column / Placement + Kanban components). Appwork::Gtd::Action is the ONLY place
+  # they meet; the two gems never reference each other. The UI stack (turbo,
+  # stimulus, importmap, tailwindcss, phlex) arrives transitively through
+  # partitia-ui. NOTE: partitia-ui has no Board/Column/Placement or Kanban
+  # components today (see ROADMAP.md), so the board half of gtd does not load.
+  spec.add_dependency "appwork-okf"
+  spec.add_dependency "partitia-ui"
 end

@@ -1,4 +1,6 @@
-module CnfsOkf
-  class ApplicationJob < ActiveJob::Base
+module Appwork
+  module Okf
+    class ApplicationJob < ActiveJob::Base
+    end
   end
 end
